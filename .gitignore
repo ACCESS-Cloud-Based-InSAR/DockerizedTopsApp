@@ -1,0 +1,97 @@
+# OS Files
+**/.DS_Store
+**/.DS_Store?
+
+# vscode
+.vscode
+
+# .pyenv files
+.python-version
+
+# pytest files
+.pytest_cache/
+
+# Jupyter files
+*.ipynb_checkpoints
+
+# Python build files
+build/
+
+# Setuptools distribution folder.
+/dist/
+
+# Rope Files
+.ropeproject/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+# Ignore env files
+.env
+.netrc
+
+# Ignore the following Directories
+tmp/
+tests/
+
+# Only Specific Test Files
+!tests/localize-data.ipynb
+
+# configure files
+conf/settings.conf
+
+# Data Files
+*.zip
+*.EOF
+*.nc
+*.tif
+*.xml
+*.wbd.json
+*.hdr
+*.vrt
+*.cpt
+*.wbd
+*.geo
+*.html
+*.json
+*.rdr
+*.off
+*.full
+*.int
+*.cor
+*.slc
+*.wgs84
+*.hgt
+*_groups.json
+*.nc.md5
+*.png
+*.dataset.json
+*.txt
+*.txt
+*.xrd
+*.xsd
+*.bak
+*.dem
+*.safe
+*.int
+*.amp
+*.isce
+*.los
+*.phsig
+*.unw
+*.ion
+*.lat
+*.float
+*.geojson
+*.sim
+*.lon
+*.conncomp
+*.wgs84
+**/PICKLE/
+
+# Log files
+*.log
+*isce.log*

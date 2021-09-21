@@ -1,0 +1,26 @@
+name: topsapp_env
+channels:
+ - conda-forge
+ - anaconda
+ - defaults
+dependencies:
+ - python=3.8
+ - isce2
+ - jupyter
+ - papermill
+ - ipykernel
+ - rasterio
+ - shapely
+ - dateparser
+ - jinja2
+ - numpy
+ - matplotlib
+ - netcdf4
+ - fiona
+ - geopandas
+ - pip
+ - pip:
+   - dem_stitcher
+   - asf_search
+   - tqdm
+   - lxml
