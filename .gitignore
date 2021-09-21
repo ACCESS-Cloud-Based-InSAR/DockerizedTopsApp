@@ -56,7 +56,6 @@ conf/settings.conf
 *.wbd
 *.geo
 *.html
-*.json
 *.rdr
 *.off
 *.full
@@ -85,7 +84,6 @@ conf/settings.conf
 *.ion
 *.lat
 *.float
-*.geojson
 *.sim
 *.lon
 *.conncomp
