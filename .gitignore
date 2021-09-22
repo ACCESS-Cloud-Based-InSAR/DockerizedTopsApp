@@ -96,3 +96,9 @@ conf/settings.conf
 
 # Include template directory
 !isce2_topsapp/templates/topsapp_template.xml
+
+
+# Tests
+tests/*.ipynb
+tests/out/*.ipynb
+!tests/localize-data.ipynb
