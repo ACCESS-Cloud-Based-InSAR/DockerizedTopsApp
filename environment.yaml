@@ -24,3 +24,5 @@ dependencies:
    - asf_search
    - tqdm
    - lxml
+   - click
+   - python-dotenv
