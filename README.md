@@ -15,7 +15,7 @@ earthdata_password=<earthdata_password>
 
 ## Run Locally
 
-Run `isce2_topsapp sample_dataset.json`. The `json` file has the following form:
+Run `isce2_topsapp sample_dataset.json`, where `json` file has the following form:
 
 ```
 {
@@ -25,6 +25,12 @@ Run `isce2_topsapp sample_dataset.json`. The `json` file has the following form:
                          "S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C"]
 }
 ```
+
+Because there are *lots* of intermediate processing files, good to this in its own directory:
+
+1. `mkdir tmp` and navigate to it.
+2. Create a `dataset.json` file as above in the `tmp`.
+3. Run `isce2_topsapp dataset.json`
 
 ## Run in docker
 
