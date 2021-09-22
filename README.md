@@ -60,6 +60,11 @@ Don't forget to put an `.env` file in this repository.
 
    ```cd /home/ops/topsapp_data && isce2_topsapp dataset.json```
 
+
+Steps 3 and 4 together as:
+
+```docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img bash -c "/opt/conda/envs/topsapp_env/bin/isce2_topsapp /home/ops/topsapp_data/dataset.json"```
+
 ## FAQ
 
 1. I get the following error when running `isce2_topsapp dataset.json`.
