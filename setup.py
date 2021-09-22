@@ -9,7 +9,7 @@ setup(
     description='Automated ISCE2 TopsApp Processing',
     long_description=readme.read_text(),
     long_description_content_type='text/markdown',
-    url='https://github.com/TBD',
+    url='https://github.com/dbekaert/DockerizedTopsApp',
     author=('Charlie Marshak, David Bekaert, Grace Bato, Simran Sangha',
             'Joseph Kennedy', 'Brett Buzzunga, and others'
             ),
