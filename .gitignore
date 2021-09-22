@@ -35,7 +35,6 @@ __pycache__/
 
 # Ignore the following Directories
 tmp/
-tests/
 
 # Only Specific Test Files
 !tests/localize-data.ipynb
@@ -88,8 +87,12 @@ conf/settings.conf
 *.lon
 *.conncomp
 *.wgs84
+*.TGZ
 **/PICKLE/
 
 # Log files
 *.log
 *isce.log*
+
+# Include template directory
+!isce2_topsapp/templates/topsapp_template.xml
