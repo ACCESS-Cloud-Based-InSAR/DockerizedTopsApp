@@ -12,7 +12,7 @@ This is a dockerized TopsApp Science processing that performs the necessary loca
    earthdata_username=<earthdata_username>
    earthdata_password=<earthdata_password>
    ```
-4. Make a `~/.netrc` file (or within the working directory) with:
+4. (optional) Make a `~/.netrc` file (or within the working directory) with:
     ```
     machine urs.earthdata.nasa.gov
         login <username>
@@ -39,13 +39,28 @@ Because there are *lots* of intermediate processing files, good to this in its o
 2. Create a `dataset.json` file in the format above with desired IDs.
 3. Run `isce2_topsapp dataset.json`
 
-## Run in docker
+## Run in a (local) docker container in interactive mode
 
-Build the docker image with `build -f Dockerfile -t topsapp_img .`.
+Don't forget to put an `.env` file in this repository.
 
-1. To be continued
 
-# FAQ
+1. Build the docker image from this repository with
+
+    ```docker build -f Dockerfile -t topsapp_img .```
+
+2. Create a directory with a `dataset.json` file as specified earlier. Navigate to this directory.
+
+3. Take a look around a docker container, mounting a volume built from the image with:
+
+   ```docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img```
+
+   You can even run jupyter notebooks within the docker container mirroring ports with `-p 1313:1313`.
+
+4. Run the topsapp process within a docker container:
+
+   ```cd /home/ops/topsapp_data && isce2_topsapp dataset.json```
+
+## FAQ
 
 1. I get the following error when running `isce2_topsapp dataset.json`.
 
@@ -56,4 +71,8 @@ Build the docker image with `build -f Dockerfile -t topsapp_img .`.
        raise IOError('File not found')
    ```
     *Answer*: There is no `.env` file as described above. This error is design. At some point, we may improve the error message and remove this FAQ.
+
+2. The docker build is taking a long time.
+
+    *Answer*: Make sure the time is spent with `conda/mamba` not copying data files. The `.dockerignore` file should ignore ISCE2 data files (if you are running some examples within this repo directory, there will be GBs of intermediate files). It's crucial you don't include unnecessary ISCE2 intermediate files into the Docker image as this will bloat it.
 
