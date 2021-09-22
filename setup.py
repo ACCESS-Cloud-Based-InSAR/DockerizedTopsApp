@@ -10,7 +10,7 @@ setup(
     long_description=readme.read_text(),
     long_description_content_type='text/markdown',
     url='https://github.com/TBD',
-    author=('Charlie Marshak, David Bekaert, Simran Sangha',
+    author=('Charlie Marshak, David Bekaert, Grace Bato, Simran Sangha',
             'Joseph Kennedy', 'Brett Buzzunga, and others'
             ),
     author_email='charlie.z.marshak@jpl.nasa.gov',
