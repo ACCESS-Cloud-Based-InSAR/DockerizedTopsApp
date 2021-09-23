@@ -61,9 +61,9 @@ Don't forget to put an `.env` file in this repository.
    ```cd /home/ops/topsapp_data && isce2_topsapp dataset.json```
 
 
-Steps 3 and 4 together as:
+We can combine steps 3 and 4 above as:
 
-```docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img bash -c "/opt/conda/envs/topsapp_env/bin/isce2_topsapp /home/ops/topsapp_data/dataset.json"```
+```docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img bash -c "cd /home/ops/topsapp_data && /opt/conda/envs/topsapp_env/bin/isce2_topsapp /home/ops/topsapp_data/dataset.json"```
 
 ## FAQ
 
@@ -80,4 +80,3 @@ Steps 3 and 4 together as:
 2. The docker build is taking a long time.
 
     *Answer*: Make sure the time is spent with `conda/mamba` not copying data files. The `.dockerignore` file should ignore ISCE2 data files (if you are running some examples within this repo directory, there will be GBs of intermediate files). It's crucial you don't include unnecessary ISCE2 intermediate files into the Docker image as this will bloat it.
-
