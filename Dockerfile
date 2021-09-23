@@ -8,11 +8,8 @@ COPY . /home/ops/DockerizedTopsApp
 COPY .env /home/ops/.env
 
 # Create the environment with mamba
-# RUN conda install mamba -n base -c conda-forge
-# RUN mamba env create -f /home/ops/DockerizedTopsApp/environment.yaml
-
-# Create the environment with conda
-RUN conda env create -f /home/ops/DockerizedTopsApp/environment.yaml
+RUN conda install mamba -n base -c conda-forge
+RUN mamba env create -f /home/ops/DockerizedTopsApp/environment.yaml
 
 # Ensure that environment is activated on startup
 RUN echo "conda activate topsapp_env" >> ~/.bashrc
