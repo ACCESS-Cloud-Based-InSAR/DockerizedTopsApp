@@ -1,10 +1,8 @@
 .git
 .gitignore
 .svn
-notebooks/
-
-# configure files
-conf/settings.conf
+tests/
+tmp/
 
 # Data Files
 *.zip

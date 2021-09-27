@@ -43,6 +43,7 @@ def check_geometry(reference_obs: list,
     # Two geometries must intersect for their to be an interferogram
     intersection_geo = secondary_geo.intersection(reference_geo)
     assert(not intersection_geo.is_empty)
+
     # if they are not Polygons they are multipolygons and not valid
     assert(isinstance(secondary_geo, Polygon))
     assert(isinstance(reference_geo, Polygon))
@@ -55,6 +56,10 @@ def download_slcs(reference_ids: list,
                   dry_run: bool = False) -> dict:
     reference_obs = get_asf_slc_objects(reference_ids)
     secondary_obs = get_asf_slc_objects(secondary_ids)
+
+    # store properties so we don't have to retreive them again
+    reference_props = [ob.properties for ob in reference_obs]
+    secondary_props = [ob.properties for ob in secondary_obs]
 
     # Check the number of objects is the same as inputs
     assert(len(reference_obs) == len(reference_ids))
@@ -80,4 +85,8 @@ def download_slcs(reference_ids: list,
     n0 = len(reference_obs)
     return {'ref_paths': results[:n0],
             'sec_paths': results[n0:],
-            'extent': list(intersection_geo.bounds)}
+            'extent': list(intersection_geo.bounds),
+            'intersection_geo': intersection_geo,
+            'reference_properties': reference_props,
+            'secondary_properties': secondary_props
+            }

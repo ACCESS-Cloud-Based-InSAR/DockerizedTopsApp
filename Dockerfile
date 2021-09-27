@@ -1,15 +1,23 @@
 FROM continuumio/miniconda3
 
-LABEL description="Alos2App PGE Container"
+LABEL description="TopsApp Container"
 
 # Build context must be from root of this repository
-COPY . /home/ops/hyp3-topsApp
+COPY . /home/ops/DockerizedTopsApp
+# Must have .env in repository
+COPY .env /home/ops/.env
+COPY .netrc /home/ops/.netrc
 
-# Create the environment:
-RUN conda env create -f /home/ops/hyp3-topsApp/environment.yaml
+# Create the environment with mamba
+RUN conda install mamba -n base -c conda-forge
+RUN mamba env create -f /home/ops/DockerizedTopsApp/environment.yaml
 
 # Ensure that environment is activated on startup
-RUN echo "conda activate topsapp_env && python -m ipykernel install --user" >> ~/.bashrc
+RUN echo "conda activate topsapp_env" >> ~/.bashrc
+
+# Install repository with pip; must be better way
+# Just using pip install to base not env
+RUN /bin/bash -c "/opt/conda/envs/topsapp_env/bin/pip install /home/ops/DockerizedTopsApp"
 
 # set entrypoint
 WORKDIR /home/ops
