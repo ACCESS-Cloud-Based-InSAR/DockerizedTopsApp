@@ -6,6 +6,7 @@ LABEL description="TopsApp Container"
 COPY . /home/ops/DockerizedTopsApp
 # Must have .env in repository
 COPY .env /home/ops/.env
+COPY .netrc /home/ops/.netrc
 
 # Create the environment with mamba
 RUN conda install mamba -n base -c conda-forge
