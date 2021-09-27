@@ -1,10 +1,13 @@
 import click
 import json
+from pathlib import Path
+import shutil
 from isce2_topsapp import (download_slcs,
                            download_orbits,
                            download_dem_for_isce2,
                            download_aux_cal,
-                           topsapp_processing)
+                           topsapp_processing,
+                           package_gunw_product)
 
 
 def localize_data(reference_scenes: list,
@@ -56,6 +59,21 @@ def main(input_dataset: str, dry_run: bool):
                        dem_for_geoc=loc_data['low_res_dem_path'],
                        dry_run=dry_run
                        )
+
+    ref_properties = loc_data['reference_properties']
+    sec_properties = loc_data['secondary_properties']
+    extent = loc_data['extent']
+
+    nc_path = package_gunw_product(isce_data_directory=Path('.'),
+                                   reference_properties=ref_properties,
+                                   secondary_properties=sec_properties,
+                                   extent=extent
+                                   )
+
+    # Move final product to current working directory
+    nc_path_final = nc_path.filename
+    shutil.move(nc_path, nc_path_final)
+
 
 
 if __name__ == '__main__':

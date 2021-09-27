@@ -26,12 +26,15 @@ setup(
     ],
 
     python_requires='~=3.8',
-    package_data={"isce2_topsapp": ["templates/*.xml"]},
+    package_data={"isce2_topsapp": ["templates/*.xml",
+                                    "templates/*.json"]},
     packages=find_packages(
                            exclude=['tmp/', 'tests/']
                           ),
     entry_points={'console_scripts': [
             'isce2_topsapp = isce2_topsapp.__main__:main',
+            'makeGeocube = isce2_topsapp.packaging_utils.makeGeocube:main',
+            'nc_packaging = isce2_topsapp.packaging_utils.nc_packaging:main'
         ]
     },
     zip_safe=False
