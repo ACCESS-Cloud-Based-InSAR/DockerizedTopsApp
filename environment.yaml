@@ -19,6 +19,7 @@ dependencies:
  - fiona
  - geopandas
  - pip
+ - python-dotenv
  - pip:
    - dem_stitcher
    - asf_search
