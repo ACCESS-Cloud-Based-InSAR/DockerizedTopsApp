@@ -12,13 +12,13 @@ This is a dockerized TopsApp Science processing that performs the necessary loca
    earthdata_username=<earthdata_username>
    earthdata_password=<earthdata_password>
    ```
-4. (optional) Make a `~/.netrc` file (or within the working directory) with:
+4. Make a `.netrc` file within the working directory with:
     ```
     machine urs.earthdata.nasa.gov
         login <username>
         password <password>
     ```
-    The ISCE library (I believe) obtains the [SRTM water body data](https://en.wikipedia.org/wiki/SRTM_Water_Body_Data) using the python [`requests`](https://docs.python-requests.org/en/latest/) library. `requests` automatically uses credentials stored in the `.netrc`.
+    This file is necessary for downloading the Sentinel-1 orbit files and the ISCE library (I believe) requires them for the [SRTM water body data](https://en.wikipedia.org/wiki/SRTM_Water_Body_Data). The [`requests`](https://docs.python-requests.org/en/latest/) library automatically uses credentials stored in the `.netrc` for authentification when none are supplied.
 
 ## Run Locally
 
