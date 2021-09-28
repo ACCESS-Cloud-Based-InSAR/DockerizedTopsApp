@@ -80,7 +80,7 @@ def main():
                                    )
 
     # Move final product to current working directory
-    shutil.move(nc_path, Path.cwd())
+    nc_path.rename(Path.cwd() / nc_path.name)
 
     if args.bucket:
         aws.upload_file_to_s3(nc_path, args.bucket, args.bucket_prefix)
