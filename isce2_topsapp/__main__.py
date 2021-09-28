@@ -1,5 +1,4 @@
-import click
-import json
+from argparse import ArgumentParser
 from pathlib import Path
 import shutil
 from isce2_topsapp import (download_slcs,
@@ -34,21 +33,26 @@ def localize_data(reference_scenes: list,
     return out
 
 
-@click.command()
-@click.argument('input_dataset', required=True, type=str, nargs=1)
-@click.option('--dry-run',
-              'dry_run',
-              is_flag=True,
-              default=False)
-def main(input_dataset: str, dry_run: bool):
-    data = json.load(open(input_dataset, 'r'))
+def main():
+    parser = ArgumentParser()
+    parser.add_argument('--username', required=True)
+    parser.add_argument('--password', required=True)
+    parser.add_argument('--bucket')
+    parser.add_argument('--bucket-prefix', default='')
+    parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--reference-scenes', type=str.split, nargs='+')
+    parser.add_argument('--secondary-scenes', type=str.split, nargs='+')
+    args = parser.parse_args()
 
-    reference_scenes = data['reference_scenes']
-    secondary_scenes = data['secondary_scenes']
+    with open('.env', 'w') as f:
+        f.write(f'earthdata_username = {args.username}\n')
+        f.write(f'earthdata_password = {args.password}')
+    with open('.netrc', 'w') as f:
+        f.write(f'machine urs.earthdata.nasa.gov login {args.username} password {args.password}')
 
-    loc_data = localize_data(reference_scenes,
-                             secondary_scenes,
-                             dry_run=dry_run)
+    loc_data = localize_data(args.reference_scenes,
+                             args.secondary_scenes,
+                             dry_run=args.dry_run)
 
     topsapp_processing(reference_slc_zips=loc_data['ref_paths'],
                        secondary_slc_zips=loc_data['sec_paths'],
@@ -57,7 +61,7 @@ def main(input_dataset: str, dry_run: bool):
                        extent=loc_data['extent'],
                        dem_for_proc=loc_data['full_res_dem_path'],
                        dem_for_geoc=loc_data['low_res_dem_path'],
-                       dry_run=dry_run
+                       dry_run=args.dry_run
                        )
 
     ref_properties = loc_data['reference_properties']
