@@ -19,6 +19,7 @@ dependencies:
  - fiona
  - geopandas
  - pip
+ - boto3
  - pip:
    - dem_stitcher
    - asf_search

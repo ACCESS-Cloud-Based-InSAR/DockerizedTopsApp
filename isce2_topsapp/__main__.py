@@ -1,12 +1,14 @@
 from argparse import ArgumentParser
 from pathlib import Path
 import shutil
+
 from isce2_topsapp import (download_slcs,
                            download_orbits,
                            download_dem_for_isce2,
                            download_aux_cal,
                            topsapp_processing,
-                           package_gunw_product)
+                           package_gunw_product,
+                           aws)
 
 
 def localize_data(reference_scenes: list,
@@ -78,6 +80,8 @@ def main():
     nc_path_final = nc_path.filename
     shutil.move(nc_path, nc_path_final)
 
+    if args.bucket:
+        aws.upload_file_to_s3(nc_path_final, args.bucket, args.bucket_prefix)
 
 
 if __name__ == '__main__':
