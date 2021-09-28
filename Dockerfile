@@ -18,5 +18,5 @@ RUN /bin/bash -c "/opt/conda/envs/topsapp_env/bin/pip install /home/ops/Dockeriz
 
 # set entrypoint
 WORKDIR /home/ops
-ENTRYPOINT ["isce2_topsapp"]
+ENTRYPOINT ["/home/ops/DockerizedTopsApp/isce2_topsapp/etc/entrypoint.sh"]
 CMD ["-h"]
