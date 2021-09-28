@@ -1,6 +1,7 @@
 import os
 import subprocess
 from pathlib import Path
+from typing import Union
 import json
 import hashlib
 from dateparser import parse
@@ -113,7 +114,7 @@ def get_gunw_id(reference_properties: list,
     return gunw_id
 
 
-def make_geocube(isce_data_directory: Path) -> Path:
+def make_geocube(isce_data_directory: Union[str, Path]) -> Path:
     """This generates the `metadata.h5` from a command-line script.
 
     The metadata.h5 will be written in the `merged/` directory of the ISCE2
@@ -121,7 +122,7 @@ def make_geocube(isce_data_directory: Path) -> Path:
 
     Parameters
     ----------
-    isce_data_directory : Path
+    isce_data_directory
         The relative location of the ISCE2 files.
 
     Returns
@@ -173,7 +174,7 @@ def _write_json_config(*,
 
 def perform_netcdf_packaging(*,
                              gunw_id: str,
-                             isce_data_dir: Path):
+                             isce_data_dir: Union[str, Path]) -> Path:
 
     # Check that the metadata.h5 exists
     isce_data_dir = Path(isce_data_dir)
@@ -200,7 +201,7 @@ def perform_netcdf_packaging(*,
 
 
 def package_gunw_product(*,
-                         isce_data_directory: str,
+                         isce_data_directory: Union[str, Path],
                          reference_properties: list,
                          secondary_properties: list,
                          extent: list) -> Path:
@@ -209,13 +210,13 @@ def package_gunw_product(*,
 
     Parameters
     ----------
-    isce_data_directory : str
+    isce_data_directory
         Where the ISCE outputs are relative to current working directory
-    reference_properties : list
+    reference_properties
         Each item a dictionary per ASF API including ID, starttime, etc.
-    secondary_properties : list
+    secondary_properties
         Each item a dictionary per ASF API including ID, starttime, etc
-    extent : list
+    extent
         List of extents ([xmin, ymin, xmax, ymax])
 
     Returns
