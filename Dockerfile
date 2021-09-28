@@ -4,13 +4,10 @@ LABEL description="TopsApp Container"
 
 # Build context must be from root of this repository
 COPY . /home/ops/DockerizedTopsApp
-# Must have .env in repository
-COPY .env /home/ops/.env
-COPY .netrc /home/ops/.netrc
 
 # Create the environment with mamba
 RUN conda install mamba -n base -c conda-forge
-RUN mamba env create -f /home/ops/DockerizedTopsApp/environment.yaml
+RUN mamba env create -f /home/ops/DockerizedTopsApp/environment.yml
 
 # Ensure that environment is activated on startup
 RUN echo "conda activate topsapp_env" >> ~/.bashrc
