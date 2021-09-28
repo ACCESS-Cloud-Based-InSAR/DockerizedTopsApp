@@ -47,12 +47,13 @@ def main():
     parser.add_argument('--secondary-scenes', nargs='+')
     args = parser.parse_args()
 
-    # FIXME this could clobber existing files
-    with open('.env', 'w') as f:
-        f.write(f'earthdata_username = {args.username}\n')
-        f.write(f'earthdata_password = {args.password}\n')
-    with open('.netrc', 'w') as f:
-        f.write(f'machine urs.earthdata.nasa.gov login {args.username} password {args.password}\n')
+    dot_env = Path.home() / '.env'
+    if not dot_env.exists():
+        dot_env.write_text(f'earthdata_username={args.username}\nearthdata_password={args.password}\n')
+
+    dot_netrc = Path.home() / '.netrc'
+    if not dot_netrc.exists():
+        dot_netrc.write_text(f'machine urs.earthdata.nasa.gov login {args.username} password {args.password}\n')
 
     loc_data = localize_data(args.reference_scenes,
                              args.secondary_scenes,
@@ -72,7 +73,7 @@ def main():
     sec_properties = loc_data['secondary_properties']
     extent = loc_data['extent']
 
-    nc_path = package_gunw_product(isce_data_directory=Path('.'),
+    nc_path = package_gunw_product(isce_data_directory=Path.cwd(),
                                    reference_properties=ref_properties,
                                    secondary_properties=sec_properties,
                                    extent=extent
