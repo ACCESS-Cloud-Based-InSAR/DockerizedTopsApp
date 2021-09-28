@@ -47,7 +47,7 @@ def main():
     parser.add_argument('--secondary-scenes', nargs='+')
     args = parser.parse_args()
 
-    dot_env = Path.home() / '.env'
+    dot_env = Path.cwd() / '.env'
     if not dot_env.exists():
         dot_env.write_text(f'earthdata_username={args.username}\nearthdata_password={args.password}\n')
 
