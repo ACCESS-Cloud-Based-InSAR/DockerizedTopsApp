@@ -42,16 +42,17 @@ def main():
     parser.add_argument('--bucket')
     parser.add_argument('--bucket-prefix', default='')
     parser.add_argument('--dry-run', action='store_true')
-    parser.add_argument('--reference-scenes', type=str.split, nargs='+')
-    parser.add_argument('--secondary-scenes', type=str.split, nargs='+')
+    # FIXME may need changes to support quoted, space delimited lists, e.g. "a b c"
+    parser.add_argument('--reference-scenes', nargs='+')
+    parser.add_argument('--secondary-scenes', nargs='+')
     args = parser.parse_args()
 
     # FIXME this could clobber existing files
     with open('.env', 'w') as f:
         f.write(f'earthdata_username = {args.username}\n')
-        f.write(f'earthdata_password = {args.password}')
+        f.write(f'earthdata_password = {args.password}\n')
     with open('.netrc', 'w') as f:
-        f.write(f'machine urs.earthdata.nasa.gov login {args.username} password {args.password}')
+        f.write(f'machine urs.earthdata.nasa.gov login {args.username} password {args.password}\n')
 
     loc_data = localize_data(args.reference_scenes,
                              args.secondary_scenes,
@@ -78,11 +79,10 @@ def main():
                                    )
 
     # Move final product to current working directory
-    nc_path_final = nc_path.filename
-    shutil.move(nc_path, nc_path_final)
+    shutil.move(nc_path, Path.cwd())
 
     if args.bucket:
-        aws.upload_file_to_s3(nc_path_final, args.bucket, args.bucket_prefix)
+        aws.upload_file_to_s3(nc_path, args.bucket, args.bucket_prefix)
 
 
 if __name__ == '__main__':
