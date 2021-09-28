@@ -46,6 +46,7 @@ def main():
     parser.add_argument('--secondary-scenes', type=str.split, nargs='+')
     args = parser.parse_args()
 
+    # FIXME this could clobber existing files
     with open('.env', 'w') as f:
         f.write(f'earthdata_username = {args.username}\n')
         f.write(f'earthdata_password = {args.password}')

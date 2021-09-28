@@ -4,7 +4,7 @@ This is a dockerized TopsApp Science processing that performs the necessary loca
 
 ## Setup
 
-1. `conda env update -n topsapp_env --file environment.yaml`
+1. `conda env update -n topsapp_env --file environment.yml`
 2. `pip install .`
 3. Make an `.env` file with:
 
