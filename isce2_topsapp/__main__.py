@@ -79,11 +79,11 @@ def main():
                                    extent=extent
                                    )
 
-    # Move final product to current working directory
-    nc_path.rename(Path.cwd() / nc_path.name)
-
     if args.bucket:
         aws.upload_file_to_s3(nc_path, args.bucket, args.bucket_prefix)
+
+    # Move final product to current working directory
+    nc_path.rename(Path.cwd() / nc_path.name)
 
 
 if __name__ == '__main__':
