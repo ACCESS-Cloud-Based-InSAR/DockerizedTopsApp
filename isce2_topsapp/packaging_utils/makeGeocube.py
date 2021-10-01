@@ -9,7 +9,6 @@ import isce
 import argparse
 import h5py
 import datetime
-import numbers
 import pyproj
 import pdb
 import logging
