@@ -5,11 +5,24 @@
 from __future__ import division
 from builtins import str
 from builtins import range
+import numbers
 from osgeo import gdal, ogr, osr
 
 
-def old_div(x, y):
-    return x // y
+def old_div(a, b):
+    """
+    DEPRECATED: import ``old_div`` from ``past.utils`` instead.
+
+    Equivalent to ``a / b`` on Python 2 without ``from __future__ import
+    division``.
+
+    TODO: generalize this to other objects (like arrays etc.)
+    """
+    if isinstance(a, numbers.Integral) and isinstance(b, numbers.Integral):
+        return a // b
+    else:
+        return a / b
+
 
 def data_loading(filename,out_data_type=None,data_band=None):
     """

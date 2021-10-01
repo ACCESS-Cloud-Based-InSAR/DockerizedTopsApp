@@ -2,7 +2,6 @@ from __future__ import division
 from builtins import str
 from builtins import range
 from builtins import object
-# from past.utils import old_div
 import math
 import numpy as np
 import os
@@ -10,6 +9,7 @@ import isce
 import argparse
 import h5py
 import datetime
+import numbers
 import pyproj
 import pdb
 import logging
@@ -26,8 +26,20 @@ log_format = "[%(asctime)s: %(levelname)s/%(funcName)s] %(message)s"
 logging.basicConfig(format=log_format, level=logging.INFO)
 logger = logging.getLogger('makeGeocube')
 
-def old_div(x, y):
-    return x // y
+
+def old_div(a, b):
+    """
+    DEPRECATED: import ``old_div`` from ``past.utils`` instead.
+
+    Equivalent to ``a / b`` on Python 2 without ``from __future__ import
+    division``.
+
+    TODO: generalize this to other objects (like arrays etc.)
+    """
+    if isinstance(a, numbers.Integral) and isinstance(b, numbers.Integral):
+        return a // b
+    else:
+        return a / b
 
 
 def simple_time_tracker(log_fun):
