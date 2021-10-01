@@ -27,21 +27,6 @@ logging.basicConfig(format=log_format, level=logging.INFO)
 logger = logging.getLogger('makeGeocube')
 
 
-def old_div(a, b):
-    """
-    DEPRECATED: import ``old_div`` from ``past.utils`` instead.
-
-    Equivalent to ``a / b`` on Python 2 without ``from __future__ import
-    division``.
-
-    TODO: generalize this to other objects (like arrays etc.)
-    """
-    if isinstance(a, numbers.Integral) and isinstance(b, numbers.Integral):
-        return a // b
-    else:
-        return a / b
-
-
 def simple_time_tracker(log_fun):
 
     def _simple_time_tracker(fn):
@@ -178,7 +163,7 @@ def getUTMZone(inps):
             elif longitude < 42:
                 return 37
 
-        return int(old_div((longitude + 180), 6)) + 1
+        return int((longitude + 180) / 6) + 1
 
     def latitude_to_zone_letter(latitude):
         ZONE_LETTERS = "CDEFGHJKLMNPQRSTUVWXX"
@@ -311,13 +296,13 @@ def estimateGridPoints(inps):
 
     pts = np.array(pts)
 
-    inps.x0 = (int(old_div(np.min(pts[:, 0]), inps.xspacing)) - 2) * inps.xspacing
-    inps.x1 = (int(old_div(np.max(pts[:, 0]), inps.xspacing)) + 3) * inps.xspacing
-    inps.Nx = int(np.round(old_div((inps.x1 - inps.x0), inps.xspacing))) + 1
+    inps.x0 = (int(np.min(pts[:, 0]) / inps.xspacing) - 2) * inps.xspacing
+    inps.x1 = (int(np.max(pts[:, 0]) / inps.xspacing) + 3) * inps.xspacing
+    inps.Nx = int(np.round((inps.x1 - inps.x0) / inps.xspacing)) + 1
 
-    inps.y0 = (int(old_div(np.min(pts[:, 1]), inps.yspacing)) - 2) * inps.yspacing
-    inps.y1 = (int(old_div(np.max(pts[:, 1]), inps.yspacing)) + 3) * inps.yspacing
-    inps.Ny = int(np.round(old_div((inps.y1 - inps.y0), inps.yspacing))) + 1
+    inps.y0 = (int(np.min(pts[:, 1]) / inps.yspacing) - 2) * inps.yspacing
+    inps.y1 = (int(np.max(pts[:, 1]) / inps.yspacing) + 3) * inps.yspacing
+    inps.Ny = int(np.round((inps.y1 - inps.y0) / inps.yspacing)) + 1
     inps.utmproj = pyproj.Proj(getUTMZone(inps))
 
 
@@ -468,8 +453,8 @@ class Cube(object):
                         mtaz - self.inps.midnight).total_seconds()
                     self.slantrange[ind, ii, jj] = mrng
 
-                    losvec = old_div((targxyz - satpos), mrng)
-                    losvec = old_div(losvec, np.linalg.norm(losvec))
+                    losvec = (targxyz - satpos) / mrng
+                    losvec = losvec / np.linalg.norm(losvec)
 
                     staz = None
                     srng = None
