@@ -2,7 +2,6 @@ from __future__ import division
 from builtins import str
 from builtins import range
 from builtins import object
-# from past.utils import old_div
 import math
 import numpy as np
 import os
@@ -25,9 +24,6 @@ from isceobj.Planet.Planet import Planet
 log_format = "[%(asctime)s: %(levelname)s/%(funcName)s] %(message)s"
 logging.basicConfig(format=log_format, level=logging.INFO)
 logger = logging.getLogger('makeGeocube')
-
-def old_div(x, y):
-    return x // y
 
 
 def simple_time_tracker(log_fun):
@@ -166,7 +162,7 @@ def getUTMZone(inps):
             elif longitude < 42:
                 return 37
 
-        return int(old_div((longitude + 180), 6)) + 1
+        return int((longitude + 180) / 6) + 1
 
     def latitude_to_zone_letter(latitude):
         ZONE_LETTERS = "CDEFGHJKLMNPQRSTUVWXX"
@@ -299,13 +295,13 @@ def estimateGridPoints(inps):
 
     pts = np.array(pts)
 
-    inps.x0 = (int(old_div(np.min(pts[:, 0]), inps.xspacing)) - 2) * inps.xspacing
-    inps.x1 = (int(old_div(np.max(pts[:, 0]), inps.xspacing)) + 3) * inps.xspacing
-    inps.Nx = int(np.round(old_div((inps.x1 - inps.x0), inps.xspacing))) + 1
+    inps.x0 = (int(np.min(pts[:, 0]) / inps.xspacing) - 2) * inps.xspacing
+    inps.x1 = (int(np.max(pts[:, 0]) / inps.xspacing) + 3) * inps.xspacing
+    inps.Nx = int(np.round((inps.x1 - inps.x0) / inps.xspacing)) + 1
 
-    inps.y0 = (int(old_div(np.min(pts[:, 1]), inps.yspacing)) - 2) * inps.yspacing
-    inps.y1 = (int(old_div(np.max(pts[:, 1]), inps.yspacing)) + 3) * inps.yspacing
-    inps.Ny = int(np.round(old_div((inps.y1 - inps.y0), inps.yspacing))) + 1
+    inps.y0 = (int(np.min(pts[:, 1]) / inps.yspacing) - 2) * inps.yspacing
+    inps.y1 = (int(np.max(pts[:, 1]) / inps.yspacing) + 3) * inps.yspacing
+    inps.Ny = int(np.round((inps.y1 - inps.y0) / inps.yspacing)) + 1
     inps.utmproj = pyproj.Proj(getUTMZone(inps))
 
 
@@ -456,8 +452,8 @@ class Cube(object):
                         mtaz - self.inps.midnight).total_seconds()
                     self.slantrange[ind, ii, jj] = mrng
 
-                    losvec = old_div((targxyz - satpos), mrng)
-                    losvec = old_div(losvec, np.linalg.norm(losvec))
+                    losvec = (targxyz - satpos) / mrng
+                    losvec = losvec / np.linalg.norm(losvec)
 
                     staz = None
                     srng = None
