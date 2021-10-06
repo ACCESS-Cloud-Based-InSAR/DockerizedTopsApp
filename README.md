@@ -6,49 +6,45 @@ This is a dockerized TopsApp Science processing that performs the necessary loca
 
 1. `conda env update -n topsapp_env --file environment.yml`
 2. `pip install .`
-3. Make an `.env` file with:
 
-   ```
-   earthdata_username=<earthdata_username>
-   earthdata_password=<earthdata_password>
-   ```
-4. Make a `.netrc` file within the working directory with:
+### Setup for local runs
+
+1. Ensure that your `~/.netrc` file has:
     ```
     machine urs.earthdata.nasa.gov
         login <username>
         password <password>
     ```
-    This file is necessary for downloading the Sentinel-1 orbit files and the ISCE library (I believe) requires them for the [SRTM water body data](https://en.wikipedia.org/wiki/SRTM_Water_Body_Data). The [`requests`](https://docs.python-requests.org/en/latest/) library automatically uses credentials stored in the `.netrc` for authentification when none are supplied.
+    This file is necessary for downloading the Sentinel-1 orbit files and the ISCE library requires them for the [SRTM water body data](https://en.wikipedia.org/wiki/SRTM_Water_Body_Data). The [`requests`](https://docs.python-requests.org/en/latest/) library automatically uses credentials stored in the `~/.netrc` for authentification when none are supplied.
+
 
 ## Run Locally
 
-Run `isce2_topsapp sample_dataset.json`, where `json` file has the following form:
+Make sure you have `~/.netrc`. Run the following command:
 
 ```
-{
-    "reference_scenes": ["S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9"],
-    "secondary_scenes": ["S1B_IW_SLC__1SDV_20210711T014922_20210711T014949_027740_034F80_859D",
-                         "S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404",
-                         "S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C"]
-}
+isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9 \
+              --secondary-scenes S1B_IW_SLC__1SDV_20210711T014922_20210711T014949_027740_034F80_859D \
+                                 S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404 \
+                                 S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C
 ```
-
-Because there are *lots* of intermediate processing files, good to this in its own directory:
-
-1. Make a new directory (e.g. `mkdir ~/topsapp_example`) and navigate to it.
-2. Create a `dataset.json` file in the format above with desired IDs.
-3. Run `isce2_topsapp dataset.json`
 
 ## Run in a (local) docker container in interactive mode
-
-Don't forget to put an `.env` file in this repository.
-
 
 1. Build the docker image from this repository with
 
     ```docker build -f Dockerfile -t topsapp_img .```
 
-2. Create a directory with a `dataset.json` file as specified earlier. Navigate to this directory.
+2. Create a directory to mount the data files so you can inspect them outside of your docker container. Call it `topsapp_data`. Navigate to it. Copy the `sample_run.sh` in this directory, modifying it to add your username and password e.g.
+
+    ```
+   isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9 \
+                 --secondary-scenes S1B_IW_SLC__1SDV_20210711T014922_20210711T014949_027740_034F80_859D \
+                                    S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404 \
+                                    S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C
+                --username <username>
+                --password <password>
+   ```
 
 3. Take a look around a docker container, mounting a volume built from the image with:
 
@@ -58,25 +54,15 @@ Don't forget to put an `.env` file in this repository.
 
 4. Run the topsapp process within a docker container:
 
-   ```cd /home/ops/topsapp_data && isce2_topsapp dataset.json```
-
+   ```cd /home/ops/topsapp_data && /home/ops/topsapp_data/sample_run.sh```
 
 We can combine steps 3 and 4 above as:
 
-```docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img bash -c "cd /home/ops/topsapp_data && /opt/conda/envs/topsapp_env/bin/isce2_topsapp /home/ops/topsapp_data/dataset.json"```
+```docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img bash -c "cd /home/ops/topsapp_data && /home/ops/topsapp_data/sample_run.sh```
+
 
 ## FAQ
 
-1. I get the following error when running `isce2_topsapp dataset.json`.
-
-   ```
-   ...
-   env_path = dotenv.find_dotenv(usecwd=True,
-   File ".../miniconda3/envs/topsapp_env/lib/python3.8/site-packages/dotenv/main.py", line 291, in find_dotenv
-       raise IOError('File not found')
-   ```
-    *Answer*: There is no `.env` file as described above. This error is design. At some point, we may improve the error message and remove this FAQ.
-
-2. The docker build is taking a long time.
+1. The docker build is taking a long time.
 
     *Answer*: Make sure the time is spent with `conda/mamba` not copying data files. The `.dockerignore` file should ignore ISCE2 data files (if you are running some examples within this repo directory, there will be GBs of intermediate files). It's crucial you don't include unnecessary ISCE2 intermediate files into the Docker image as this will bloat it.
