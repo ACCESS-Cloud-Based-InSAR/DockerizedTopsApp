@@ -26,4 +26,3 @@ dependencies:
    - tqdm
    - lxml
    - click
-   - python-dotenv
