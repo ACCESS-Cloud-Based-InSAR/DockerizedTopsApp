@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-import shutil
+import netrc
 
 from isce2_topsapp import (download_slcs,
                            download_orbits,
@@ -37,23 +37,28 @@ def localize_data(reference_scenes: list,
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('--username', required=True)
-    parser.add_argument('--password', required=True)
+    parser.add_argument('--username', default='')
+    parser.add_argument('--password', default='')
     parser.add_argument('--bucket')
     parser.add_argument('--bucket-prefix', default='')
     parser.add_argument('--dry-run', action='store_true')
-    # FIXME may need changes to support quoted, space delimited lists, e.g. "a b c"
-    parser.add_argument('--reference-scenes', nargs='+')
-    parser.add_argument('--secondary-scenes', nargs='+')
+    # FIXME may need changes to support quoted, space delimited lists,
+    # e.g. "a b c"
+    parser.add_argument('--reference-scenes', nargs='+', required=True)
+    parser.add_argument('--secondary-scenes', nargs='+', required=True)
     args = parser.parse_args()
 
-    dot_env = Path.cwd() / '.env'
-    if not dot_env.exists():
-        dot_env.write_text(f'earthdata_username={args.username}\nearthdata_password={args.password}\n')
-
     dot_netrc = Path.home() / '.netrc'
-    if not dot_netrc.exists():
-        dot_netrc.write_text(f'machine urs.earthdata.nasa.gov login {args.username} password {args.password}\n')
+    if args.username and (not dot_netrc.exists()):
+        dot_netrc.write_text(f'machine urs.earthdata.nasa.gov '
+                             f'login {args.username} password '
+                             f'{args.password}\n')
+    else:  # either arg.username is not supplied or dot_netrc exists
+        netrc_ob = netrc.netrc()
+        earthdata_url = 'urs.earthdata.nasa.gov'
+        if earthdata_url not in netrc_ob.hosts.keys():
+            raise ValueError('Not updating your existing `~/.netrc`. '
+                             'Your `~/.netrc` needs Earthdata credentials')
 
     loc_data = localize_data(args.reference_scenes,
                              args.secondary_scenes,
