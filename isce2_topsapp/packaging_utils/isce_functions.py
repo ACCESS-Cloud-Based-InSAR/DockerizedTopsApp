@@ -8,9 +8,6 @@ from builtins import range
 from osgeo import gdal, ogr, osr
 
 
-def old_div(x, y):
-    return x // y
-
 def data_loading(filename,out_data_type=None,data_band=None):
     """
         GDAL READER of the data
@@ -182,14 +179,14 @@ def get_geocoded_coords(args):
             lon_arr = list(range(0, cols))
             lons = np.empty((cols,),dtype='float64')
             for px in lon_arr:
-                lons[px] = gt[0]+old_div(gt[1],2) + (px * gt[1])
+                lons[px] = gt[0] + (gt[1] / 2) + (px * gt[1])
             count+=1
             lons_map = geovariable[1]
         elif variable == 'latitude' or variable == 'Latitude' or variable == 'lat' or variable == 'Lat':
             lat_arr = list(range(0, rows))
             lats = np.empty((rows,),dtype='float64')
             for py in lat_arr:
-                lats[py] = gt[3]-old_div(gt[5],2) + (py * gt[5])
+                lats[py] = gt[3] - (gt[5] / 2) + (py * gt[5])
             count+=1
             lats_map = geovariable[1]
         else:
@@ -421,7 +418,7 @@ def get_tops_metadata(masterdir):
     output['rangePixelSize'] = burst.rangePixelSize
     output['azimuthTimeInterval'] = burst.azimuthTimeInterval
     output['wavelength'] = burst.radarWavelength
-    output['frequency']  = old_div(c,output['wavelength'])
+    output['frequency']  = (c / output['wavelength'])
     if "POEORB" in obj.orbit.getOrbitSource():
         output['orbittype'] = "precise"
     elif "RESORB" in obj.orbit.getOrbitSource():
@@ -555,7 +552,7 @@ def get_area(coords):
         area += coords[i][1] * coords[j][0]
         area -= coords[j][1] * coords[i][0]
     #area = abs(area) / 2.0
-    return old_div(area, 2)
+    return (area / 2)
 
 def change_direction(coords):
     cord_area= get_area(coords)
