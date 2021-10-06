@@ -37,8 +37,8 @@ def fix_image_xml(isce_raster_path: str) -> str:
 
 def download_dem_for_isce2(extent: list,
                            dem_name: str = 'glo_30',
-                           full_res_dem_dir: str = None,
-                           low_res_dem_dir: str = None,
+                           full_res_dem_dir: Path = None,
+                           low_res_dem_dir: Path = None,
                            buffer: float = .004) -> dict:
     """
     Parameters
@@ -47,8 +47,8 @@ def download_dem_for_isce2(extent: list,
         [xmin, ymin, xmax, ymin] for epsg:4326 (i.e. (x, y) = (lon, lat))
     dem_name : str, optional
         See names in `dem_stitcher`
-    full_res_dem_dir : str, optional
-    low_res_dem_dir : str, optional
+    full_res_dem_dir : Path, optional
+    low_res_dem_dir : Path, optional
     buffer : float, optional
         In degrees, by default .004, which is .5 km at equator
 
