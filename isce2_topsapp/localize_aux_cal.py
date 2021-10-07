@@ -1,12 +1,15 @@
 from pathlib import Path
 import requests
 import tarfile
+from typing import Union
 
-S1A_AUX_URL = 'https://qc.sentinel1.groupcls.com/product/S1A/AUX_CAL/2019/02/28/S1A_AUX_CAL_V20190228T092500_G20210104T141310.SAFE.TGZ'
-S1B_AUX_URL = 'https://qc.sentinel1.groupcls.com/product/S1B/AUX_CAL/2019/05/14/S1B_AUX_CAL_V20190514T090000_G20210104T140612.SAFE.TGZ'
+S1A_AUX_URL = ('https://qc.sentinel1.groupcls.com/product/S1A/AUX_CAL/2019/02/'
+               '28/S1A_AUX_CAL_V20190228T092500_G20210104T141310.SAFE.TGZ')
+S1B_AUX_URL = ('https://qc.sentinel1.groupcls.com/product/S1B/AUX_CAL/2019/05/'
+               '14/S1B_AUX_CAL_V20190514T090000_G20210104T140612.SAFE.TGZ')
 
 
-def download_aux_cal(aux_cal_dir: str = None):
+def download_aux_cal(aux_cal_dir: Union[str, Path] = None):
     aux_cal_dir = aux_cal_dir or 'aux_cal'
     aux_cal_dir = Path(aux_cal_dir)
     aux_cal_dir.mkdir(exist_ok=True, parents=True)

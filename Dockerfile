@@ -1,24 +1,30 @@
-FROM continuumio/miniconda3
+FROM condaforge/mambaforge:latest
 
 LABEL description="TopsApp Container"
 
+# run commands in a bash login shell
+SHELL ["/bin/bash", "-l", "-c"]
+
 # Build context must be from root of this repository
-COPY . /home/ops/DockerizedTopsApp
-# Must have .env in repository
-COPY .env /home/ops/.env
-COPY .netrc /home/ops/.netrc
+# Ensures we cached mamba install per
+# https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#leverage-build-cache
+COPY environment.yml /home/ops/environment.yml
 
 # Create the environment with mamba
-RUN conda install mamba -n base -c conda-forge
-RUN mamba env create -f /home/ops/DockerizedTopsApp/environment.yaml
+RUN mamba env create -f /home/ops/environment.yml && \
+    conda clean -afy
+
+# Build context must be from root of this repository
+COPY . /home/ops/DockerizedTopsApp
 
 # Ensure that environment is activated on startup
-RUN echo "conda activate topsapp_env" >> ~/.bashrc
+RUN echo ". /opt/conda/etc/profile.d/conda.sh" > ~/.profile && \
+    echo "conda activate topsapp_env" >> ~/.profile
 
-# Install repository with pip; must be better way
-# Just using pip install to base not env
-RUN /bin/bash -c "/opt/conda/envs/topsapp_env/bin/pip install /home/ops/DockerizedTopsApp"
+# Install repository with pip
+RUN python -m pip install --no-cache-dir /home/ops/DockerizedTopsApp
 
 # set entrypoint
 WORKDIR /home/ops
-CMD ["/bin/bash"]
+ENTRYPOINT ["/home/ops/DockerizedTopsApp/isce2_topsapp/etc/entrypoint.sh"]
+CMD ["-h"]

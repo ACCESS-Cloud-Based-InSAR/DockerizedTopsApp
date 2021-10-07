@@ -1,13 +1,14 @@
-import click
-import json
+from argparse import ArgumentParser
 from pathlib import Path
-import shutil
+import netrc
+
 from isce2_topsapp import (download_slcs,
                            download_orbits,
                            download_dem_for_isce2,
                            download_aux_cal,
                            topsapp_processing,
-                           package_gunw_product)
+                           package_gunw_product,
+                           aws)
 
 
 def localize_data(reference_scenes: list,
@@ -34,21 +35,35 @@ def localize_data(reference_scenes: list,
     return out
 
 
-@click.command()
-@click.argument('input_dataset', required=True, type=str, nargs=1)
-@click.option('--dry-run',
-              'dry_run',
-              is_flag=True,
-              default=False)
-def main(input_dataset: str, dry_run: bool):
-    data = json.load(open(input_dataset, 'r'))
+def main():
+    parser = ArgumentParser()
+    parser.add_argument('--username', default='')
+    parser.add_argument('--password', default='')
+    parser.add_argument('--bucket')
+    parser.add_argument('--bucket-prefix', default='')
+    parser.add_argument('--dry-run', action='store_true')
+    # FIXME may need changes to support quoted, space delimited lists,
+    # e.g. "a b c"
+    parser.add_argument('--reference-scenes', nargs='+', required=True)
+    parser.add_argument('--secondary-scenes', nargs='+', required=True)
+    args = parser.parse_args()
 
-    reference_scenes = data['reference_scenes']
-    secondary_scenes = data['secondary_scenes']
+    dot_netrc = Path.home() / '.netrc'
+    if args.username and (not dot_netrc.exists()):
+        dot_netrc.write_text(f'machine urs.earthdata.nasa.gov '
+                             f'login {args.username} password '
+                             f'{args.password}\n')
+        dot_netrc.chmod(0o000600)
+    else:  # either arg.username is not supplied or dot_netrc exists
+        netrc_ob = netrc.netrc()
+        earthdata_url = 'urs.earthdata.nasa.gov'
+        if earthdata_url not in netrc_ob.hosts.keys():
+            raise ValueError('Not updating your existing `~/.netrc`. '
+                             'Your `~/.netrc` needs Earthdata credentials')
 
-    loc_data = localize_data(reference_scenes,
-                             secondary_scenes,
-                             dry_run=dry_run)
+    loc_data = localize_data(args.reference_scenes,
+                             args.secondary_scenes,
+                             dry_run=args.dry_run)
 
     topsapp_processing(reference_slc_zips=loc_data['ref_paths'],
                        secondary_slc_zips=loc_data['sec_paths'],
@@ -57,23 +72,24 @@ def main(input_dataset: str, dry_run: bool):
                        extent=loc_data['extent'],
                        dem_for_proc=loc_data['full_res_dem_path'],
                        dem_for_geoc=loc_data['low_res_dem_path'],
-                       dry_run=dry_run
+                       dry_run=args.dry_run
                        )
 
     ref_properties = loc_data['reference_properties']
     sec_properties = loc_data['secondary_properties']
     extent = loc_data['extent']
 
-    nc_path = package_gunw_product(isce_data_directory=Path('.'),
+    nc_path = package_gunw_product(isce_data_directory=Path.cwd(),
                                    reference_properties=ref_properties,
                                    secondary_properties=sec_properties,
                                    extent=extent
                                    )
 
-    # Move final product to current working directory
-    nc_path_final = nc_path.filename
-    shutil.move(nc_path, nc_path_final)
+    if args.bucket:
+        aws.upload_file_to_s3(nc_path, args.bucket, args.bucket_prefix)
 
+    # Move final product to current working directory
+    nc_path.rename(Path.cwd() / nc_path.name)
 
 
 if __name__ == '__main__':
