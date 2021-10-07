@@ -53,6 +53,7 @@ def main():
         dot_netrc.write_text(f'machine urs.earthdata.nasa.gov '
                              f'login {args.username} password '
                              f'{args.password}\n')
+        dot_netrc.chmod(0o000600)
     else:  # either arg.username is not supplied or dot_netrc exists
         netrc_ob = netrc.netrc()
         earthdata_url = 'urs.earthdata.nasa.gov'
