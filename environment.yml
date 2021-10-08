@@ -20,9 +20,9 @@ dependencies:
  - geopandas
  - pip
  - boto3
+ - asf_search>=3.0.4
  - pip:
    - dem_stitcher
-   - asf_search
    - tqdm
    - lxml
    - click
