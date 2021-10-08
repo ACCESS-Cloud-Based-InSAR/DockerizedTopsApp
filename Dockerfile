@@ -6,11 +6,16 @@ LABEL description="TopsApp Container"
 SHELL ["/bin/bash", "-l", "-c"]
 
 # Build context must be from root of this repository
-COPY . /home/ops/DockerizedTopsApp
+# Ensures we cached mamba install per
+# https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#leverage-build-cache
+COPY environment.yml /home/ops/environment.yml
 
 # Create the environment with mamba
-RUN mamba env create -f /home/ops/DockerizedTopsApp/environment.yml && \
+RUN mamba env create -f /home/ops/environment.yml && \
     conda clean -afy
+
+# Build context must be from root of this repository
+COPY . /home/ops/DockerizedTopsApp
 
 # Ensure that environment is activated on startup
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" > ~/.profile && \

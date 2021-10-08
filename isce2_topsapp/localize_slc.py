@@ -1,7 +1,7 @@
 import asf_search as asf
 from shapely.geometry import shape, Polygon, GeometryCollection
 from shapely.ops import unary_union
-import dotenv
+import netrc
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
@@ -19,16 +19,13 @@ def get_asf_slc_objects(slc_ids: list) -> list:
 
 
 def get_session():
-    # usecwd ensures that env is searched for from current working directory
-    # rather than the one where this script is installed.
-    env_path = dotenv.find_dotenv(usecwd=True,
-                                  raise_error_if_not_found=True)
-    env_dict = dotenv.dotenv_values(env_path)
-    earthdata_username = env_dict['earthdata_username']
-    earthdata_password = env_dict['earthdata_password']
+    netrc_ob = netrc.netrc()
+
+    earthdata_url = 'urs.earthdata.nasa.gov'
+    username, _, password = netrc_ob.authenticators(earthdata_url)
 
     session = asf.ASFSession()
-    session.auth_with_creds(earthdata_username, earthdata_password)
+    session.auth_with_creds(username, password)
     return session
 
 

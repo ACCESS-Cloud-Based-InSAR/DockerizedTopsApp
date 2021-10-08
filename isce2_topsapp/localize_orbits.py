@@ -4,7 +4,6 @@ import requests
 import re
 from requests.adapters import HTTPAdapter
 from lxml import html, etree
-from typing import List
 from pathlib import Path
 
 
@@ -14,7 +13,7 @@ PLATFORMS = ['S1A', 'S1B']
 
 def get_asf_orbit_url(orbit_type: str,
                       platform: str,
-                      timestamp: str) -> List[str]:
+                      timestamp: str) -> str:
     """Source:
 
     https://github.com/ASFHyP3/hyp3-lib/blob/develop/hyp3lib/get_orb.py
@@ -46,14 +45,14 @@ def get_asf_orbit_url(orbit_type: str,
         backoff_factor=10,
         status_forcelist=[429, 500, 503, 504],
     )
-    session.mount(hostname, HTTPAdapter(max_retries=retries))
+    session.mount(str(hostname), HTTPAdapter(max_retries=retries))
     response = session.get(search_url)
     response.raise_for_status()
     tree = html.fromstring(response.content)
     file_list = [file for file in tree.xpath('//a[@href]//@href')
                  if file.startswith(platform) and file.endswith('.EOF')]
 
-    d1 = 0
+    d1 = 0.
     best = None
     for file in file_list:
         file = file.strip()

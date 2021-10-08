@@ -4,6 +4,7 @@ from tqdm import tqdm
 import subprocess
 from pathlib import Path
 import os
+from typing import Union
 
 
 TOPSAPP_STEPS = ['startup',
@@ -35,7 +36,7 @@ def topsapp_processing(*,
                        dem_for_proc: str,
                        dem_for_geoc: str,
                        swaths: list = None,
-                       log_dir: str = 'logs',
+                       log_dir: Union[Path, str] = 'logs',
                        dry_run: bool = False):
     swaths = swaths or [1, 2, 3]
     # for [ymin, ymax, xmin, xmax]
@@ -81,10 +82,10 @@ def topsapp_processing(*,
                                 shell=True,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
-        with open(log_dir/f'{k}_stderr_{step}.log', 'wb') as file:
-            file.write(result.stderr)
-        with open(log_dir/f'{k}_stdout_{step}.log', 'wb') as file:
-            file.write(result.stdout)
+        with open(log_dir/f'{k}_stderr_{step}.log', 'w') as file:
+            file.write(str(result.stderr))
+        with open(log_dir/f'{k}_stdout_{step}.log', 'w') as file:
+            file.write(str(result.stdout))
         if result.returncode != 0:
             raise ValueError(f'TopsApp failed at step: {step}')
         if dry_run and (step == 'topo'):
