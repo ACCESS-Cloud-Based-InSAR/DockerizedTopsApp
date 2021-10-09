@@ -42,11 +42,12 @@ def main():
     parser.add_argument('--bucket')
     parser.add_argument('--bucket-prefix', default='')
     parser.add_argument('--dry-run', action='store_true')
-    # FIXME may need changes to support quoted, space delimited lists,
-    # e.g. "a b c"
-    parser.add_argument('--reference-scenes', nargs='+', required=True)
-    parser.add_argument('--secondary-scenes', nargs='+', required=True)
+    parser.add_argument('--reference-scenes', type=str.split, nargs='+', required=True)
+    parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
     args = parser.parse_args()
+
+    args.reference_scenes = [item for sublist in args.reference_scenes for item in sublist]
+    args.secondary_scenes = [item for sublist in args.secondary_scenes for item in sublist]
 
     dot_netrc = Path.home() / '.netrc'
     if args.username and (not dot_netrc.exists()):
