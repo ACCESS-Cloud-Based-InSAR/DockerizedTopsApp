@@ -67,8 +67,6 @@ conf/settings.conf
 *.nc.md5
 *.png
 *.dataset.json
-*.txt
-*.txt
 *.xrd
 *.xsd
 *.bak
