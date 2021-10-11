@@ -7,9 +7,32 @@ from PIL import Image
 from matplotlib import cm
 
 from .packaging import DATASET_VERSION
-from .nd_tools import (get_superpixel_means_as_features,
-                       get_array_from_features,
-                       scale_img)
+
+
+def scale_img(img: np.ndarray,
+              new_min: int = 0,
+              new_max: int = 1) -> np.ndarray:
+    """
+    Scale an image by the absolute max and min in the array to have dynamic
+    range new_min to new_max. Useful for visualization.
+    Parameters
+    ----------
+    img : np.ndarray
+    new_min : int
+    new_max : int
+    Returns
+    -------
+    np.ndarray:
+       New image with shape equal to img, scaled to [new_min, new_max]
+    """
+    i_min = np.nanmin(img)
+    i_max = np.nanmax(img)
+    if i_min == i_max:
+        # then image is constant image and clip between new_min and new_max
+        return np.clip(img, new_min, new_max)
+    img_scaled = (img - i_min) / (i_max - i_min) * (new_max - new_min)
+    img_scaled += new_min
+    return img_scaled
 
 
 def read_baseline_perp(nc_path) -> np.ndarray:
@@ -27,14 +50,8 @@ def open_science_grid(nc_path, variable):
     return X, profile
 
 
-def get_gunw_mask(coh: np.ndarray, con_comp: np.ndarray) -> np.ndarray:
-    low_coh = coh < .5
-    labels = con_comp.astype(int)
-
-    low_coh_per_cc_features = get_superpixel_means_as_features(labels, low_coh)
-    low_coh_per_cc = get_array_from_features(labels, low_coh_per_cc_features)
-    # either 50% low coherence pixels in comp. or mask value for coherence
-    mask = (low_coh_per_cc > .5) | (coh == 0)
+def get_gunw_mask(con_comp: np.ndarray) -> np.ndarray:
+    mask = (con_comp == 0) | (con_comp == -1)
     return mask
 
 
@@ -66,7 +83,7 @@ def gen_browse_imagery(nc_path: Path,
     cc, _ = open_science_grid(nc_path, 'connectedComponents')
     unw, _ = open_science_grid(nc_path, 'unwrappedPhase')
 
-    mask = get_gunw_mask(coh, cc)
+    mask = get_gunw_mask(cc)
 
     unw_m = unw.copy()
     unw_m[mask] = np.nan
@@ -132,6 +149,7 @@ def prepare_for_delivery(nc_path: Path,
               open(metadata_path, 'w'),
               indent=2)
 
+    # move product to Netcdf Path
     nc_path.rename(out_dir / nc_filename)
 
     return out_dir
