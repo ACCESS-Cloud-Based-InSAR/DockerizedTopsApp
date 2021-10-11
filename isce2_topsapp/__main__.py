@@ -91,10 +91,17 @@ def main():
 
     # Move final product to current working directory
     final_directory = prepare_for_delivery(nc_path, loc_data)
-    # nc_path.rename(Path.cwd() / nc_path.name)
 
+    files = list(final_directory.glob('*'))
+    # ignore os files, if any
+    files = list(filter(lambda x: x.name[0] != '.', files))
     if args.bucket:
-        aws.upload_file_to_s3(nc_path, args.bucket, args.bucket_prefix)
+        dataset_prefix = args.bucket_prefix
+        # final_directory is the product id
+        product_prefix = f'{dataset_prefix}/{final_directory.name}'
+        for file in files:
+            aws.upload_file_to_s3(file, args.bucket, product_prefix)
+
 
 if __name__ == '__main__':
     main()
