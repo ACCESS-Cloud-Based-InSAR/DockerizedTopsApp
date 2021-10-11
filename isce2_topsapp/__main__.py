@@ -2,12 +2,14 @@ from argparse import ArgumentParser
 from pathlib import Path
 import netrc
 
+
 from isce2_topsapp import (download_slcs,
                            download_orbits,
                            download_dem_for_isce2,
                            download_aux_cal,
                            topsapp_processing,
                            package_gunw_product,
+                           prepare_for_delivery,
                            aws)
 
 
@@ -28,7 +30,9 @@ def localize_data(reference_scenes: list,
     out_dem = download_dem_for_isce2(out_slc['extent'])
     out_aux_cal = download_aux_cal()
 
-    out = {**out_slc,
+    out = {'reference_scenes': reference_scenes,
+           'secondary_scenes': secondary_scenes,
+           **out_slc,
            **out_dem,
            **out_aux_cal,
            **out_orbit}
@@ -85,12 +89,12 @@ def main():
                                    extent=extent
                                    )
 
+    # Move final product to current working directory
+    final_directory = prepare_for_delivery(nc_path, loc_data)
+    # nc_path.rename(Path.cwd() / nc_path.name)
+
     if args.bucket:
         aws.upload_file_to_s3(nc_path, args.bucket, args.bucket_prefix)
-
-    # Move final product to current working directory
-    nc_path.rename(Path.cwd() / nc_path.name)
-
 
 if __name__ == '__main__':
     main()
