@@ -7,6 +7,7 @@ from PIL import Image
 from matplotlib import cm
 
 from .packaging import DATASET_VERSION
+from .water_mask import get_water_mask_raster
 
 
 def scale_img(img: np.ndarray,
@@ -50,7 +51,7 @@ def open_science_grid(nc_path, variable):
     return X, profile
 
 
-def get_gunw_mask(con_comp: np.ndarray) -> np.ndarray:
+def get_connected_component_mask(con_comp: np.ndarray) -> np.ndarray:
     mask = (con_comp == 0) | (con_comp == -1)
     return mask
 
@@ -77,18 +78,27 @@ def save_png(arr: np.ndarray,
     return out_png_path
 
 
-def gen_browse_imagery(nc_path: Path,
-                       out_path: Path) -> Path:
-    coh, _ = open_science_grid(nc_path, 'coherence')
-    cc, _ = open_science_grid(nc_path, 'connectedComponents')
+def get_wrapped_ifg(nc_path: Path) -> np.ndarray:
+    cc, profile = open_science_grid(nc_path, 'connectedComponents')
     unw, _ = open_science_grid(nc_path, 'unwrappedPhase')
 
-    mask = get_gunw_mask(cc)
+    mask_cc = get_connected_component_mask(cc)
+    mask_water = get_water_mask_raster(profile)
+    mask = mask_cc | mask_water
 
-    unw_m = unw.copy()
-    unw_m[mask] = np.nan
-    wrapped = np.angle(np.exp(1j * unw_m))
+    wrapped = np.zeros(mask.shape)
+    # If no valid data skip
+    if np.sum(~mask) > 0:
+        unw_m = unw.copy()
+        unw_m[mask] = np.nan
+        wrapped = np.angle(np.exp(1j * unw_m))
+    return wrapped
 
+
+def gen_browse_imagery(nc_path: Path,
+                       out_path: Path) -> Path:
+
+    wrapped = get_wrapped_ifg(nc_path)
     save_png(wrapped, out_path)
     return out_path
 
