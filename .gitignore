@@ -36,9 +36,6 @@ __pycache__/
 # Ignore the following Directories
 tmp/
 
-# Only Specific Test Files
-!tests/localize-data.ipynb
-
 # configure files
 conf/settings.conf
 
@@ -100,3 +97,7 @@ conf/settings.conf
 tests/*.ipynb
 tests/out/*.ipynb
 !tests/localize-data.ipynb
+!tests/prepare-for-delivery.ipynb
+
+# Dataset delivery file
+**/dataset.json
