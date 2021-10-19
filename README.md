@@ -33,7 +33,7 @@ isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T01501
 
 1. Build the docker image from this repository with
 
-    ```docker build -f Dockerfile -t topsapp_img .```
+    ```docker build -f Dockerfile -t topsapp_img --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .```
 
 2. Create a directory to mount the data files so you can inspect them outside of your docker container. Call it `topsapp_data`. Navigate to it. Copy the `sample_run.sh` in this directory, modifying it to add your username and password e.g.
 
