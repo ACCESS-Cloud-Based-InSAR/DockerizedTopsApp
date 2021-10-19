@@ -24,6 +24,14 @@ RUN echo ". /opt/conda/etc/profile.d/conda.sh" > ~/.profile && \
 # Install repository with pip
 RUN python -m pip install --no-cache-dir /home/ops/DockerizedTopsApp
 
+# Add USER/GROUP for volume mount permission
+ARG USER_ID
+ARG GROUP_ID
+
+RUN addgroup --gid $GROUP_ID user
+RUN adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID user
+USER user
+
 # set entrypoint
 WORKDIR /home/ops
 ENTRYPOINT ["/home/ops/DockerizedTopsApp/isce2_topsapp/etc/entrypoint.sh"]
