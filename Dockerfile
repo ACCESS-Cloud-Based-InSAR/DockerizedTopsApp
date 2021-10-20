@@ -27,8 +27,7 @@ RUN mamba env create -f /home/ops/environment.yml && \
     conda clean -afy
 
 # Build context must be from root of this repository
-COPY . /home/ops/DockerizedTopsApp
-RUN chown -R $UID:$GID /home/ops/DockerizedTopsApp
+COPY --chown=$UID:$GID . /home/ops/DockerizedTopsApp
 
 # Ensure that environment is activated on startup
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.profile && \
