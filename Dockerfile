@@ -20,8 +20,7 @@ RUN adduser --disabled-password --gecos '' --uid $UID --gid $GID $UNAME
 # Build context must be from root of this repository
 # Ensures we cached mamba install per
 # https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#leverage-build-cache
-COPY environment.yml /home/ops/environment.yml
-RUN chown $UID:$GID /home/ops/environment.yml
+COPY --chown=$UID:$GID environment.yml /home/ops/environment.yml
 
 # Create the environment with mamba
 RUN mamba env create -f /home/ops/environment.yml && \
