@@ -31,11 +31,16 @@ isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T01501
 
 ## Run in a (local) docker container in interactive mode
 
-1. Build the docker image from this repository with
+1. Build the non-root user docker image from this repository with default config:
+    ```
+   docker build -f Dockerfile -t topsapp_img .
+   ```
+   or with build arguments for USER_ID, GROUP_ID, and USERNAME:
+    ```
+   docker build -f Dockerfile -t topsapp_img --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --build-arg USERNAME=<yourusername> .
+   ```
 
-    ```docker build -f Dockerfile -t topsapp_img --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .```
-
-2. Create a directory to mount the data files so you can inspect them outside of your docker container. Call it `topsapp_data`. Navigate to it. Copy the `sample_run.sh` in this directory, modifying it to add your username and password e.g.
+3. Create a directory to mount the data files so you can inspect them outside of your docker container. Call it `topsapp_data`. Navigate to it. Copy the `sample_run.sh` in this directory, modifying it to add your username and password e.g.
 
     ```
     isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9 \
@@ -46,13 +51,13 @@ isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T01501
                   --password <password>
    ```
 
-3. Take a look around a docker container, mounting a volume built from the image with:
+4. Take a look around a docker container, mounting a volume built from the image with:
 
    ```docker run -ti -v $PWD:/home/ops/topsapp_data --entrypoint /bin/bash topsapp_img```
 
    You can even run jupyter notebooks within the docker container mirroring ports with `-p 1313:1313`.
 
-4. Run the topsapp process within a docker container:
+5. Run the topsapp process within a docker container:
 
    ```cd /home/ops/topsapp_data && conda activate topsapp_env && /home/ops/topsapp_data/sample_run.sh```
 
@@ -77,3 +82,12 @@ The magic of the above is taken care of the `isce2_topsapp/etc/entrypoint.sh` (w
 1. The docker build is taking a long time.
 
     *Answer*: Make sure the time is spent with `conda/mamba` not copying data files. The `.dockerignore` file should ignore ISCE2 data files (if you are running some examples within this repo directory, there will be GBs of intermediate files). It's crucial you don't include unnecessary ISCE2 intermediate files into the Docker image as this will bloat it.
+2. Need to install additional package (e.g. vim)
+   
+   *Answer*: Exit from the current container. Make sure you know the container_id (e.g. ```docker ps -a ```). Then do the following steps:
+   ``` 
+   $ docker start <container_id>
+   $ docker exec --user root -ti <container_id> /bin/bash
+   $ conda install -c conda-forge <package>
+   $ exit  
+   ```
