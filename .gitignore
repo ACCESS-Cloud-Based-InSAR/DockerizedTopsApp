@@ -102,3 +102,4 @@ conf/settings.conf
 tests/*.ipynb
 tests/out/*.ipynb
 !tests/localize-data.ipynb
+/isce2_topsapp.egg-info/

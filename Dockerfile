@@ -2,32 +2,37 @@ FROM condaforge/mambaforge:latest
 
 LABEL description="TopsApp Container"
 
+ARG DEBIAN_FRONTEND=noninteractive
+ENV PYTHONDONTWRITEBYTECODE=true
+
+# Install libgl1-mesa-glx unzip vim
+RUN apt-get update && apt-get install -y --no-install-recommends libgl1-mesa-glx unzip vim && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # run commands in a bash login shell
 SHELL ["/bin/bash", "-l", "-c"]
 
 # Create non-root user/group with default inputs
-ARG USER_ID=1000
-ARG GROUP_ID=1000
-ARG USERNAME=iscer
+ARG UID=1000
+ARG GID=1000
 
-ENV UID $USER_ID
-ENV GID $GROUP_ID
-ENV UNAME $USERNAME
+RUN groupadd -g "${GID}" --system iscer && \
+    useradd -l -u "${UID}" -g "${GID}" --system -d /home/ops -m  -s /bin/bash iscer && \
+    chown -R iscer:iscer /opt
 
-RUN addgroup --gid $GID $UNAME
-RUN adduser --disabled-password --gecos '' --uid $UID --gid $GID $UNAME
+# Switch to non-root user
+USER iscer
+WORKDIR /home/ops
 
 # Build context must be from root of this repository
 # Ensures we cached mamba install per
 # https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#leverage-build-cache
-COPY --chown=$UID:$GID environment.yml /home/ops/environment.yml
+COPY --chown=iscer:iscer environment.yml /home/ops/environment.yml
+COPY --chown=iscer:iscer . /home/ops/DockerizedTopsApp
 
 # Create the environment with mamba
 RUN mamba env create -f /home/ops/environment.yml && \
     conda clean -afy
-
-# Build context must be from root of this repository
-COPY --chown=$UID:$GID . /home/ops/DockerizedTopsApp
 
 # Ensure that environment is activated on startup
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.profile && \
@@ -36,10 +41,6 @@ RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.profile && \
 # Install repository with pip
 RUN python -m pip install --no-cache-dir /home/ops/DockerizedTopsApp
 
-# Switch to non-root user
-USER $UNAME
-
 # set entrypoint
-WORKDIR /home/ops
 ENTRYPOINT ["/home/ops/DockerizedTopsApp/isce2_topsapp/etc/entrypoint.sh"]
 CMD ["-h"]
