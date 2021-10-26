@@ -24,14 +24,13 @@ RUN groupadd -g "${GID}" --system iscer && \
 USER iscer
 WORKDIR /home/ops
 
-# Build context must be from root of this repository
 # Ensures we cached mamba install per
 # https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#leverage-build-cache
 COPY --chown=iscer:iscer environment.yml /home/ops/environment.yml
 COPY --chown=iscer:iscer . /home/ops/DockerizedTopsApp
 
 # Create the environment with mamba
-RUN mamba env create -f /home/ops/environment.yml && \
+RUN mamba env create -f /home/ops/DockerizedTopsApp/environment.yml && \
     conda clean -afy
 
 # Ensure that environment is activated on startup

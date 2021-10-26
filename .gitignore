@@ -36,9 +36,6 @@ __pycache__/
 # Ignore the following Directories
 tmp/
 
-# Only Specific Test Files
-!tests/localize-data.ipynb
-
 # configure files
 conf/settings.conf
 
@@ -67,8 +64,6 @@ conf/settings.conf
 *.nc.md5
 *.png
 *.dataset.json
-*.txt
-*.txt
 *.xrd
 *.xsd
 *.bak
@@ -103,3 +98,7 @@ tests/*.ipynb
 tests/out/*.ipynb
 !tests/localize-data.ipynb
 /isce2_topsapp.egg-info/
+!tests/prepare-for-delivery.ipynb
+
+# Dataset delivery file
+**/dataset.json
