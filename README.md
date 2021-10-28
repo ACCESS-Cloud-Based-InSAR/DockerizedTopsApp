@@ -31,13 +31,13 @@ isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T01501
 
 ## Run in a (local) docker container in interactive mode
 
-1. Build the non-root user docker image from this repository with default config:
+1. When running locally with root privileges (i.e. at your local workstation), build the docker image using:
     ```
    docker build -f Dockerfile -t topsapp_img .
    ```
-   or with build arguments for USER_ID, GROUP_ID, and USERNAME:
+   In a managed cluster/server without root privileges, build the docker with arguments for your user's `UID` and `GID`:
     ```
-   docker build -f Dockerfile -t topsapp_img --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --build-arg USERNAME=<yourusername> .
+   docker build -f Dockerfile -t topsapp_img --build-arg UID=$(id -u) --build-arg GID=$(id -g) .
    ```
 
 3. Create a directory to mount the data files so you can inspect them outside of your docker container. Call it `topsapp_data`. Navigate to it. Copy the `sample_run.sh` in this directory, modifying it to add your username and password e.g.
@@ -59,7 +59,7 @@ isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T01501
 
 5. Run the topsapp process within a docker container:
 
-   ```cd /home/ops/topsapp_data && conda activate topsapp_env && /home/ops/topsapp_data/sample_run.sh```
+   ```cd /home/ops/topsapp_data && conda activate topsapp_env && source /home/ops/topsapp_data/sample_run.sh```
 
 ## Expedient Docker Test
 
@@ -82,12 +82,18 @@ The magic of the above is taken care of the `isce2_topsapp/etc/entrypoint.sh` (w
 1. The docker build is taking a long time.
 
     *Answer*: Make sure the time is spent with `conda/mamba` not copying data files. The `.dockerignore` file should ignore ISCE2 data files (if you are running some examples within this repo directory, there will be GBs of intermediate files). It's crucial you don't include unnecessary ISCE2 intermediate files into the Docker image as this will bloat it.
-2. Need to install additional package (e.g. vim)
+    
+2. Need to install additional packages such as vim?
    
-   *Answer*: Exit from the current container. Make sure you know the container_id (e.g. ```docker ps -a ```). Then do the following steps:
+   *Answer*: Login as root user to the container and install the additional packages. 
+
+   Make sure you know the container_id (e.g. ```docker ps -a ```). Then do the following steps:
    ``` 
    $ docker start <container_id>
    $ docker exec --user root -ti <container_id> /bin/bash
-   $ conda install -c conda-forge <package>
-   $ exit  
+   $ conda activate topsapp_env
+   $ conda install <package>
+   $ exit
    ```
+   Return to the terminal inside the container as non-root user: ```docker exec -ti <container_id> /bin/bash```
+
