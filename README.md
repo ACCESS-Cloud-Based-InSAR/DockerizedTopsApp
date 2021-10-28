@@ -1,4 +1,4 @@
-# ISCE2 TopsApp Hyp3-Plugin
+# DockerizedTopsApp (aka ISCE2 TopsApp Hyp3-Plugin)
 
 This repository represents a dockerized science processor for generating ARIA Sentinel-1 [Geocoded Unwrapped Interferogram](https://aria.jpl.nasa.gov/products/standard-displacement-products.html) (GUNW) product from a collection of valid Sentinel-1 IW-mode Single Look Complex (SLC) IDs from a date pair using [ISCE2](https://github.com/isce-framework/isce2). The GUNW is a NISAR beta-product. The initial development of the GUNW was done under the Getting Ready for NISAR initiative and a collection of related ARIA-funded projects. This work has continued under the Project Enabling Cloud-Based InSAR Science for an Exploding NASA InSAR Data Archive (ACCESS19-0023) funded under the ACCESS program.
 
@@ -32,7 +32,7 @@ We note all the input datasets are publicly available using a NASA Earthdata acc
     The `username`/`password` are the appropriate Earthdata Login credentials that are used to access NASA data. This file is necessary for downloading the Sentinel-1 orbit files from the ASF DAAC. Additionally, the [`requests`](https://docs.python-requests.org/en/latest/) library automatically uses credentials stored in the `~/.netrc` for authentification when none are supplied.
 
 
-## Run Locally
+## Generate a GUNW
 
 Make sure you have `~/.netrc`. Run the following command:
 
@@ -75,7 +75,7 @@ isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T01501
 
    ```cd /home/ops/topsapp_data && conda activate topsapp_env && source /home/ops/topsapp_data/sample_run.sh```
 
-## Expedient Docker Test
+## Expedient Docker Test for GUNW Generation
 
 Create a new directory (for all the intermediate files) and navigate to it.
 
