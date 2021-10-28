@@ -31,11 +31,11 @@ isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T01501
 
 ## Run in a (local) docker container in interactive mode
 
-1. When running locally, build the docker image using:
+1. When running locally with root privileges (i.e. at your local workstation), build the docker image using:
     ```
    docker build -f Dockerfile -t topsapp_img .
    ```
-   In a managed cluster/server, it is best to build the docker with arguments for UID and GID:
+   In a managed cluster/server without root privileges, build the docker with arguments for your user's `UID` and `GID`:
     ```
    docker build -f Dockerfile -t topsapp_img --build-arg UID=$(id -u) --build-arg GID=$(id -g) .
    ```
@@ -82,7 +82,8 @@ The magic of the above is taken care of the `isce2_topsapp/etc/entrypoint.sh` (w
 1. The docker build is taking a long time.
 
     *Answer*: Make sure the time is spent with `conda/mamba` not copying data files. The `.dockerignore` file should ignore ISCE2 data files (if you are running some examples within this repo directory, there will be GBs of intermediate files). It's crucial you don't include unnecessary ISCE2 intermediate files into the Docker image as this will bloat it.
-2. Need to install additional packages ?
+    
+2. Need to install additional packages such as vim?
    
    *Answer*: Login as root user to the container and install the additional packages. 
 
