@@ -25,6 +25,7 @@ jobs:
           python -m pip install pytest ipykernel
           python -m pip install .
           python -m ipykernel install --user --name topsapp_env
+          cd tests
           pytest .
       - name: flake8
         shell: bash
