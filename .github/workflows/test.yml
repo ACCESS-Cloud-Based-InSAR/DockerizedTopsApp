@@ -32,7 +32,7 @@ jobs:
           flake8 . --max-line-length=120 --exclude=isce2_topsapp/packaging_utils/
 
       - name: Pytest in conda environment
-        shell: bash
+        shell: bash -l {0}
         run: |
           python -m pip install pytest
           python -m pip install .
