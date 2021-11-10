@@ -4,7 +4,6 @@ channels:
  - anaconda
  - defaults
 dependencies:
- - python=3.8
  - isce2
  - jupyter
  - papermill
