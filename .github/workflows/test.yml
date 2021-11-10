@@ -19,16 +19,18 @@ jobs:
           activate-environment: topsapp_env
           environment-file: environment.yml
 
-      - name: Pytest in conda environment
-        shell: bash -l {0}
-        run: |
-          python -m pip install pytest ipykernel
-          python -m pip install .
-          python -m ipykernel install --user --name topsapp_env
-          cd tests
-          pytest .
       - name: flake8
         shell: bash
         run: |
           python -m pip install flake8
           flake8 . --max-line-length=120 --exclude=isce2_topsapp/packaging_utils/
+
+      - name: Pytest in conda environment
+        shell: bash
+        run: |
+          python -m pip install pytest
+          python -m pip install .
+          python -m ipykernel install --user --name topsapp_env
+          cd tests
+          pytest .
+          cd ..
