@@ -22,8 +22,9 @@ jobs:
       - name: Pytest in conda environment
         shell: bash -l {0}
         run: |
-          python -m pip install pytest
+          python -m pip install pytest ipykernel
           python -m pip install .
+          python -m ipykernel install --user --name topsapp_env
           pytest .
       - name: flake8
         shell: bash
