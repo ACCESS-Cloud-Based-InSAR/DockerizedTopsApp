@@ -74,7 +74,7 @@ def download_dem_for_isce2(extent: list,
 
     full_res_dem_path = full_res_dem_dir/'full_res.dem.wgs84'
     dem_array[np.isnan(dem_array)] = 0.
-    dem_profile['nodata'] = 0.
+    dem_profile['nodata'] = None
     dem_profile['driver'] = 'ISCE'
     with rasterio.open(full_res_dem_path, 'w', **dem_profile) as ds:
         ds.write(dem_array, 1)
