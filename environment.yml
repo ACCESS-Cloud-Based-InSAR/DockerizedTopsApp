@@ -4,6 +4,7 @@ channels:
  - anaconda
  - defaults
 dependencies:
+ - python>=3.8
  - isce2
  - jupyter
  - papermill
@@ -21,7 +22,7 @@ dependencies:
  - boto3
  - asf_search>=3.0.4
  - pip:
-   - dem_stitcher
+   - git+https://github.com/ACCESS-Cloud-Based-InSAR/dem_stitcher.git
    - tqdm
    - lxml
    - click
