@@ -143,23 +143,20 @@ def format_metadata(nc_path: Path,
 
 def prepare_for_delivery(nc_path: Path,
                          all_metadata: dict) -> Path:
-
-    nc_filename = nc_path.name
-    gunw_id = nc_filename.split('.')[0]
+    gunw_id = nc_path.stem
 
     out_dir = Path(gunw_id)
     out_dir.mkdir(exist_ok=True)
 
-    browse_path = out_dir / 'browse.png'
+    browse_path = out_dir / f'{gunw_id}.png'
     gen_browse_imagery(nc_path, browse_path)
 
     metadata = format_metadata(nc_path, all_metadata)
-    metadata_path = out_dir / 'dataset.json'
+    metadata_path = out_dir / f'{gunw_id}.json'
     json.dump(metadata,
               open(metadata_path, 'w'),
               indent=2)
 
-    # move product to Netcdf Path
-    nc_path.rename(out_dir / nc_filename)
+    nc_path.rename(out_dir / f'{gunw_id}.nc')
 
     return out_dir
