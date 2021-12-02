@@ -1,11 +1,12 @@
 from lxml import etree
 import rasterio
 from shapely.geometry import box
-from dem_stitcher.stitcher import download_dem
+from dem_stitcher.stitcher import stitch_dem
 from dem_stitcher.rio_tools import resample_by_multiple
 from pathlib import Path
 import subprocess
 import site
+import numpy as np
 
 
 def tag_dem_xml_as_ellipsoidal(dem_path: Path) -> str:
@@ -66,13 +67,17 @@ def download_dem_for_isce2(extent: list,
     extent_buffered = list(extent_geo.buffer(buffer).bounds)
     extent_buffered = list(map(lambda e: round(e, 3), extent_buffered))
 
-    full_res_dem_path = download_dem(extent_buffered,
-                                     dem_name,
-                                     full_res_dem_dir,
-                                     dst_file_name='full_res.dem.wgs84')
+    dem_array, dem_profile = stitch_dem(extent_buffered,
+                                        'glo_30',
+                                        dst_ellipsoidal_height=True,
+                                        max_workers=5)
 
-    with rasterio.open(full_res_dem_path) as ds:
-        dem_array, dem_profile = ds.read(1), ds.profile
+    full_res_dem_path = full_res_dem_dir/'full_res.dem.wgs84'
+    dem_array[np.isnan(dem_array)] = 0.
+    dem_profile['nodata'] = None
+    dem_profile['driver'] = 'ISCE'
+    with rasterio.open(full_res_dem_path, 'w', **dem_profile) as ds:
+        ds.write(dem_array, 1)
 
     dem_geocode_arr, dem_geocode_profile = resample_by_multiple(dem_array,
                                                                 dem_profile,
@@ -80,6 +85,7 @@ def download_dem_for_isce2(extent: list,
     dem_geocode_arr = dem_geocode_arr[0, ...]
     low_res_dem_path = (low_res_dem_dir/'low_res.dem.wgs84')
 
+    dem_geocode_profile['driver'] = 'ISCE'
     with rasterio.open(low_res_dem_path, 'w', **dem_geocode_profile) as ds:
         ds.write(dem_geocode_arr, 1)
 
