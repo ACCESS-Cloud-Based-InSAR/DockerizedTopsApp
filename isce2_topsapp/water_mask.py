@@ -53,8 +53,8 @@ def rasterize_shapes_to_array(shapes: list,
 
 
 def get_water_mask_dataframe(bounds: list) -> gpd.GeoDataFrame:
-    mask_location = ('/vsicurl/https://asf-dem-west.s3.amazonaws.com/'
-                     'WATER_MASK/GSHHG/GSHHS_f_L1.shp')
+    mask_location = ('/vsicurl/https://asf-dem-west.s3.us-west-2.amazonaws.co'
+                     'm/WATER_MASK/GSHHG/GSHHS_shp/f/GSHHS_f_L1.shp')
 
     if (bounds[0] < -200) or (bounds[1] > 200):
         raise ValueError('The bounds need to be within -200 and 200')
