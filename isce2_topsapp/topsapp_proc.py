@@ -26,7 +26,6 @@ TOPSAPP_STEPS = ['startup',
 
 TEMPLATE_DIR = Path(__file__).parent/'templates'
 
-
 def topsapp_processing(*,
                        reference_slc_zips: list,
                        secondary_slc_zips: list,
@@ -41,10 +40,6 @@ def topsapp_processing(*,
     swaths = swaths or [1, 2, 3]
     # for [ymin, ymax, xmin, xmax]
     extent_isce = [extent[k] for k in [1, 3, 0, 2]]
-
-    # logs
-    log_dir = Path(log_dir)
-    log_dir.mkdir(exist_ok=True)
 
     # Update PATH with ISCE2 applications
     isce_application_path = Path(f'{site.getsitepackages()[0]}'
@@ -76,19 +71,13 @@ def topsapp_processing(*,
         file.write(topsApp_xml)
 
     tops_app_cmd = f'{isce_application_path}/topsApp.py'
-    for k, step in enumerate(tqdm(TOPSAPP_STEPS, desc='TopsApp Steps')):
+    for step in tqdm(TOPSAPP_STEPS, desc='TopsApp Steps'):
         step_cmd = f'{tops_app_cmd} --dostep={step}'
         result = subprocess.run(step_cmd,
-                                shell=True,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        with open(log_dir/f'{k}_stderr_{step}.log', 'w') as file:
-            file.write(str(result.stderr))
-        with open(log_dir/f'{k}_stdout_{step}.log', 'w') as file:
-            file.write(str(result.stdout))
+                                shell=True)
         if result.returncode != 0:
             raise ValueError(f'TopsApp failed at step: {step}')
         if dry_run and (step == 'topo'):
             break
 
-    return log_dir
+    return result.returncode
