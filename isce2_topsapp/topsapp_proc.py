@@ -4,7 +4,6 @@ from tqdm import tqdm
 import subprocess
 from pathlib import Path
 import os
-from typing import Union
 
 
 TOPSAPP_STEPS = ['startup',
@@ -26,6 +25,7 @@ TOPSAPP_STEPS = ['startup',
 
 TEMPLATE_DIR = Path(__file__).parent/'templates'
 
+
 def topsapp_processing(*,
                        reference_slc_zips: list,
                        secondary_slc_zips: list,
@@ -35,7 +35,6 @@ def topsapp_processing(*,
                        dem_for_proc: str,
                        dem_for_geoc: str,
                        swaths: list = None,
-                       log_dir: Union[Path, str] = 'logs',
                        dry_run: bool = False):
     swaths = swaths or [1, 2, 3]
     # for [ymin, ymax, xmin, xmax]
