@@ -1,11 +1,11 @@
-from six.moves.urllib.parse import urlparse
-from urllib3.util.retry import Retry
-import requests
 import re
-from requests.adapters import HTTPAdapter
-from lxml import html, etree
 from pathlib import Path
 
+import requests
+from lxml import etree, html
+from requests.adapters import HTTPAdapter
+from six.moves.urllib.parse import urlparse
+from urllib3.util.retry import Retry
 
 ORBIT_TYPES = ['AUX_RESORB', 'AUX_POEORB']
 PLATFORMS = ['S1A', 'S1B']

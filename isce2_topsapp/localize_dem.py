@@ -1,12 +1,13 @@
-from lxml import etree
-import rasterio
-from shapely.geometry import box
-from dem_stitcher.stitcher import stitch_dem
-from dem_stitcher.rio_tools import resample_by_multiple
-from pathlib import Path
-import subprocess
 import site
+import subprocess
+from pathlib import Path
+
 import numpy as np
+import rasterio
+from dem_stitcher.rio_tools import resample_by_multiple
+from dem_stitcher.stitcher import stitch_dem
+from lxml import etree
+from shapely.geometry import box
 
 
 def tag_dem_xml_as_ellipsoidal(dem_path: Path) -> str:

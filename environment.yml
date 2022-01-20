@@ -21,6 +21,10 @@ dependencies:
  - pip
  - boto3
  - asf_search>=3.0.4
+ - flake8
+ - flake8-import-order
+ - flake8-blind-except
+ - flake8-builtins
  - pip:
    - git+https://github.com/ACCESS-Cloud-Based-InSAR/dem_stitcher.git
    - tqdm

@@ -1,9 +1,10 @@
-import asf_search as asf
-from shapely.geometry import shape, Polygon, GeometryCollection
-from shapely.ops import unary_union
 import netrc
-from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
+
+import asf_search as asf
+from shapely.geometry import GeometryCollection, Polygon, shape
+from shapely.ops import unary_union
+from tqdm import tqdm
 
 
 def get_asf_slc_objects(slc_ids: list) -> list:

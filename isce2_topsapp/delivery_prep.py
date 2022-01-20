@@ -1,8 +1,9 @@
 import datetime
+import json
 from pathlib import Path
+
 import numpy as np
 import rasterio
-import json
 from PIL import Image
 from matplotlib import cm
 
