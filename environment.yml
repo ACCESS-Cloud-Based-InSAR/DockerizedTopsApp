@@ -21,6 +21,7 @@ dependencies:
  - pip
  - boto3
  - asf_search>=3.0.4
+ - jsonschema==3.2.0
  - pip:
    - git+https://github.com/ACCESS-Cloud-Based-InSAR/dem_stitcher.git
    - tqdm
