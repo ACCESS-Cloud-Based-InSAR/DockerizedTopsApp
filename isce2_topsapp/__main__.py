@@ -70,7 +70,10 @@ def main():
 
     # Allows for easier re-inspection of processing, packaging, and delivery
     # after job completes
-    json.dump(MetadataEncoder().encode(loc_data), open('loc_data.json', 'w'), indent=2)
+    json.dump(loc_data,
+              open('loc_data.json', 'w'),
+              indent=2,
+              cls=MetadataEncoder)
 
     topsapp_processing(reference_slc_zips=loc_data['ref_paths'],
                        secondary_slc_zips=loc_data['sec_paths'],
