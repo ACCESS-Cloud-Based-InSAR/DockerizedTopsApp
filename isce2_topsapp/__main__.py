@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from pathlib import Path
 import netrc
+import json
 
 
 from isce2_topsapp import (download_slcs,
@@ -69,6 +70,10 @@ def main():
     loc_data = localize_data(args.reference_scenes,
                              args.secondary_scenes,
                              dry_run=args.dry_run)
+
+    # Allows for easier re-inspection of processing, packaging, and delivery
+    # after job completes
+    json.dump(loc_data, open('loc_data.json', 'w'), indent=2)
 
     topsapp_processing(reference_slc_zips=loc_data['ref_paths'],
                        secondary_slc_zips=loc_data['sec_paths'],
