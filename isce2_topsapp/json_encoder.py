@@ -1,6 +1,8 @@
 import json
-from shapely.geometry import Polygon
 from pathlib import PosixPath
+
+from shapely.geometry import Polygon
+
 
 # Source: https://docs.python.org/3/library/json.html
 # and: https://stackoverflow.com/a/3768975
