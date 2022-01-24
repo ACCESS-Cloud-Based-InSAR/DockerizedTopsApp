@@ -16,7 +16,7 @@ import isce
 import osgeo
 from osgeo import gdal
 from osgeo import osr
-import collections
+import collections.abc
 import pdb
 
 log_format = "[%(asctime)s: %(levelname)s/%(funcName)s] %(message)s"
@@ -153,7 +153,7 @@ def write_dataset(fid,data,properties_data):
             elif properties_data.dims is None:
                 dset = fid.createVariable(properties_data.name, properties_data.type)
             dset[:] = data
-        elif isinstance(data, collections.Iterable):
+        elif isinstance(data, collections.abc.Iterable):
             if isinstance(data[0],str):
                 dset = fid.createVariable(properties_data.name, str, ('matchup',), zlib=True)
                 count = 0
