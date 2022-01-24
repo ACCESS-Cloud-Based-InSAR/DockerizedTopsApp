@@ -1,16 +1,14 @@
+import json
+import netrc
 from argparse import ArgumentParser
 from pathlib import Path
-import netrc
 
+from isce2_topsapp import (aws, download_aux_cal, download_dem_for_isce2,
+                           download_orbits, download_slcs,
+                           package_gunw_product, prepare_for_delivery,
+                           topsapp_processing)
 
-from isce2_topsapp import (download_slcs,
-                           download_orbits,
-                           download_dem_for_isce2,
-                           download_aux_cal,
-                           topsapp_processing,
-                           package_gunw_product,
-                           prepare_for_delivery,
-                           aws)
+from .json_encoder import MetadataEncoder
 
 
 def localize_data(reference_scenes: list,
@@ -69,6 +67,13 @@ def main():
     loc_data = localize_data(args.reference_scenes,
                              args.secondary_scenes,
                              dry_run=args.dry_run)
+
+    # Allows for easier re-inspection of processing, packaging, and delivery
+    # after job completes
+    json.dump(loc_data,
+              open('loc_data.json', 'w'),
+              indent=2,
+              cls=MetadataEncoder)
 
     topsapp_processing(reference_slc_zips=loc_data['ref_paths'],
                        secondary_slc_zips=loc_data['sec_paths'],
