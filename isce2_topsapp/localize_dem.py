@@ -68,7 +68,7 @@ def download_dem_for_isce2(extent: list,
     extent_buffered = list(map(lambda e: round(e, 3), extent_buffered))
 
     dem_array, dem_profile = stitch_dem(extent_buffered,
-                                        'glo_30',
+                                        dem_name,
                                         dst_ellipsoidal_height=True,
                                         max_workers=5)
 
