@@ -16,6 +16,8 @@ import shutil
 from time import time
 from functools import wraps
 from joblib import Parallel, delayed, dump, load
+from pathlib import Path
+from pyproj import CRS
 
 from iscesys.Component.ProductManager import ProductManager as PM
 from isceobj.Orbit.Orbit import Orbit
@@ -274,10 +276,9 @@ def estimateGridPoints(inps):
     '''
 
     #pdb.set_trace()
-    inps.proj4 = 'EPSG:{0}'.format(inps.epsg)
-    inps.proj = pyproj.Proj(init=inps.proj4)
+    inps.proj = CRS.from_epsg(int(inps.epsg))
     inps.ecef = pyproj.Proj(proj='geocent', ellps='WGS84', datum='WGS84')
-    inps.lla = pyproj.Proj(proj='latlong', ellps='WGS84', datum='WGS84')
+    inps.lla = CRS.from_epsg(4326)
 
     inps.earlyNear = inps.orbit.rdr2geo(inps.sensingStart, inps.nearRange)
     inps.lateNear = inps.orbit.rdr2geo(inps.sensingStop, inps.nearRange)
@@ -289,9 +290,9 @@ def estimateGridPoints(inps):
         inps.midtime, 0.5 * (inps.nearRange + inps.farRange))
 
     pts = []
+    pts_trans = pyproj.Transformer.from_proj(inps.lla, inps.proj, always_xy=True)
     for x in [inps.earlyNear, inps.lateNear, inps.earlyFar, inps.lateFar]:
-        pts.append(
-            list(pyproj.transform(inps.lla, inps.proj, x[1], x[0], x[2])))
+        pts.append(list(pts_trans.transform(x[1], x[0], x[2])))
 
     pts = np.array(pts)
 
@@ -346,7 +347,7 @@ def writeInputs(inps, fid):
     orb.create_dataset(
         'velocity', data=np.array([x.getVelocity() for x in inps.orbit]))
     grp.create_dataset(
-        'projection', data=[inps.proj4.encode('utf-8')], dtype='S200')
+        'projection', data=[str(inps.proj).encode('utf-8')], dtype='S200')
     grp.create_dataset(
         'localutm', data=[inps.utm.encode('utf-8')], dtype='S200')
 
@@ -408,10 +409,13 @@ class Cube(object):
         '''
 
         yval = self.inps.y1 - ii * self.inps.yspacing
-        #satutm = np.array( pyproj.transform( lla, utm, satllh[0], satllh[1], satllh[2]))
         self.latvector[ii] = yval
 
         logger.info("Running ROW: " + str(ii + 1) + " of " + str(self.inps.Ny))
+
+        tarproj_trans = pyproj.Transformer.from_proj(self.inps.proj, self.inps.lla, always_xy=True)
+        targxyz_trans = pyproj.Transformer.from_proj(self.inps.proj, self.inps.ecef, always_xy=True)
+        targutm_trans = pyproj.Transformer.from_proj(self.inps.proj, self.inps.utmproj, always_xy=True)
 
         for jj in range(self.inps.Nx):
             xval = self.inps.x0 + jj * self.inps.xspacing
@@ -419,13 +423,10 @@ class Cube(object):
                 self.lonvector[jj] = xval
 
             for ind, hh in enumerate(self.inps.heights):
-                targproj = pyproj.transform(self.inps.proj, self.inps.lla, xval,
-                                            yval, hh)
+                targproj = tarproj_trans.transform(xval, yval, hh)
                 targ = [targproj[1], targproj[0], targproj[2]]
-                targxyz = pyproj.transform(self.inps.proj, self.inps.ecef, xval,
-                                           yval, hh)
-                targutm = pyproj.transform(self.inps.proj, self.inps.utmproj,
-                                           xval, yval, hh)
+                targxyz = targxyz_trans.transform(xval, yval, hh)
+                targutm = targutm_trans.transform(xval, yval, hh)
                 targnorm = self.nvector(targproj)
 
                 try:
@@ -436,16 +437,19 @@ class Cube(object):
 
                 if mrng is not None:
 
+                    satllh_trans = pyproj.Transformer.from_proj(self.inps.ecef,
+                                                                self.inps.lla,
+                                                                always_xy=True)
+                    satutm_trans = pyproj.Transformer.from_proj(self.inps.lla,
+                                                                self.inps.utmproj,
+                                                                always_xy=True)
+
                     sv = self.inps.orbit.interpolateOrbit(
                         mtaz, method='hermite')
                     satpos = np.array(sv.getPosition())
                     satvel = np.array(sv.getVelocity())
-                    satllh = np.array(
-                        pyproj.transform(self.inps.ecef, self.inps.lla,
-                                         satpos[0], satpos[1], satpos[2]))
-                    satutm = np.array(
-                        pyproj.transform(self.inps.lla, self.inps.utmproj,
-                                         satllh[0], satllh[1], satllh[2]))
+                    satllh = np.array(satllh_trans.transform(satpos[0], satpos[1], satpos[2]))
+                    satutm = np.array(satutm_trans.transform(satllh[0], satllh[1], satllh[2]))
                     satnorm = self.nvector(satllh)
 
                     self.azimuthtime[ind, ii, jj] = (
@@ -614,15 +618,13 @@ def main():
     ##Get corners
     estimateGridPoints(inps)
 
-    ####Check for existing HDF5 file
-    if os.path.exists(inps.outh5):
-        logger.info('{0} file already exists'.format(inps.outh5))
-        raise Exception('Output file already exists')
-
     ###Create h5 file
-    fid = h5py.File(inps.outh5, 'w')
-
+    hdf5_path = Path(inps.outh5)
+    if hdf5_path.exists():
+        hdf5_path.unlink()
+    fid = h5py.File(hdf5_path, 'w')
     ###Record inputs
+
     writeInputs(inps, fid)
 
     ###Record summary
