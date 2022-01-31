@@ -145,48 +145,29 @@ def loadProduct(xmlname):
     return obj
 
 
-def getUTMZone(inps):
-    '''
-    Determine UTM zone for scene center. Can update to use majority of scene later.
-    '''
-
-    def latlon_to_zone_number(latitude, longitude):
-        if 56 <= latitude < 64 and 3 <= longitude < 12:
-            return 32
-
-        if 72 <= latitude <= 84 and longitude >= 0:
-            if longitude < 9:
-                return 31
-            elif longitude < 21:
-                return 33
-            elif longitude < 33:
-                return 35
-            elif longitude < 42:
-                return 37
-
-        return int((longitude + 180) / 6) + 1
-
-    def latitude_to_zone_letter(latitude):
-        ZONE_LETTERS = "CDEFGHJKLMNPQRSTUVWXX"
-        if -80 <= latitude <= 84:
-            return ZONE_LETTERS[int(latitude + 80) >> 3]
-        else:
-            return None
-
-    lat = inps.sceneCenter[0]
-    lon = inps.sceneCenter[1]
-
-    zone = latlon_to_zone_number(lat, lon)
-    inps.utmzone = str(zone) + latitude_to_zone_letter(lat)
-
-    if lat < 0:
-        pad = '+south'
+def convert_4326_to_utm(lon: float, lat: float) -> str:
+    """
+    Obtain UTM zone from (lon, lat) coordinate.
+    From: https://gis.stackexchange.com/a/269552
+    Parameters
+    ----------
+    lon : float
+        Longitude
+    lat : float
+        Latitude
+    Returns
+    -------
+    str:
+        epsg code, in the form `epsg:<epsg_num>`.
+    """
+    utm_band = str(int((np.floor((lon + 180) / 6) % 60) + 1))
+    if len(utm_band) == 1:
+        utm_band = '0'+utm_band
+    if lat >= 0:
+        epsg_code = '326' + utm_band
     else:
-        pad = ''
-
-    inps.utm = '+proj=utm +zone={0} {1} +ellps=WGS84 +datum=WGS84 +units=m +no_defs'.format(
-        zone, pad)
-    return inps.utm
+        epsg_code = '327' + utm_band
+    return int(epsg_code)
 
 
 def getMergedOrbit(product):
@@ -303,7 +284,11 @@ def estimateGridPoints(inps):
     inps.y0 = (int(np.min(pts[:, 1]) / inps.yspacing) - 2) * inps.yspacing
     inps.y1 = (int(np.max(pts[:, 1]) / inps.yspacing) + 3) * inps.yspacing
     inps.Ny = int(np.round((inps.y1 - inps.y0) / inps.yspacing)) + 1
-    inps.utmproj = pyproj.Proj(getUTMZone(inps))
+
+    lat = inps.sceneCenter[0]
+    lon = inps.sceneCenter[1]
+    utm_epsg = convert_4326_to_utm(lon, lat)
+    inps.utmproj = CRS.from_epsg(utm_epsg)
 
 
 @simple_time_tracker(_log)
@@ -349,7 +334,7 @@ def writeInputs(inps, fid):
     grp.create_dataset(
         'projection', data=[str(inps.proj).encode('utf-8')], dtype='S200')
     grp.create_dataset(
-        'localutm', data=[inps.utm.encode('utf-8')], dtype='S200')
+        'localutm', data=[str(inps.utmproj).encode('utf-8')], dtype='S200')
 
 
 @simple_time_tracker(_log)
