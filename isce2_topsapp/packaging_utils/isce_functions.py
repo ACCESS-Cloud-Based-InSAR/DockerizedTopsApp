@@ -315,7 +315,7 @@ def get_h5_dataset_coords(args):
         variable = geovariable[0]
         varname = variable.split('/')[-1]
         if varname == 'longitude' or varname == 'Longitude' or varname == 'lon' or varname == 'Lon' or  varname == 'lons' or varname == 'Lons':
-            lons = get_h5_dataset_2([h5_file,variable])
+            lons = get_h5_dataset([h5_file,variable])
             count+=1
             lons_map = geovariable[1]
         elif varname == 'latitude' or varname == 'Latitude' or varname == 'lat' or varname == 'Lat' or  varname == 'lats' or varname == 'Lats':
@@ -377,25 +377,7 @@ def get_h5_dataset(args):
     file_name=  args[0]
     path_variable = args[1]
     datafile = h5py.File(file_name,'r')
-    data = datafile[path_variable][:][::-1]
-
-    return data
-
-def get_h5_dataset_2(args):
-    '''
-        Extracts a hdf5 variable and return the content of it
-        INPUTS:
-        filename    str of the hdf5 file
-        variable    str describing the path within the hdf5 file: e.g. cube/dataset1
-    '''
-
-    import h5py
-    import numpy as np
-
-    file_name=  args[0]
-    path_variable = args[1]
-    datafile = h5py.File(file_name,'r')
-    data = datafile[path_variable][:][::]
+    data = datafile[path_variable][:]
 
     return data
 
