@@ -377,7 +377,7 @@ def get_h5_dataset(args):
     file_name=  args[0]
     path_variable = args[1]
     datafile = h5py.File(file_name,'r')
-    data = datafile[path_variable][:][::-1]
+    data = datafile[path_variable][:]
 
     return data
 
