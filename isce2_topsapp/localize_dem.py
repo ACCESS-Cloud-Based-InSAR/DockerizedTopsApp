@@ -70,6 +70,7 @@ def download_dem_for_isce2(extent: list,
     dem_array, dem_profile = stitch_dem(extent_buffered,
                                         dem_name,
                                         dst_ellipsoidal_height=True,
+                                        dst_area_or_point='Point',
                                         max_workers=5)
 
     full_res_dem_path = full_res_dem_dir/'full_res.dem.wgs84'
