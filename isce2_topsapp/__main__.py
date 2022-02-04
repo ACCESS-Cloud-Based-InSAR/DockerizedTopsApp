@@ -49,10 +49,10 @@ def ensure_earthdata_credentials(username: Optional[str] = None, password: Optio
         * `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables
     """
     if username is None:
-        username = os.getenv('EARTHDATA_USERNAME', '')
+        username = os.getenv('EARTHDATA_USERNAME')
 
     if password is None:
-        password = os.getenv('EARTHDATA_PASSWORD', '')
+        password = os.getenv('EARTHDATA_PASSWORD')
 
     if not netrc_file.exists() and username and password:
         netrc_file.write_text(f'machine {host} login {username} password {password}')
