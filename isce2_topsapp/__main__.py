@@ -54,21 +54,20 @@ def ensure_earthdata_credentials(username: Optional[str] = None, password: Optio
     if password is None:
         password = os.getenv('EARTHDATA_PASSWORD', '')
 
-    if not netrc_file.exists():
+    if not netrc_file.exists() and username and password:
         netrc_file.write_text(f'machine {host} login {username} password {password}')
         netrc_file.chmod(0o000600)
 
     try:
         dot_netrc = netrc.netrc(netrc_file)
         username, _, password = dot_netrc.authenticators(host)
-    except (netrc.NetrcParseError, TypeError):
+    except (FileNotFoundError, netrc.NetrcParseError, TypeError):
         raise ValueError(
             f'Please provide valid Earthdata login credentials via {netrc_file}, '
             f'the --username and --password CLI option, or '
             f'the EARTHDATA_USERNAME and EARTHDATA_PASSWORD environment variables.'
         )
 
-    return username, password
 
 
 def main():
