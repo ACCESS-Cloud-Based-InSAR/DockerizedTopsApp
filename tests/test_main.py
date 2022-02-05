@@ -22,10 +22,14 @@ def test_main_check_earthdata_credentials_prefer_netrc(tmp_path, monkeypatch):
     assert netrc.read_text() == 'machine foobar.nasa.gov login foo password bar'
 
     with pytest.raises(ValueError):
-        ensure_earthdata_credentials(None, None, host='another.nasa.gov')
+        ensure_earthdata_credentials(None, None)
 
     with pytest.raises(ValueError):
-        ensure_earthdata_credentials('biz', 'baz', host='another.nasa.gov')
+        ensure_earthdata_credentials('biz', 'baz')
+
+    netrc.write_text('machine urs.earthdata.nasa.gov login foo password bar')
+    ensure_earthdata_credentials(None, None)
+    assert netrc.read_text() == 'machine urs.earthdata.nasa.gov login foo password bar'
 
 
 def test_main_check_earthdata_credentials_fn_variables(tmp_path, monkeypatch):
