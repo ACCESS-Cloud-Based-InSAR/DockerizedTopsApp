@@ -1,66 +1,68 @@
-import os
-
 import pytest
 from isce2_topsapp.__main__ import ensure_earthdata_credentials
 
 
-def test_main_check_earthdata_credentials(tmp_path):
+def test_main_check_earthdata_credentials_prefer_netrc(tmp_path, monkeypatch):
+    monkeypatch.setenv('HOME', str(tmp_path))
     netrc = tmp_path / '.netrc'
     netrc.write_text('machine foobar.nasa.gov login foo password bar')
 
-    ensure_earthdata_credentials(None, None, host='foobar.nasa.gov', netrc_file=netrc)
+    ensure_earthdata_credentials(None, None, host='foobar.nasa.gov')
     assert netrc.read_text() == 'machine foobar.nasa.gov login foo password bar'
 
-    ensure_earthdata_credentials('biz', 'baz', host='foobar.nasa.gov', netrc_file=netrc)
+    ensure_earthdata_credentials('biz', 'baz', host='foobar.nasa.gov')
     assert netrc.read_text() == 'machine foobar.nasa.gov login foo password bar'
 
-    os.environ['EARTHDATA_USERNAME'] = 'fizz'
-    os.environ['EARTHDATA_PASSWORD'] = 'buzz'
-    ensure_earthdata_credentials(None, None, host='foobar.nasa.gov', netrc_file=netrc)
+    monkeypatch.setenv('EARTHDATA_USERNAME', 'fizz')
+    monkeypatch.setenv('EARTHDATA_PASSWORD', 'buzz')
+    ensure_earthdata_credentials(None, None, host='foobar.nasa.gov')
     assert netrc.read_text() == 'machine foobar.nasa.gov login foo password bar'
 
-    ensure_earthdata_credentials('biz', 'baz', host='foobar.nasa.gov', netrc_file=netrc)
+    ensure_earthdata_credentials('biz', 'baz', host='foobar.nasa.gov')
     assert netrc.read_text() == 'machine foobar.nasa.gov login foo password bar'
 
     with pytest.raises(ValueError):
-        ensure_earthdata_credentials(None, None, host='another.nasa.gov', netrc_file=netrc)
+        ensure_earthdata_credentials(None, None, host='another.nasa.gov')
 
     with pytest.raises(ValueError):
-        ensure_earthdata_credentials('biz', 'baz', host='another.nasa.gov', netrc_file=netrc)
+        ensure_earthdata_credentials('biz', 'baz', host='another.nasa.gov')
 
+
+def test_main_check_earthdata_credentials_fn_variables(tmp_path, monkeypatch):
+    monkeypatch.setenv('HOME', str(tmp_path))
+    netrc = tmp_path / '.netrc'
+
+    with pytest.raises(ValueError):
+        ensure_earthdata_credentials(None, None, host='foobar.nasa.gov')
+
+    with pytest.raises(ValueError):
+        ensure_earthdata_credentials('biz', None, host='foobar.nasa.gov')
+
+    with pytest.raises(ValueError):
+        ensure_earthdata_credentials(None, 'baz', host='foobar.nasa.gov')
+
+    ensure_earthdata_credentials('biz', 'baz', host='foobar.nasa.gov')
+    assert netrc.read_text() == 'machine foobar.nasa.gov login biz password baz'
     netrc.unlink()
-    del os.environ['EARTHDATA_USERNAME']
-    del os.environ['EARTHDATA_PASSWORD']
-    with pytest.raises(ValueError):
-        ensure_earthdata_credentials(None, None, host='foobar.nasa.gov', netrc_file=netrc)
 
-    with pytest.raises(ValueError):
-        ensure_earthdata_credentials('biz', None, host='foobar.nasa.gov', netrc_file=netrc)
-
-    with pytest.raises(ValueError):
-        ensure_earthdata_credentials(None, 'baz', host='foobar.nasa.gov', netrc_file=netrc)
-
-    ensure_earthdata_credentials('biz', 'baz', host='foobar.nasa.gov', netrc_file=netrc)
+    monkeypatch.setenv('EARTHDATA_USERNAME', 'fizz')
+    monkeypatch.setenv('EARTHDATA_PASSWORD', 'buzz')
+    ensure_earthdata_credentials('biz', 'baz', host='foobar.nasa.gov')
     assert netrc.read_text() == 'machine foobar.nasa.gov login biz password baz'
 
-    netrc.unlink()
-    os.environ['EARTHDATA_USERNAME'] = 'fizz'
-    os.environ['EARTHDATA_PASSWORD'] = 'buzz'
-    ensure_earthdata_credentials(None, None, host='foobar.nasa.gov', netrc_file=netrc)
+
+def test_main_check_earthdata_credentials_env_variables(tmp_path, monkeypatch):
+    monkeypatch.setenv('HOME', str(tmp_path))
+    netrc = tmp_path / '.netrc'
+
+    monkeypatch.setenv('EARTHDATA_USERNAME', 'fizz')
+    with pytest.raises(ValueError):
+        ensure_earthdata_credentials(None, None, host='foobar.nasa.gov')
+
+    monkeypatch.setenv('EARTHDATA_PASSWORD', 'buzz')
+    ensure_earthdata_credentials(None, None, host='foobar.nasa.gov')
     assert netrc.read_text() == 'machine foobar.nasa.gov login fizz password buzz'
-
     netrc.unlink()
-    ensure_earthdata_credentials('biz', 'baz', host='foobar.nasa.gov', netrc_file=netrc)
-    assert netrc.read_text() == 'machine foobar.nasa.gov login biz password baz'
 
-    netrc.unlink()
-    del os.environ['EARTHDATA_PASSWORD']
-    with pytest.raises(ValueError):
-        ensure_earthdata_credentials(None, None, host='foobar.nasa.gov', netrc_file=netrc)
-
-    ensure_earthdata_credentials('biz', 'baz', host='foobar.nasa.gov', netrc_file=netrc)
-    assert netrc.read_text() == 'machine foobar.nasa.gov login biz password baz'
-
-    netrc.unlink()
-    ensure_earthdata_credentials(None, 'baz', host='foobar.nasa.gov', netrc_file=netrc)
+    ensure_earthdata_credentials(None, 'baz', host='foobar.nasa.gov')
     assert netrc.read_text() == 'machine foobar.nasa.gov login fizz password baz'

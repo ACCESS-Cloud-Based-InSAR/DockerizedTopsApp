@@ -39,7 +39,7 @@ def localize_data(reference_scenes: list,
 
 
 def ensure_earthdata_credentials(username: Optional[str] = None, password: Optional[str] = None,
-                                 host: str = 'urs.earthdata.nasa.gov', netrc_file: Path = Path.home() / '.netrc'):
+                                 host: str = 'urs.earthdata.nasa.gov'):
     """Ensures Earthdata credentials are provided in ~/.netrc
 
      Earthdata username and password may be provided by, in order of preference, one of:
@@ -54,6 +54,7 @@ def ensure_earthdata_credentials(username: Optional[str] = None, password: Optio
     if password is None:
         password = os.getenv('EARTHDATA_PASSWORD')
 
+    netrc_file = Path.home() / '.netrc'
     if not netrc_file.exists() and username and password:
         netrc_file.write_text(f'machine {host} login {username} password {password}')
         netrc_file.chmod(0o000600)
