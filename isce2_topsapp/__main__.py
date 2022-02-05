@@ -46,8 +46,8 @@ def ensure_earthdata_credentials(username: Optional[str] = None, password: Optio
         * `netrc_file`
         * `username` and `password`
         * `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables
-    and will be written ~/.netrc file if it doesn't already exist.
-    """
+     and will be written to the ~/.netrc file if it doesn't already exist.
+     """
     if username is None:
         username = os.getenv('EARTHDATA_USERNAME')
 
