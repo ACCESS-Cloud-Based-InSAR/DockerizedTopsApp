@@ -70,7 +70,6 @@ def ensure_earthdata_credentials(username: Optional[str] = None, password: Optio
         )
 
 
-
 def main():
     parser = ArgumentParser()
     parser.add_argument('--username')
