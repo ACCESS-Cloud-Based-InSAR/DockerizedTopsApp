@@ -64,7 +64,7 @@ def ensure_earthdata_credentials(username: Optional[str] = None, password: Optio
     except (FileNotFoundError, netrc.NetrcParseError, TypeError):
         raise ValueError(
             f'Please provide valid Earthdata login credentials via {netrc_file}, '
-            f'the --username and --password CLI option, or '
+            f'the --username and --password CLI options, or '
             f'the EARTHDATA_USERNAME and EARTHDATA_PASSWORD environment variables.'
         )
 
