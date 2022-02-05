@@ -35,10 +35,10 @@ def test_main_check_earthdata_credentials(tmp_path):
         ensure_earthdata_credentials(None, None, host='foobar.nasa.gov', netrc_file=netrc)
 
     with pytest.raises(ValueError):
-        _ = ensure_earthdata_credentials('biz', None, host='foobar.nasa.gov', netrc_file=netrc)
+        ensure_earthdata_credentials('biz', None, host='foobar.nasa.gov', netrc_file=netrc)
 
     with pytest.raises(ValueError):
-        _ = ensure_earthdata_credentials(None, 'baz', host='foobar.nasa.gov', netrc_file=netrc)
+        ensure_earthdata_credentials(None, 'baz', host='foobar.nasa.gov', netrc_file=netrc)
 
     ensure_earthdata_credentials('biz', 'baz', host='foobar.nasa.gov', netrc_file=netrc)
     assert netrc.read_text() == 'machine foobar.nasa.gov login biz password baz'
