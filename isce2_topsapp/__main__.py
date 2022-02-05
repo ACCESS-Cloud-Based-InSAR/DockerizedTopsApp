@@ -1,6 +1,6 @@
-import os
-import netrc
 import json
+import netrc
+import os
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Optional
@@ -9,7 +9,6 @@ from isce2_topsapp import (aws, download_aux_cal, download_dem_for_isce2,
                            download_orbits, download_slcs,
                            package_gunw_product, prepare_for_delivery,
                            topsapp_processing)
-
 from .json_encoder import MetadataEncoder
 
 
@@ -41,12 +40,13 @@ def localize_data(reference_scenes: list,
 
 def ensure_earthdata_credentials(username: Optional[str] = None, password: Optional[str] = None,
                                  host: str = 'urs.earthdata.nasa.gov', netrc_file: Path = Path.home() / '.netrc'):
-    """Ensures an Earthdata username and password are provided
+    """Ensures Earthdata credentials are provided in ~/.netrc
 
-     Earthdata username and password have been provided by, in order of preference, one of:
+     Earthdata username and password may be provided by, in order of preference, one of:
         * `netrc_file`
         * `username` and `password`
         * `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables
+    and will be written ~/.netrc file if it doesn't already exist.
     """
     if username is None:
         username = os.getenv('EARTHDATA_USERNAME')
