@@ -5,23 +5,24 @@ channels:
  - defaults
 dependencies:
  - python>=3.8
- - isce2
- - jupyter
- - papermill
- - ipykernel
- - rasterio
- - shapely
+ - pip
+ - asf_search>=3.0.4
+ - boto3
  - dateparser
- - jinja2
- - numpy
- - matplotlib
- - netcdf4
  - fiona
  - geopandas
- - pip
- - boto3
- - asf_search>=3.0.4
+ - ipykernel
+ - isce2
+ - jinja2
  - jsonschema==3.2.0
+ - jupyter
+ - matplotlib
+ - netcdf4
+ - numpy
+ - papermill
+ - pytest
+ - rasterio
+ - shapely
  - pip:
    - git+https://github.com/ACCESS-Cloud-Based-InSAR/dem_stitcher.git
    - tqdm
