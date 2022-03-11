@@ -11,11 +11,13 @@ dependencies:
  - dateparser
  - fiona
  - geopandas
+ - hyp3lib>=1.7
  - ipykernel
  - isce2
  - jinja2
  - jsonschema==3.2.0
  - jupyter
+ - lxml
  - matplotlib
  - netcdf4
  - numpy
@@ -23,8 +25,6 @@ dependencies:
  - pytest
  - rasterio
  - shapely
+ - tqdm
  - pip:
    - git+https://github.com/ACCESS-Cloud-Based-InSAR/dem_stitcher.git
-   - tqdm
-   - lxml
-   - click
