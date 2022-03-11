@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import hyp3lib
 import requests
 from hyp3lib import get_orb
 
