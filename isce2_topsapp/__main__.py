@@ -23,11 +23,16 @@ def localize_data(reference_scenes: list,
     out_slc = download_slcs(reference_scenes,
                             secondary_scenes,
                             dry_run=dry_run)
+
     out_orbits = download_orbits(reference_scenes,
                                  secondary_scenes,
                                  dry_run=dry_run)
-    out_dem = download_dem_for_isce2(out_slc['extent'])
-    out_aux_cal = download_aux_cal()
+
+    out_dem = {}
+    out_aux_cal = {}
+    if not dry_run:
+        out_dem = download_dem_for_isce2(out_slc['extent'])
+        out_aux_cal = download_aux_cal()
 
     out = {'reference_scenes': reference_scenes,
            'secondary_scenes': secondary_scenes,

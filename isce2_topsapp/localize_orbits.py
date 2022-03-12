@@ -13,7 +13,8 @@ def _spoof_orbit_download(scene, _, providers=('ESA', 'ASF'), orbit_types=('AUX_
                 continue
 
             if orbit_url is not None:
-                return orbit_url
+                return orbit_url, None
+    return None, None
 
 
 def download_orbits(reference_scenes: list,
