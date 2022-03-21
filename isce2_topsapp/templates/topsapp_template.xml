@@ -2,13 +2,13 @@
 <topsApp>
   <component name="topsinsar">
     <component name="reference">
-      <property name="orbit file">{{  ref_orbit_file  }}</property>
+      <property name="orbit directory">{{  orbit_directory  }}</property>
       <property name="auxiliary data directory">aux_cal</property>
       <property name="output directory">{{ output_reference_directory }}</property>
       <property name="safe">{{  ref_zip_file  }}</property>
     </component>
     <component name="secondary">
-      <property name="orbit file">{{ sec_orbit_file }}</property>
+      <property name="orbit directory">{{ orbit_directory }}</property>
       <property name="auxiliary data directory">aux_cal</property>
       <property name="output directory">{{ output_secondary_directory }}</property>
       <property name="safe">{{ sec_zip_file }}</property>

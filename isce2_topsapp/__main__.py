@@ -23,18 +23,23 @@ def localize_data(reference_scenes: list,
     out_slc = download_slcs(reference_scenes,
                             secondary_scenes,
                             dry_run=dry_run)
-    out_orbit = download_orbits(reference_scenes,
-                                secondary_scenes,
-                                dry_run=dry_run)
-    out_dem = download_dem_for_isce2(out_slc['extent'])
-    out_aux_cal = download_aux_cal()
+
+    out_orbits = download_orbits(reference_scenes,
+                                 secondary_scenes,
+                                 dry_run=dry_run)
+
+    out_dem = {}
+    out_aux_cal = {}
+    if not dry_run:
+        out_dem = download_dem_for_isce2(out_slc['extent'])
+        out_aux_cal = download_aux_cal()
 
     out = {'reference_scenes': reference_scenes,
            'secondary_scenes': secondary_scenes,
            **out_slc,
            **out_dem,
            **out_aux_cal,
-           **out_orbit}
+           **out_orbits}
     return out
 
 
@@ -99,8 +104,7 @@ def main():
 
     topsapp_processing(reference_slc_zips=loc_data['ref_paths'],
                        secondary_slc_zips=loc_data['sec_paths'],
-                       reference_orbit_path=loc_data['ref_orbit'],
-                       secondary_orbit_path=loc_data['sec_orbit'],
+                       orbit_directory=loc_data['orbit_directory'],
                        extent=loc_data['extent'],
                        dem_for_proc=loc_data['full_res_dem_path'],
                        dem_for_geoc=loc_data['low_res_dem_path'],

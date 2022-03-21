@@ -29,8 +29,7 @@ TEMPLATE_DIR = Path(__file__).parent/'templates'
 def topsapp_processing(*,
                        reference_slc_zips: list,
                        secondary_slc_zips: list,
-                       reference_orbit_path: str,
-                       secondary_orbit_path: str,
+                       orbit_directory: str,
                        extent: list,
                        dem_for_proc: str,
                        dem_for_geoc: str,
@@ -48,8 +47,7 @@ def topsapp_processing(*,
     with open(TEMPLATE_DIR/'topsapp_template.xml', 'r') as file:
         template = Template(file.read())
 
-    topsApp_xml = template.render(ref_orbit_file=reference_orbit_path,
-                                  sec_orbit_file=secondary_orbit_path,
+    topsApp_xml = template.render(orbit_directory=orbit_directory,
                                   output_reference_directory='reference',
                                   output_secondary_directory='secondary',
                                   ref_zip_file=reference_slc_zips,
