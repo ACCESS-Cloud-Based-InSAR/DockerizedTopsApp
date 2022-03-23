@@ -18,7 +18,7 @@ We note all the input datasets are publicly available using a NASA Earthdata acc
 
 ## Installation
 
-1. `conda env update -n topsapp_env --file environment.yml python=3.8` (or use [`mamba`](https://github.com/mamba-org/mamba) to speed install up)
+1. `conda env update -n topsapp_env --file environment.yml` (or use [`mamba`](https://github.com/mamba-org/mamba) to speed install up)
 2. `pip install .`
 
 ## Additional setup
