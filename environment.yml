@@ -27,4 +27,4 @@ dependencies:
  - shapely
  - tqdm
  - pip:
-   - git+https://github.com/ACCESS-Cloud-Based-InSAR/dem_stitcher.git
+   - dem-stitcher>=2.1
