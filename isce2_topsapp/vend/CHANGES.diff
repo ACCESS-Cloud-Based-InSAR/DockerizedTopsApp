@@ -1,0 +1,30 @@
+--- stageS1_earthdata.py
++++ stageS1_earthdata.py
+@@ -4,17 +4,13 @@
+ # Copyright 2021
+
+ import os
+-import netrc
+-import base64
+ import zipfile
+ import logging
+ import argparse
++
+ from osgeo import gdal
+
+-from urllib.request import build_opener, install_opener, Request, urlopen
+-from urllib.request import HTTPHandler, HTTPSHandler, HTTPCookieProcessor
+-from urllib.error import HTTPError, URLError
+-from http.cookiejar import MozillaCookieJar
++ASF_COOKIE_JAR = 'asf_cookies.txt'
+
+
+ class SentinelVRT:
+@@ -232,7 +228,7 @@ def cmdLineParse():
+     parser.add_argument('-o', '--output', dest='outdir', type=str,
+                         default='.', help='Output folder to store the data in')
+     parser.add_argument('-c', '--cookies', dest='cookies', type=str,
+-                        default='asfcookies.txt', help='Path to cookies file')
++                        default=ASF_COOKIE_JAR, help='Path to cookies file')
+     parser.add_argument('-d', '--debug', dest='debug', action='store_true',
+                         default=False, help='Set to CPL_DEBUG to ON')

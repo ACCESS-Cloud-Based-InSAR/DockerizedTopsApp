@@ -1,9 +1,15 @@
-import asf_search as asf
-from shapely.geometry import shape, Polygon, GeometryCollection
-from shapely.ops import unary_union
 import netrc
-from tqdm import tqdm
+import sys
 from concurrent.futures import ThreadPoolExecutor
+from tempfile import NamedTemporaryFile
+
+import asf_search as asf
+from shapely.geometry import GeometryCollection, Polygon, shape
+from shapely.ops import unary_union
+from tqdm import tqdm
+
+from isce2_topsapp.vend import stageS1_earthdata
+from isce2_topsapp.util import SysArgvManager
 
 
 def get_asf_slc_objects(slc_ids: list) -> list:
@@ -50,7 +56,8 @@ def check_geometry(reference_obs: list,
 def download_slcs(reference_ids: list,
                   secondary_ids: list,
                   max_workers: int = 5,
-                  dry_run: bool = False) -> dict:
+                  dry_run: bool = False,
+                  process_virtually: bool = False) -> dict:
     reference_obs = get_asf_slc_objects(reference_ids)
     secondary_obs = get_asf_slc_objects(secondary_ids)
 
@@ -64,20 +71,33 @@ def download_slcs(reference_ids: list,
 
     intersection_geo = check_geometry(reference_obs, secondary_obs)
 
-    def download_one(resp):
-        session = get_session()
-        file_name = resp.properties['fileName']
-        if not dry_run:
-            resp.download(path='.', session=session)
-        return file_name
-
     all_obs = reference_obs + secondary_obs
-    n = len(all_obs)
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        results = list(tqdm(executor.map(download_one,
-                                         all_obs),
-                            total=n,
-                            desc='Downloading SLCs'))
+
+    if process_virtually:
+        download_urls = [obj.properties['url'] for obj in all_obs]
+        with NamedTemporaryFile('w+t', delete=False) as tmp_file:
+            tmp_file.write('\n'.join(download_urls))
+
+        with SysArgvManager():
+            sys.argv += ['-i', tmp_file.name]
+            inps = stageS1_earthdata.cmdLineParse()
+
+        stageS1_earthdata.main(inps)
+        results = [obj.properties['fileName'] for obj in all_obs]
+
+    else:
+        def download_one(resp):
+            session = get_session()
+            file_name = resp.properties['fileName']
+            if not dry_run:
+                resp.download(path='.', session=session)
+            return file_name
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            results = list(tqdm(executor.map(download_one,
+                                             all_obs),
+                                total=len(all_obs),
+                                desc='Downloading SLCs'))
 
     n0 = len(reference_obs)
     return {'ref_paths': results[:n0],

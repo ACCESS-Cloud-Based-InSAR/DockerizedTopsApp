@@ -5,6 +5,9 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Optional
 
+from osgeo import gdal
+
+from isce2_topsapp.vend import stageS1_earthdata
 from isce2_topsapp import (aws, download_aux_cal, download_dem_for_isce2,
                            download_orbits, download_slcs,
                            package_gunw_product, prepare_for_delivery,
@@ -14,7 +17,8 @@ from .json_encoder import MetadataEncoder
 
 def localize_data(reference_scenes: list,
                   secondary_scenes: list,
-                  dry_run: bool = False) -> dict:
+                  dry_run: bool = False,
+                  process_virtually: bool = False) -> dict:
     """
     The dry-run prevents gets necessary metadata from SLCs and orbits.
 
@@ -22,7 +26,8 @@ def localize_data(reference_scenes: list,
     """
     out_slc = download_slcs(reference_scenes,
                             secondary_scenes,
-                            dry_run=dry_run)
+                            dry_run=dry_run,
+                            process_virtually=process_virtually)
 
     out_orbits = download_orbits(reference_scenes,
                                  secondary_scenes,
@@ -84,6 +89,7 @@ def main():
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--reference-scenes', type=str.split, nargs='+', required=True)
     parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
+    parser.add_argument('--process-virtually', action='store_true')
     args = parser.parse_args()
 
     ensure_earthdata_credentials(args.username, args.password)
@@ -91,9 +97,15 @@ def main():
     args.reference_scenes = [item for sublist in args.reference_scenes for item in sublist]
     args.secondary_scenes = [item for sublist in args.secondary_scenes for item in sublist]
 
+    if args.process_virtually:
+        gdal.SetConfigOption('GDAL_HTTP_COOKIEFILE', stageS1_earthdata.ASF_COOKIE_JAR)
+        gdal.SetConfigOption('GDAL_HTTP_COOKIEJAR', stageS1_earthdata.ASF_COOKIE_JAR)
+        gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', 'TRUE')
+
     loc_data = localize_data(args.reference_scenes,
                              args.secondary_scenes,
-                             dry_run=args.dry_run)
+                             dry_run=args.dry_run,
+                             process_virtually=args.process_virtually)
 
     # Allows for easier re-inspection of processing, packaging, and delivery
     # after job completes
