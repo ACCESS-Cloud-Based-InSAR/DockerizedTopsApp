@@ -18,7 +18,7 @@ We note all the input datasets are publicly available using a NASA Earthdata acc
 
 ## Installation
 
-1. `conda env update -n topsapp_env --file environment.yml python=3.8` (or use [`mamba`](https://github.com/mamba-org/mamba) to speed install up)
+1. `conda env update -n topsapp_env --file environment.yml` (or use [`mamba`](https://github.com/mamba-org/mamba) to speed install up)
 2. `pip install .`
 
 ## Additional setup
@@ -42,6 +42,10 @@ isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T01501
                                  S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404 \
                                  S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C
 ```
+Add `> topsapp_img.out 2> topsapp_img.err` to avoid unnecessary output to your terminal and record the stdout and stderr as files.
+This is reflected in the (`sample_run.sh`)[sample_run.sh].
+
+To be even more explicity, you can use [`tee`](https://en.wikipedia.org/wiki/Tee_(command)) to record output to both including `> >(tee -a topsapp_img.out) 2> >(tee -a topsapp_img.err >&2)`.
 
 # Running with Docker (locally or on a server)
 
@@ -57,12 +61,13 @@ isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T01501
 3. Create a directory to mount the data files so you can inspect them outside of your docker container. Call it `topsapp_data`. Navigate to it. Copy the `sample_run.sh` in this directory, modifying it to add your Earthdata username and password e.g.
 
     ```
-    isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9 \
+    isce2_topsapp --username <username> \
+                  --password <password> \
+                  --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9 \
                   --secondary-scenes S1B_IW_SLC__1SDV_20210711T014922_20210711T014949_027740_034F80_859D \
-                                    S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404 \
-                                    S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C
-                  --username <username>
-                  --password <password>
+                                     S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404 \
+                                     S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C \
+                  > topsapp_img.out 2> topsapp_img.err
    ```
 
 4. Take a look around a docker container, mounting a volume built from the image with:
