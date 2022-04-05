@@ -1,10 +1,10 @@
-from jinja2 import Template
+import os
 import site
-from tqdm import tqdm
 import subprocess
 from pathlib import Path
-import os
 
+from jinja2 import Template
+from tqdm import tqdm
 
 TOPSAPP_STEPS = ['startup',
                  'preprocess',

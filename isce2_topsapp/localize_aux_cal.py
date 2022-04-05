@@ -1,7 +1,8 @@
-from pathlib import Path
-import requests
 import tarfile
+from pathlib import Path
 from typing import Union
+
+import requests
 
 S1A_AUX_URL = ('https://qc.sentinel1.groupcls.com/product/S1A/AUX_CAL/2019/02/'
                '28/S1A_AUX_CAL_V20190228T092500_G20210104T141310.SAFE.TGZ')

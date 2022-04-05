@@ -9,22 +9,28 @@ dependencies:
  - asf_search>=3.0.4
  - boto3
  - dateparser
- - fiona
  - geopandas
  - hyp3lib>=1.7
- - ipykernel
  - isce2
  - jinja2
- - jsonschema==3.2.0
- - jupyter
  - lxml
  - matplotlib
  - netcdf4
  - numpy
- - papermill
- - pytest
  - rasterio
  - shapely
  - tqdm
+ # for testing and distribution
+ - flake8
+ - flake8-import-order
+ - flake8-blind-except
+ - flake8-builtins
+ - ipykernel
+ - jsonschema==3.2.0
+ - jupyter
+ - papermill
+ - pytest
+ - setuptools
+ - setuptools_scm
  - pip:
    - git+https://github.com/ACCESS-Cloud-Based-InSAR/dem_stitcher.git

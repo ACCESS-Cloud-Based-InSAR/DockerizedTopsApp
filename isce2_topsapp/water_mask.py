@@ -1,9 +1,10 @@
+from typing import Union
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 from rasterio import features
 from rasterio.transform import array_bounds
-from typing import Union
 
 
 def rasterize_shapes_to_array(shapes: list,

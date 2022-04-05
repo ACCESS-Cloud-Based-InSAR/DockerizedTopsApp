@@ -1,5 +1,6 @@
-import papermill as pm
 from pathlib import Path
+
+import papermill as pm
 import pytest
 
 notebooks = ['localize-data.ipynb',

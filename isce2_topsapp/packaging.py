@@ -1,13 +1,14 @@
+import hashlib
+import json
 import os
 import subprocess
 from pathlib import Path
 from typing import Union
-import json
-import hashlib
-from dateparser import parse
-import numpy as np
-from .templates import read_netcdf_packaging_template
 
+import numpy as np
+from dateparser import parse
+
+from .templates import read_netcdf_packaging_template
 
 DATASET_VERSION = '2.0.5'
 
