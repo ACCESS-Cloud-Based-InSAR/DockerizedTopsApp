@@ -1,13 +1,21 @@
-name: PyTest and Flake8
+name: PyTest
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
 
 jobs:
   pytest:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.9]
+        python-version: ["3.8", "3.9", "3.10"]
 
     steps:
       - uses: actions/checkout@v2
@@ -24,11 +32,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
           activate-environment: topsapp_env
           environment-file: environment.yml
-
-      - name: flake8
-        shell: bash -l {0}
-        run: |
-          flake8 . --max-line-length=120 --import-order-style=pycharm --application-import-names isce2_topsapp --exclude=isce2_topsapp/packaging_utils/
 
       - name: Pytest in conda environment
         shell: bash -l {0}

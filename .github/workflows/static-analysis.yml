@@ -1,0 +1,12 @@
+name: Static analysis
+
+on: push
+
+jobs:
+  call-flake8-workflow:
+    uses: ASFHyP3/actions/.github/workflows/reusable-flake8.yml@main
+    with:
+      local_package_names: isce2_topsapp
+
+  call-secrets-analysis-workflow:
+    uses: ASFHyP3/actions/.github/workflows/reusable-secrets-analysis.yml@main
