@@ -15,7 +15,7 @@ setup(
     author='Charlie Marshak, David Bekaert, Grace Bato, Simran Sangha  Joseph H. Kennedy Brett Buzzunga, and others',
     author_email='charlie.z.marshak@jpl.nasa.gov',
 
-    license='Apache',
+    license='Apache-2.0',
     classifiers=[
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',
