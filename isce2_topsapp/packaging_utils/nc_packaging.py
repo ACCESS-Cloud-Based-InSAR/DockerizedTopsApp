@@ -4,6 +4,7 @@ from builtins import map
 from builtins import str
 from builtins import range
 from builtins import object
+import argparse
 import sys
 import json
 import logging
@@ -559,13 +560,9 @@ def main():
     cwd = os.getcwd()
     filename = os.path.join(cwd, 'tops_groups.json')
 
-    # open the file
-    f = open(filename)
-    # read the json file with planned netcdf4 structure and put the content in a dictionary
-    structure = json.load(f, object_pairs_hook=OrderedDict)
-    # close the file
-    f.close
-
+    with open(filename) as f:
+        # read the json file with planned netcdf4 structure and put the content in a dictionary
+        structure = json.load(f, object_pairs_hook=OrderedDict)
 
     # set netcdf file
     netcdf_outfile = structure["filename"]
@@ -607,14 +604,18 @@ def main():
         logger.error(traceback.format_exc())
         pass
 
+    source_statement = fid.getncattr('source')
+    software_statement = structure['software_statement']
+    fid.setncattr('source', f'{source_statement} {software_statement}')
+
     # close the file
     fid.close()
 
     logger.info('Done with packaging')
+
 
 if __name__ == '__main__':
     '''
         Main driver.
     '''
     main()
-
