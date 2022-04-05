@@ -2,7 +2,6 @@ import os
 import site
 import subprocess
 from pathlib import Path
-from typing import Union
 
 from jinja2 import Template
 from tqdm import tqdm

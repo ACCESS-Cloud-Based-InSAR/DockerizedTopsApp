@@ -2,9 +2,6 @@ import site
 import subprocess
 from pathlib import Path
 
-import numpy as np
-import rasterio
-from dem_stitcher.rio_tools import resample_by_multiple
 from dem_stitcher.stitcher import stitch_dem
 from lxml import etree
 from shapely.geometry import box
@@ -58,10 +55,9 @@ def download_dem_for_isce2(extent: list,
     dict
     """
     import os
-    import glob
     import shutil
     from osgeo import gdal
-    
+
     full_res_dem_dir = full_res_dem_dir or Path('.')
     low_res_dem_dir = low_res_dem_dir or Path('.')
 
@@ -71,30 +67,31 @@ def download_dem_for_isce2(extent: list,
     extent_geo = box(*extent)
     extent_buffered = list(extent_geo.buffer(buffer).bounds)
     extent_buffered = list(map(lambda e: round(e, 3), extent_buffered))
-    
+
     full_res_dem_path = full_res_dem_dir/'full_res.dem.wgs84'
     full_res_dem_path = str(full_res_dem_path.resolve())
     stitch_dem(extent_buffered,
-                       dem_name,
-                       full_res_dem_path,
-                       dst_ellipsoidal_height=True,
-                       dst_area_or_point='Point',
-                       max_workers=5)
-                       
+               dem_name,
+               full_res_dem_path,
+               dst_ellipsoidal_height=True,
+               dst_area_or_point='Point',
+               max_workers=5)
+
     # downsample to 3-arc sec
     downsamp_res = gdal.Open(full_res_dem_path).GetGeoTransform()[1]
     downsamp_res *= 3
     low_res_dem_path = (low_res_dem_dir/'low_res.dem.wgs84')
     low_res_dem_path = str(low_res_dem_path.resolve())
-    gdal.Warp(low_res_dem_path, full_res_dem_path, \
-                     options=gdal.WarpOptions(format = 'ISCE', \
-                     xRes = downsamp_res, \
-                     yRes = downsamp_res, \
-                     targetAlignedPixels = True, \
-                     multithread = True))
+    gdal.Warp(low_res_dem_path, full_res_dem_path,
+              options=gdal.WarpOptions(format='ISCE',
+                                       xRes=downsamp_res,
+                                       yRes=downsamp_res,
+                                       targetAlignedPixels=True,
+                                       multithread=True)
+              )
     # Update VRT
-    gdal.BuildVRT(low_res_dem_path+'.vrt', low_res_dem_path, \
-                            options=gdal.BuildVRTOptions(options=['-overwrite']))
+    gdal.BuildVRT(low_res_dem_path+'.vrt', low_res_dem_path,
+                  options=gdal.BuildVRTOptions(options=['-overwrite']))
 
     low_res_dem_xml = tag_dem_xml_as_ellipsoidal(low_res_dem_path)
     full_res_dem_xml = tag_dem_xml_as_ellipsoidal(full_res_dem_path)
