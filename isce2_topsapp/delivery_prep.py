@@ -7,8 +7,8 @@ import rasterio
 from PIL import Image
 from matplotlib import cm
 
-from .packaging import DATASET_VERSION
-from .water_mask import get_water_mask_raster
+from isce2_topsapp.packaging import DATASET_VERSION
+from isce2_topsapp.water_mask import get_water_mask_raster
 
 TEMPLATE_DIR = (Path(__file__).parent/'templates').absolute()
 SCHEMA_PATH = TEMPLATE_DIR/'daac_ingest_schema.json'

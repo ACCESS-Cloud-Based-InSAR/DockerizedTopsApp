@@ -9,7 +9,7 @@ from isce2_topsapp import (aws, download_aux_cal, download_dem_for_isce2,
                            download_orbits, download_slcs,
                            package_gunw_product, prepare_for_delivery,
                            topsapp_processing)
-from .json_encoder import MetadataEncoder
+from isce2_topsapp.json_encoder import MetadataEncoder
 
 
 def localize_data(reference_scenes: list,

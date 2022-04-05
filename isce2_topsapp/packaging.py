@@ -9,7 +9,7 @@ import numpy as np
 from dateparser import parse
 
 from isce2_topsapp import __version__
-from .templates import read_netcdf_packaging_template
+from isce2_topsapp.templates import read_netcdf_packaging_template
 
 DATASET_VERSION = '2.0.5'
 
