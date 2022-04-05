@@ -8,7 +8,7 @@ from typing import Union
 import numpy as np
 from dateparser import parse
 
-from isce2_topsapp import __version__
+import isce2_topsapp
 from isce2_topsapp.templates import read_netcdf_packaging_template
 
 DATASET_VERSION = '2.0.5'
@@ -175,7 +175,7 @@ def _write_json_config(*,
 
     nc_template['filename'] = f'{gunw_id}.nc'
     # This will be appended to the global source attribute
-    nc_template['software_statement'] = f'using the DockerizedTopsApp HyP3 plugin version {__version__}'
+    nc_template['software_statement'] = f'using the DockerizedTopsApp HyP3 plugin version {isce2_topsapp.__version__}'
 
     out_path = directory/'tops_groups.json'
     with open(out_path, 'w') as f:
