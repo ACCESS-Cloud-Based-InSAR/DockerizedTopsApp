@@ -1,13 +1,23 @@
 import datetime
+import json
 from pathlib import Path
+
 import numpy as np
 import rasterio
-import json
 from PIL import Image
 from matplotlib import cm
 
-from .packaging import DATASET_VERSION
-from .water_mask import get_water_mask_raster
+from isce2_topsapp.packaging import DATASET_VERSION
+from isce2_topsapp.water_mask import get_water_mask_raster
+
+TEMPLATE_DIR = (Path(__file__).parent/'templates').absolute()
+SCHEMA_PATH = TEMPLATE_DIR/'daac_ingest_schema.json'
+
+
+def get_dataset_schema() -> dict:
+    with open(SCHEMA_PATH) as f:
+        schema = json.load(f)
+    return schema
 
 
 def scale_img(img: np.ndarray,
@@ -115,26 +125,30 @@ def format_metadata(nc_path: Path,
     b_perp = read_baseline_perp(nc_path).mean()
 
     metadata = {}
-    metadata.update({"ogr_bbox": geojson['coordinates'],
+    # get 4 corners of bounding box of the geometry; default is 5 returning
+    # to start point
+    ogr_bbox = all_metadata['intersection_geo'].envelope.exterior.coords[:4]
+    metadata.update({"ogr_bbox": ogr_bbox,
                      "reference_scenes": all_metadata['reference_scenes'],
                      "secondary_scenes": all_metadata['secondary_scenes'],
-                     "sensing_start": ref_props['startTime'],
-                     "sensing_stop": ref_props['stopTime'],
-                     "orbit_number": [ref_props['orbit'], sec_props['orbit']],
-                     "platform": ref_props['platform'],
+                     "sensing_start": f'{ref_props["startTime"]}Z',
+                     "sensing_stop": f'{ref_props["stopTime"]}Z',
+                     "orbit_number": [int(ref_props['orbit']),
+                                      int(sec_props['orbit'])],
+                     "platform": [ref_props['platform'], sec_props['platform']],
                      "beam_mode": ref_props['beamModeType'],
                      "orbit_direction": ref_props['flightDirection'].lower(),
                      "dataset_type": 'slc',
                      "product_type": 'interferogram',
                      "polarization": "HH",
                      "look_direction": 'right',
-                     "track_number": ref_props['pathNumber'],
-                     "perpendicular_baseline": f'{b_perp:1.4f}'
+                     "track_number": int(ref_props['pathNumber']),
+                     "perpendicular_baseline":  round(float(b_perp), 4)
                      })
 
     data = {"label": label,
             "location": geojson,
-            "creation_timestamp": now.isoformat(),
+            "creation_timestamp": f'{now.isoformat()}Z',
             "version": DATASET_VERSION,
             "metadata": metadata}
 
@@ -143,23 +157,21 @@ def format_metadata(nc_path: Path,
 
 def prepare_for_delivery(nc_path: Path,
                          all_metadata: dict) -> Path:
-
-    nc_filename = nc_path.name
-    gunw_id = nc_filename.split('.')[0]
+    gunw_id = nc_path.stem
 
     out_dir = Path(gunw_id)
     out_dir.mkdir(exist_ok=True)
 
-    browse_path = out_dir / 'browse.png'
+    browse_path = out_dir / f'{gunw_id}.png'
     gen_browse_imagery(nc_path, browse_path)
 
     metadata = format_metadata(nc_path, all_metadata)
-    metadata_path = out_dir / 'dataset.json'
+
+    metadata_path = out_dir / f'{gunw_id}.json'
     json.dump(metadata,
               open(metadata_path, 'w'),
               indent=2)
 
-    # move product to Netcdf Path
-    nc_path.rename(out_dir / nc_filename)
+    nc_path.rename(out_dir / f'{gunw_id}.nc')
 
     return out_dir

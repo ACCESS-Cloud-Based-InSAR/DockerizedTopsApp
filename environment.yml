@@ -4,25 +4,34 @@ channels:
  - anaconda
  - defaults
 dependencies:
- - python=3.8
- - isce2
- - jupyter
- - papermill
- - ipykernel
- - rasterio
- - shapely
+ - python>=3.8
+ - pip
+ - asf_search>=3.0.4
+ - boto3
  - dateparser
+ - geopandas
+ - hyp3lib>=1.7
+ - isce2
  - jinja2
- - numpy
+ - lxml
  - matplotlib
  - netcdf4
- - fiona
- - geopandas
- - pip
- - boto3
- - asf_search>=3.0.4
+ - numpy
+ - rasterio
+ - shapely
+ - tqdm
+ # for testing and distribution
+ - flake8
+ - flake8-import-order
+ - flake8-blind-except
+ - flake8-builtins
+ - ipykernel
+ - jsonschema==3.2.0
+ - jupyter
+ - papermill
+ - pytest
+ - pytest-cov
+ - setuptools
+ - setuptools_scm
  - pip:
-   - dem_stitcher
-   - tqdm
-   - lxml
-   - click
+   - dem_stitcher>=2.1

@@ -1,13 +1,15 @@
+import hashlib
+import json
 import os
 import subprocess
 from pathlib import Path
 from typing import Union
-import json
-import hashlib
-from dateparser import parse
-import numpy as np
-from .templates import read_netcdf_packaging_template
 
+import numpy as np
+from dateparser import parse
+
+import isce2_topsapp
+from isce2_topsapp.templates import read_netcdf_packaging_template
 
 DATASET_VERSION = '2.0.5'
 
@@ -41,11 +43,10 @@ def get_geo_str(extent: list) -> str:
     lon_dir = 'W' if lon <= 0 else 'E'
     lat_dir = 'N' if lat >= 0 else 'S'
 
-    lon_n, lat_n = abs(round(lon)), abs(round(lat))
-    lon_s = f'{lon_n}{lon_dir}'
-
-    lat_s = f'{lat_n}{lat_dir}'
-    return f'{lon_s}_{lat_s}'
+    lon_north, lat_north = abs(round(lon)), abs(round(lat))
+    lon_str = f'{lon_north:05d}{lon_dir}'
+    lat_str = f'{lat_north:05d}{lat_dir}'
+    return f'{lon_str}_{lat_str}'
 
 
 def get_center_time(properties: list) -> str:
@@ -82,6 +83,9 @@ def get_gunw_id(reference_properties: list,
     secondary_date = secondary_properties[0]['startTime'].split('T')[0]
     secondary_date = secondary_date.replace('-', '')
 
+    # date pair
+    date_pair = f'{reference_date}_{secondary_date}'
+
     # Geo string
     geo_str = get_geo_str(extent)
 
@@ -100,12 +104,16 @@ def get_gunw_id(reference_properties: list,
 
     ids = ['S1-GUNW',
            asc_or_desc,
+           # right looking
            'R',
            track,
-           reference_date,
-           secondary_date,
+           # legacy constant
+           'tops',
+           date_pair,
            ref_center_time,
            geo_str,
+           # legacy constant
+           'PP',
            ifg_hash_trunc,
            version]
 
@@ -166,6 +174,9 @@ def _write_json_config(*,
     nc_template = read_netcdf_packaging_template()
 
     nc_template['filename'] = f'{gunw_id}.nc'
+    # This will be appended to the global source attribute
+    nc_template['software_statement'] = f'using the DockerizedTopsApp HyP3 plugin version {isce2_topsapp.__version__}'
+
     out_path = directory/'tops_groups.json'
     with open(out_path, 'w') as f:
         json.dump(nc_template, f, indent=2, sort_keys=True)

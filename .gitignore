@@ -97,7 +97,8 @@ conf/settings.conf
 tests/*.ipynb
 tests/out/*.ipynb
 !tests/localize-data.ipynb
+/isce2_topsapp.egg-info/
 !tests/prepare-for-delivery.ipynb
 
-# Dataset delivery file
-**/dataset.json
+# Jsons in Test Directory
+tests/**/*.json
