@@ -35,7 +35,6 @@ setup(
         'dem_stitcher>=2.1',
         'geopandas',
         'hyp3lib>=1.7',
-        'isce2',
         'jinja2',
         'lxml',
         'matplotlib',
