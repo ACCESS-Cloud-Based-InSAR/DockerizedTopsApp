@@ -26,4 +26,5 @@ __all__ = [
     'topsapp_processing',
     'package_gunw_product',
     'prepare_for_delivery',
+    '__version__',
 ]
