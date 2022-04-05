@@ -1,6 +1,6 @@
-include LICENSE
+include LICENSE.txt
 include README.md
 
-recursive-exclude tests *
-recursive-exclude tmp *
+graft isce2_topsapp
+
 global-exclude *.py[cod] __pycache__ *.so
