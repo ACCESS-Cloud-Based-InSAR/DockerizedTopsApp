@@ -1,3 +1,5 @@
 .*gitleaks.toml$
 .*.ipynb$
 .*/templates/.*
+tests/sample_loc_metadata.json
+Dockerfile
