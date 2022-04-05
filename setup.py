@@ -32,6 +32,7 @@ setup(
         'asf_search>=3.0.4',
         'boto3',
         'dateparser',
+        'dem_stitcher>=2.1',
         'geopandas',
         'hyp3lib>=1.7',
         'isce2',
