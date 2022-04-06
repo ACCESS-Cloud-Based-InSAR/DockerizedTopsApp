@@ -20,8 +20,8 @@ We note all the input datasets are publicly available using a NASA Earthdata acc
 
 1. Clone this repo `git clone https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp.git`
 2. Navigate with your terminal to the repo.
-3. Create a new environment and install requirements using `conda env update -n topsapp_env --file environment.yml` (or use [`mamba`](https://github.com/mamba-org/mamba) to speed install up)
-4. Install the package from cloned repo using `pip install .`
+3. Create a new environment and install requirements using `conda env update --file environment.yml` (or use [`mamba`](https://github.com/mamba-org/mamba) to speed install up)
+4. Install the package from cloned repo using `python -m pip install -e .`
 
 ## Additional setup
 
