@@ -67,9 +67,9 @@ def download_dem_for_isce2(extent: list,
 
     extent_geo = box(*extent)
     extent_buffered = list(extent_geo.buffer(buffer).bounds)
-    ### Truncate to integers
+    # Truncate to integers
     extent_buffered = [np.floor(extent_buffered[0]), np.floor(extent_buffered[1]),
-                                 np.ceil(extent_buffered[2]), np.ceil(extent_buffered[3])]
+                       np.ceil(extent_buffered[2]), np.ceil(extent_buffered[3])]
 
     full_res_dem_path = full_res_dem_dir/'full_res.dem.wgs84'
     full_res_dem_path = str(full_res_dem_path.resolve())
