@@ -12,3 +12,5 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Initial release of the ARIA/JPL DockerizedTopsApp science processor, and [HyP3](https://hyp3-docs.asf.alaska.edu)
 plugin, for generating an ARIA Sentinel-1 [Geocoded Unwrapped Interferogram](https://aria.jpl.nasa.gov/products/standard-displacement-products.html)
 (GUNW) product from a collection of valid Sentinel-1 IW-mode Single Look Complex (SLC) scenes using [ISCE2](https://github.com/isce-framework/isce2).
+
+Round DEM bounds to nearest integer to reflect ISCE convention and avoid geocoding artifacts.
