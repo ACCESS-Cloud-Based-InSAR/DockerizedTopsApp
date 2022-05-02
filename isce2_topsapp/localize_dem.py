@@ -37,7 +37,7 @@ def download_dem_for_isce2(extent: list,
                            dem_name: str = 'glo_30',
                            full_res_dem_dir: Path = None,
                            low_res_dem_dir: Path = None,
-                           buffer: float = .004) -> dict:
+                           buffer: float = 0.1) -> dict:
     """
     Parameters
     ----------
@@ -48,7 +48,7 @@ def download_dem_for_isce2(extent: list,
     full_res_dem_dir : Path, optional
     low_res_dem_dir : Path, optional
     buffer : float, optional
-        In degrees, by default .004, which is .5 km at equator
+        In degrees, by default 0.1, which is 12.5 km at equator
 
     Returns
     -------
@@ -56,6 +56,7 @@ def download_dem_for_isce2(extent: list,
     """
     import os
     import shutil
+    import numpy as np
     from osgeo import gdal
 
     full_res_dem_dir = full_res_dem_dir or Path('.')
@@ -66,7 +67,9 @@ def download_dem_for_isce2(extent: list,
 
     extent_geo = box(*extent)
     extent_buffered = list(extent_geo.buffer(buffer).bounds)
-    extent_buffered = list(map(lambda e: round(e, 3), extent_buffered))
+    ### Truncate to integers
+    extent_buffered = [np.floor(extent_buffered[0]), np.floor(extent_buffered[1]),
+                                 np.ceil(extent_buffered[2]), np.ceil(extent_buffered[3])]
 
     full_res_dem_path = full_res_dem_dir/'full_res.dem.wgs84'
     full_res_dem_path = str(full_res_dem_path.resolve())
