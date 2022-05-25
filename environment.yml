@@ -34,4 +34,4 @@ dependencies:
  - setuptools
  - setuptools_scm
  - pip:
-   - dem_stitcher>=2.1
+   - git+https://github.com/ACCESS-Cloud-Based-InSAR/dem-stitcher.git@reproject-and-test
