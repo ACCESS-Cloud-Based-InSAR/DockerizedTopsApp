@@ -86,7 +86,7 @@ def download_dem_for_isce2(extent: list,
     dem_profile_isce['nodata'] = None
     dem_profile_isce['driver'] = 'ISCE'
     # remove keys that do not work with ISCE gdal format
-    [dem_profile_isce.pop(key) for key in ['blockxsize', 'blockysize', 'compress', 'interleave']]
+    [dem_profile_isce.pop(key) for key in ['blockxsize', 'blockysize', 'compress', 'interleave', 'tiled']]
 
     with rasterio.open(full_res_dem_path, 'w', **dem_profile_isce) as ds:
         ds.write(dem_array, 1)
