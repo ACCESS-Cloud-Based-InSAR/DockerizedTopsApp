@@ -81,15 +81,20 @@ def download_dem_for_isce2(extent: list,
 
     full_res_dem_path = full_res_dem_dir / 'full_res.dem.wgs84'
     dem_array[np.isnan(dem_array)] = 0.
-    dem_profile['nodata'] = None
-    dem_profile['driver'] = 'ISCE'
-    with rasterio.open(full_res_dem_path, 'w', **dem_profile) as ds:
+
+    dem_profile_isce = dem_profile.copy()
+    dem_profile_isce['nodata'] = None
+    dem_profile_isce['driver'] = 'ISCE'
+    # remove keys that do not work with ISCE gdal format
+    [dem_profile_isce.pop(key) for key in ['blockxsize', 'blockysize', 'compress', 'interleave']]
+
+    with rasterio.open(full_res_dem_path, 'w', **dem_profile_isce) as ds:
         ds.write(dem_array, 1)
 
     geocode_res = dem_res * 3
     dst_profile = update_profile_resolution(dem_profile, geocode_res)
     dem_geocode_arr, dem_geocode_profile = reproject_arr_to_match_profile(dem_array,
-                                                                          dem_profile,
+                                                                          dem_profile_isce,
                                                                           dst_profile,
                                                                           num_threads=5,
                                                                           resampling='bilinear')
