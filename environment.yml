@@ -45,4 +45,5 @@ dependencies:
    - notebook
    - ipykernel
    - jupyter
+   - joblib
    - git+https://github.com/ACCESS-Cloud-Based-InSAR/dem-stitcher.git@reproject-and-test
