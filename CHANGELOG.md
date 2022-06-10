@@ -10,7 +10,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.1.2]
 
 ### Changed
-* Uses updated dem-stitcher for square resolution cells and correct translation/resampling
+* Uses updated API dem-stitcher for square resolution cells and translation/resampling
 * Updates dataset (patch change) from 2.0.5 to 2.0.6
 * Sort imports for updated files
 
