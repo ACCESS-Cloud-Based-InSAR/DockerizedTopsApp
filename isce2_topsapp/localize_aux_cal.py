@@ -14,7 +14,7 @@ def download_aux_cal(aux_cal_dir: Union[str, Path] = None):
     aux_cal_dir.mkdir(exist_ok=True, parents=True)
 
     def download_one(url):
-        resp = requests.get(S1A_AUX_URL)
+        resp = requests.get(url)
         file_name = url.split('/')[-1]
         out_path = aux_cal_dir/file_name
 
