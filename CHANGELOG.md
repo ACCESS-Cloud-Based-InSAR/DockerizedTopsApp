@@ -7,6 +7,13 @@ and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.1.2]
+
+### Fixed
+* Sentinel-1 A/B `aux-cal` files are found at url: https://sar-mpc.eu/ipf-adf/aux_cal/
+* Unpack `aux-cal` with python standard package `zipfile`
+* Fix aux-cal bug (only S1A was being downloaded)
+
 ## [0.1.1]
 
 ### Fixed
