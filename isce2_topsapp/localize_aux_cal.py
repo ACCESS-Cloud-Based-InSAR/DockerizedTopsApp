@@ -1,13 +1,11 @@
-import tarfile
+import zipfile
 from pathlib import Path
 from typing import Union
 
 import requests
 
-S1A_AUX_URL = ('https://qc.sentinel1.groupcls.com/product/S1A/AUX_CAL/2019/02/'
-               '28/S1A_AUX_CAL_V20190228T092500_G20210104T141310.SAFE.TGZ')
-S1B_AUX_URL = ('https://qc.sentinel1.groupcls.com/product/S1B/AUX_CAL/2019/05/'
-               '14/S1B_AUX_CAL_V20190514T090000_G20210104T140612.SAFE.TGZ')
+S1A_AUX_URL = 'https://sar-mpc.eu/download/55282da1-679d-4ecf-aeef-d06b024451cf'
+S1B_AUX_URL = 'https://sar-mpc.eu/download/3c8b7c8d-d3de-4381-a19d-7611fb8734b9'
 
 
 def download_aux_cal(aux_cal_dir: Union[str, Path] = None):
@@ -16,7 +14,7 @@ def download_aux_cal(aux_cal_dir: Union[str, Path] = None):
     aux_cal_dir.mkdir(exist_ok=True, parents=True)
 
     def download_one(url):
-        resp = requests.get(S1A_AUX_URL)
+        resp = requests.get(url)
         file_name = url.split('/')[-1]
         out_path = aux_cal_dir/file_name
 
@@ -27,9 +25,9 @@ def download_aux_cal(aux_cal_dir: Union[str, Path] = None):
     s1a_path = download_one(S1A_AUX_URL)
     s1b_path = download_one(S1B_AUX_URL)
 
-    with tarfile.open(s1a_path) as tar:
-        tar.extractall(path=aux_cal_dir)
-    with tarfile.open(s1b_path) as tar:
-        tar.extractall(path=aux_cal_dir)
+    with zipfile.ZipFile(s1a_path) as zip_file:
+        zip_file.extractall(aux_cal_dir)
+    with zipfile.ZipFile(s1b_path) as zip_file:
+        zip_file.extractall(aux_cal_dir)
 
     return {'aux_cal_dir': str(aux_cal_dir)}
