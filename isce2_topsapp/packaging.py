@@ -11,7 +11,7 @@ from dateparser import parse
 import isce2_topsapp
 from isce2_topsapp.templates import read_netcdf_packaging_template
 
-DATASET_VERSION = '2.0.5'
+DATASET_VERSION = '2.0.6'
 
 
 """Warning: the packaging scripts were written as command line scripts and

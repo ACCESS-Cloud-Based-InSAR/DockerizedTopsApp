@@ -7,6 +7,14 @@ and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.1.3]
+
+### Changed
+* Uses updated API dem-stitcher for square resolution cells and translation/resampling
+* Updates dataset (patch change) from 2.0.5 to 2.0.6
+* Sort imports for updated files
+
+
 ## [0.1.2]
 
 ### Fixed

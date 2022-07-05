@@ -2,6 +2,10 @@ import site
 import subprocess
 from pathlib import Path
 
+import numpy as np
+import rasterio
+from dem_stitcher.rio_tools import (reproject_arr_to_match_profile,
+                                    update_profile_resolution)
 from dem_stitcher.stitcher import stitch_dem
 from lxml import etree
 from shapely.geometry import box
@@ -9,6 +13,7 @@ from shapely.geometry import box
 
 def tag_dem_xml_as_ellipsoidal(dem_path: Path) -> str:
     xml_path = str(dem_path) + '.xml'
+    assert(Path(xml_path).exists())
     tree = etree.parse(xml_path)
     root = tree.getroot()
 
@@ -37,7 +42,7 @@ def download_dem_for_isce2(extent: list,
                            dem_name: str = 'glo_30',
                            full_res_dem_dir: Path = None,
                            low_res_dem_dir: Path = None,
-                           buffer: float = 0.1) -> dict:
+                           buffer: float = .1) -> dict:
     """
     Parameters
     ----------
@@ -48,17 +53,11 @@ def download_dem_for_isce2(extent: list,
     full_res_dem_dir : Path, optional
     low_res_dem_dir : Path, optional
     buffer : float, optional
-        In degrees, by default 0.1, which is 12.5 km at equator
-
+        In degrees, by default .1, which is about 11 km at equator
     Returns
     -------
     dict
     """
-    import os
-    import shutil
-    import numpy as np
-    from osgeo import gdal
-
     full_res_dem_dir = full_res_dem_dir or Path('.')
     low_res_dem_dir = low_res_dem_dir or Path('.')
 
@@ -67,45 +66,50 @@ def download_dem_for_isce2(extent: list,
 
     extent_geo = box(*extent)
     extent_buffered = list(extent_geo.buffer(buffer).bounds)
-    # Truncate to integers
     extent_buffered = [np.floor(extent_buffered[0]), np.floor(extent_buffered[1]),
                        np.ceil(extent_buffered[2]), np.ceil(extent_buffered[3])]
 
-    full_res_dem_path = full_res_dem_dir/'full_res.dem.wgs84'
-    full_res_dem_path = str(full_res_dem_path.resolve())
-    stitch_dem(extent_buffered,
-               dem_name,
-               full_res_dem_path,
-               dst_ellipsoidal_height=True,
-               dst_area_or_point='Point',
-               max_workers=5)
+    dem_res = 0.0002777777777777777775
+    dem_array, dem_profile = stitch_dem(extent_buffered,
+                                        dem_name,
+                                        dst_ellipsoidal_height=True,
+                                        dst_area_or_point='Point',
+                                        n_threads_downloading=5,
+                                        # ensures square resolution
+                                        dst_resolution=dem_res
+                                        )
 
-    # downsample to 3-arc sec
-    downsamp_res = gdal.Open(full_res_dem_path).GetGeoTransform()[1]
-    downsamp_res *= 3
-    low_res_dem_path = (low_res_dem_dir/'low_res.dem.wgs84')
-    low_res_dem_path = str(low_res_dem_path.resolve())
-    gdal.Warp(low_res_dem_path, full_res_dem_path,
-              options=gdal.WarpOptions(format='ISCE',
-                                       xRes=downsamp_res,
-                                       yRes=downsamp_res,
-                                       targetAlignedPixels=True,
-                                       multithread=True)
-              )
-    # Update VRT
-    gdal.BuildVRT(low_res_dem_path+'.vrt', low_res_dem_path,
-                  options=gdal.BuildVRTOptions(options=['-overwrite']))
+    full_res_dem_path = full_res_dem_dir / 'full_res.dem.wgs84'
+    dem_array[np.isnan(dem_array)] = 0.
+
+    dem_profile_isce = dem_profile.copy()
+    dem_profile_isce['nodata'] = None
+    dem_profile_isce['driver'] = 'ISCE'
+    # remove keys that do not work with ISCE gdal format
+    [dem_profile_isce.pop(key) for key in ['blockxsize', 'blockysize', 'compress', 'interleave', 'tiled']]
+
+    with rasterio.open(full_res_dem_path, 'w', **dem_profile_isce) as ds:
+        ds.write(dem_array, 1)
+
+    geocode_res = dem_res * 3
+    dst_profile = update_profile_resolution(dem_profile_isce, geocode_res)
+    dem_geocode_arr, dem_geocode_profile = reproject_arr_to_match_profile(dem_array,
+                                                                          dem_profile_isce,
+                                                                          dst_profile,
+                                                                          num_threads=5,
+                                                                          resampling='bilinear')
+    dem_geocode_arr = dem_geocode_arr[0, ...]
+    low_res_dem_path = low_res_dem_dir / 'low_res.dem.wgs84'
+
+    dem_geocode_profile['driver'] = 'ISCE'
+    with rasterio.open(low_res_dem_path, 'w', **dem_geocode_profile) as ds:
+        ds.write(dem_geocode_arr, 1)
 
     low_res_dem_xml = tag_dem_xml_as_ellipsoidal(low_res_dem_path)
     full_res_dem_xml = tag_dem_xml_as_ellipsoidal(full_res_dem_path)
 
-    shutil.copyfile(full_res_dem_path+'.vrt', full_res_dem_path+'.vrt_OG')
-    shutil.copyfile(low_res_dem_path+'.vrt', low_res_dem_path+'.vrt_OG')
     fix_image_xml(low_res_dem_xml)
     fix_image_xml(full_res_dem_xml)
-    # circumvent VRT bug
-    os.rename(full_res_dem_path+'.vrt_OG', full_res_dem_path+'.vrt')
-    os.rename(low_res_dem_path+'.vrt_OG', low_res_dem_path+'.vrt')
 
     return {'extent_buffered': extent_buffered,
             'full_res_dem_path': full_res_dem_path,
