@@ -38,4 +38,4 @@ dependencies:
  - shapely
  - tqdm
  - pip:
-   - dem-stitcher>=2.2.1
+   - dem-stitcher>=2.3.0
