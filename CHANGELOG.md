@@ -10,10 +10,12 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.1.3]
 
 ### Changed
-* Uses updated API dem-stitcher for square resolution cells and translation/resampling
+* Uses updated API dem-stitcher for square resolution cells and translation/resampling (>=2.2.0)
 * Updates dataset (patch change) from 2.0.5 to 2.0.6
 * Sort imports for updated files
 
+### Fixed
+* Uses dem-stitcher>=v2.3.0, which by default, fills in `glo-30` tiles that are missing over Armenia and Azerbaijan with the available `glo-90` tiles (upsampled).
 
 ## [0.1.2]
 
