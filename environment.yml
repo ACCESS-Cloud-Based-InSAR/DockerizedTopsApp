@@ -37,4 +37,4 @@ dependencies:
  - setuptools_scm
  - shapely
  - tqdm
- - dem-stitcher>=2.3.0
+ - dem_stitcher>=2.3.0
