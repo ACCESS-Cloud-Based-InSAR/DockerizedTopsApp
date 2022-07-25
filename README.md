@@ -45,7 +45,7 @@ isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T01501
                                  S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C
 ```
 Add `> topsapp_img.out 2> topsapp_img.err` to avoid unnecessary output to your terminal and record the stdout and stderr as files.
-This is reflected in the (`sample_run.sh`)[sample_run.sh].
+This is reflected in the [`sample_run.sh`](sample_run.sh).
 
 To be even more explicity, you can use [`tee`](https://en.wikipedia.org/wiki/Tee_(command)) to record output to both including `> >(tee -a topsapp_img.out) 2> >(tee -a topsapp_img.err >&2)`.
 
