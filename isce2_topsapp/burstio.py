@@ -7,20 +7,31 @@ from shapely import geometry
 
 
 def generate_burst_request(safe_url, image_number, burst_number, content):
+    """ Trying to re-create this command:
+
+    curl --get \
+         --verbose \
+         --data-urlencode "zip_url=https://datapool.asf.alaska.edu/SLC/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip" \
+         --data-urlencode "image_number=1" \
+         --data-urlencode "burst_number=1" \
+         --header "Authorization: Bearer $EDL_TOKEN" \
+         --location \
+         --output test.xml \
+        https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata
+    """
     token = os.environ['EDL_TOKEN']
     urls = {
         'metadata': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata',
-        'data': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata',
+        'data': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/geotiff',
     }
 
     url = urls[content]
     headers = {
         'Authorization': f'Bearer {token}',
-        'Referer': 't',
         'Content-Type': 'application/x-www-form-urlencoded',
     }
-    data = f'zip_url={safe_url}&image_number={image_number}&burst_number={burst_number}'
-    return {'url': url, 'headers': headers, 'data': data}
+    data = {'zip_url': safe_url, 'image_number': str(image_number), 'burst_number': str(burst_number)}
+    return {'url': url, 'headers': headers, 'json': data, 'allow_redirects': True}
 
 
 def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do_esd, range_looks, azimuth_looks):
