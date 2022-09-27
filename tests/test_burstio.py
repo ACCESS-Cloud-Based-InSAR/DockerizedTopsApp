@@ -7,6 +7,8 @@ import requests
 
 from isce2_topsapp import burstio
 
+url_base = 'https://datapool.asf.alaska.edu/SLC'
+
 
 @pytest.fixture(scope='module')
 def annotation():
@@ -43,12 +45,9 @@ def test_create_job_xml():
     assert ET.fromstring(job_xml)
 
 
+# TODO figure out how to obtain OK response without downloading data
 def test_generate_burst_request():
-    safe_url = (
-        "https://datapool.asf.alaska.edu/SLC/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip"
-    )
-    image_number = 2
-    burst_number = 3
-    params = burstio.generate_burst_request(safe_url, image_number, burst_number, 'metadata')
-    response = requests.head(**params)
+    safe_url = f'{url_base}/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip'
+    params = burstio.generate_burst_request(safe_url, image_number=1, burst_number=1, content='metadata')
+    response = requests.get(**params)
     assert response.ok

@@ -26,12 +26,9 @@ def generate_burst_request(safe_url, image_number, burst_number, content):
     }
 
     url = urls[content]
-    headers = {
-        'Authorization': f'Bearer {token}',
-        'Content-Type': 'application/x-www-form-urlencoded',
-    }
-    data = {'zip_url': safe_url, 'image_number': str(image_number), 'burst_number': str(burst_number)}
-    return {'url': url, 'headers': headers, 'json': data, 'allow_redirects': True}
+    headers = {'Authorization': f'Bearer {token}'}
+    params = {'zip_url': safe_url, 'image_number': str(image_number), 'burst_number': str(burst_number)}
+    return {'url': url, 'headers': headers, 'params': params}
 
 
 def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do_esd, range_looks, azimuth_looks):
