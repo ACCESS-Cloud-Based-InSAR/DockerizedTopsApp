@@ -1,7 +1,9 @@
-import pandas as pd
 import xml.etree.ElementTree as ET
-from shapely import geometry
 from pathlib import Path
+
+import pandas as pd
+
+from shapely import geometry
 
 
 def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox):
@@ -86,5 +88,5 @@ if __name__ == '__main__':
     # download_metadata()
     # download_data()
 
-    bounds = get_bounding_box(filename, burst_index-1)  # 0 indexed
+    bounds = get_bounding_box(filename, burst_index - 1)  # 0 indexed
     print(bounds)
