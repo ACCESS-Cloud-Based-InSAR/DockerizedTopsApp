@@ -46,8 +46,34 @@ def test_create_job_xml():
 
 
 # TODO figure out how to obtain OK response without downloading data
-def test_generate_burst_request():
+def test_create_burst_request():
     safe_url = f'{url_base}/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip'
     params = burstio.generate_burst_request(safe_url, image_number=1, burst_number=1, content='metadata')
     response = requests.get(**params)
     assert response.ok
+
+
+def test_create_directories(tmpdir):
+    tmpdir = Path(tmpdir)
+    head_dir = burstio.create_directories('a', 'b', tmpdir)
+
+    tmp_metadata = head_dir / 'a' / 'annotation'
+    assert tmp_metadata.exists()
+
+
+@pytest.mark.slow()
+def test_prep_burst_job():
+    base_path = Path('~/Data/tmp')
+    url_ref = f'{url_base}/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip'
+    url_sec = f'{url_base}/SA/S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.zip'
+    image_number = 1
+    burst_number = 1
+    ref_dict = {'safe_url': url_ref, 'image_number': image_number, 'burst_number': burst_number}
+    sec_dict = {'safe_url': url_sec, 'image_number': image_number, 'burst_number': burst_number}
+
+    burstio.prep_burst_job(ref_dict, sec_dict, base_path)
+    ref_path = base_path / 'S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.SAFE'
+    sec_path = base_path / 'S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.SAFE'
+
+    assert (ref_path / 'manifest.safe').exists()
+    assert (sec_path / 'manifest.safe').exists()

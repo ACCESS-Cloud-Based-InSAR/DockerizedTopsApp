@@ -1,24 +1,39 @@
 import os
 import xml.etree.ElementTree as ET
+from itertools import product
 from pathlib import Path
 
 import pandas as pd
 from shapely import geometry
 
 
-def generate_burst_request(safe_url, image_number, burst_number, content):
-    """ Trying to re-create this command:
+class Burst:
+    def __init__(self, url, image_number, burst_number):
+        self.safe_url = url
+        self.image_number = image_number
+        self.burst_number = burst_number
 
-    curl --get \
-         --verbose \
-         --data-urlencode "zip_url=https://datapool.asf.alaska.edu/SLC/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip" \
-         --data-urlencode "image_number=1" \
-         --data-urlencode "burst_number=1" \
-         --header "Authorization: Bearer $EDL_TOKEN" \
-         --location \
-         --output test.xml \
-        https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata
+
+def create_directories(reference_safe, secondary_safe, base_path=Path('.')):
+    """Creates this structure:
+    base
+    ├── reference.safe
+    │   ├── annotation
+    │   └── measurement
+    └── secondary.safe
+        ├── annotation
+        └── measurement
     """
+    combos = product((reference_safe, secondary_safe), ('measurement', 'annotation'))
+    paths = [base_path / a / b for a, b in combos]
+    for p in paths:
+        if not p.exists():
+            p.mkdir(parents=True, exist_ok=True)
+
+    return base_path
+
+
+def create_burst_request(safe_url, image_number, burst_number, content):
     token = os.environ['EDL_TOKEN']
     urls = {
         'metadata': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata',
@@ -111,6 +126,17 @@ def get_bounding_box(annotation_path, burst_index):
     print(gcp_df)
     bounds = create_geometry(gcp_df, burst_index, lines_per_burst)[1]
     return bounds
+
+
+def prep_burst_job(reference_dict, secondary_dict, base_path):
+    """Steps
+    1. Download + parse metadata
+    2. Create directory structure
+    3. Extract and write metadata files
+    4. (Optional) download manifest.safe(s)
+    5. Download geotiffs
+    """
+    return None
 
 
 if __name__ == '__main__':
