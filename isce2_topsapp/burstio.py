@@ -1,36 +1,72 @@
 import os
 import xml.etree.ElementTree as ET
-from itertools import product
 from pathlib import Path
 
 import pandas as pd
+import requests
 from shapely import geometry
 
+URL_BASE = 'https://datapool.asf.alaska.edu/SLC'
 
-class Burst:
-    def __init__(self, url, image_number, burst_number):
-        self.safe_url = url
+
+class BurstMetadata:
+    def __init__(self, safe_url, image_number, burst_number, metadata):
+        self.safe_url = safe_url
         self.image_number = image_number
         self.burst_number = burst_number
+        self.safe_name = f'{self.safe_url.split("/")[-1][:-4]}.SAFE'
 
+        image_numbers = [int(x.attrib['source_filename'].split('-')[-1][2]) for x in metadata]
+        products = [x.tag for x in metadata]
+        combos = list(zip(image_numbers, products))
 
-def create_directories(reference_safe, secondary_safe, base_path=Path('.')):
-    """Creates this structure:
-    base
-    ├── reference.safe
-    │   ├── annotation
-    │   └── measurement
-    └── secondary.safe
-        ├── annotation
-        └── measurement
-    """
-    combos = product((reference_safe, secondary_safe), ('measurement', 'annotation'))
-    paths = [base_path / a / b for a, b in combos]
-    for p in paths:
-        if not p.exists():
-            p.mkdir(parents=True, exist_ok=True)
+        files = {'product': 'annotation', 'calibration': 'calibration', 'noise': 'noise'}
+        for name in files:
+            elem = metadata[combos.index((self.image_number, name))]
+            content = elem.find('content')
+            content.tag = 'product'
+            setattr(self, files[name], content)
+            setattr(self, f'{files[name]}_name', elem.attrib['source_filename'])
 
-    return base_path
+        self.bounds = self.get_bounding_box()
+
+    def reformat_gcp(self, point):
+        attribs = ['line', 'pixel', 'latitude', 'longitude', 'height']
+        values = {}
+        for attrib in attribs:
+            values[attrib] = float(point.find(attrib).text)
+        return values
+
+    def create_gcp_df(self, points):
+        gcp_df = pd.DataFrame([self.reformat_gcp(x) for x in points])
+        gcp_df = gcp_df.sort_values(['line', 'pixel']).reset_index(drop=True)
+        return gcp_df
+
+    def create_geometry(self, gcp_df, lines_per_burst):
+        line_start = self.burst_number * lines_per_burst
+        line_end = (self.burst_number + 1) * lines_per_burst
+        first_line = gcp_df.loc[gcp_df['line'] == line_start, ['longitude', 'latitude']]
+        second_line = gcp_df.loc[gcp_df['line'] == line_end, ['longitude', 'latitude']]
+
+        x1 = first_line['longitude'].tolist()
+        y1 = first_line['latitude'].tolist()
+        x2 = second_line['longitude'].tolist()
+        y2 = second_line['latitude'].tolist()
+        x2.reverse()
+        y2.reverse()
+        x = x1 + x2
+        y = y1 + y2
+        footprint = geometry.Polygon(zip(x, y))
+        centroid = tuple([x[0] for x in footprint.centroid.xy])
+        return footprint, footprint.bounds, centroid
+
+    def get_bounding_box(self):
+        lines_per_burst = int(self.annotation.findtext('.//{*}linesPerBurst'))
+        points = self.annotation.findall('.//{*}geolocationGridPoint')
+
+        gcp_df = self.create_gcp_df(points)
+        bounds = self.create_geometry(gcp_df, lines_per_burst)[1]
+        return bounds
 
 
 def create_burst_request(safe_url, image_number, burst_number, content):
@@ -42,8 +78,54 @@ def create_burst_request(safe_url, image_number, burst_number, content):
 
     url = urls[content]
     headers = {'Authorization': f'Bearer {token}'}
-    params = {'zip_url': safe_url, 'image_number': str(image_number), 'burst_number': str(burst_number)}
+    params = {
+        'zip_url': safe_url,
+        'image_number': str(image_number),
+        'burst_number': str(burst_number),
+    }
     return {'url': url, 'headers': headers, 'params': params}
+
+
+def download_metadata(safe_url, image_number, burst_number, out_file=None):
+    request_params = create_burst_request(safe_url, image_number, burst_number, content='metadata')
+    response = requests.get(**request_params)
+    if not response.ok:
+        raise(RuntimeError('Response is not OK'))
+    metadata = ET.fromstring(response.content)
+    if out_file:
+        ET.ElementTree(metadata).write(out_file, encoding='UTF-8', xml_declaration=True)
+    return BurstMetadata(metadata, safe_url, image_number, burst_number)
+
+
+def spoof_safe(burst, base_path=Path('.')):
+    """Creates this file structure:
+    SLC.SAFE/
+    ├── measurement/
+    └── annotation/
+        ├── annotation.xml
+        └── calbiration/
+            ├── calibration.xml
+            └── noise.xml
+    """
+    safe_path = base_path / burst.safe_name
+    annotation_path = safe_path / 'annotation'
+    calibration_path = safe_path / 'annotation' / 'calibration'
+    measurement_path = safe_path / 'measurement'
+    paths = [annotation_path, calibration_path, measurement_path]
+    for p in paths:
+        if not p.exists():
+            p.mkdir(parents=True)
+
+    ET.ElementTree(burst.annotation).write(
+        annotation_path / burst.annotation_name, encoding='UTF-8', xml_declaration=True
+    )
+    ET.ElementTree(burst.calibration).write(
+        calibration_path / burst.calibration_name, encoding='UTF-8', xml_declaration=True
+    )
+    ET.ElementTree(burst.noise).write(
+        calibration_path / burst.noise_name, encoding='UTF-8', xml_declaration=True
+    )
+    return safe_path
 
 
 def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do_esd, range_looks, azimuth_looks):
@@ -86,48 +168,6 @@ def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do
     return config
 
 
-def reformat_gcp(point):
-    attribs = ['line', 'pixel', 'latitude', 'longitude', 'height']
-    values = {}
-    for attrib in attribs:
-        values[attrib] = float(point.find(attrib).text)
-    return values
-
-
-def create_gcp_df(annotation):
-    points = annotation.findall('.//{*}geolocationGridPoint')
-    gcp_df = pd.DataFrame([reformat_gcp(x) for x in points])
-    gcp_df = gcp_df.sort_values(['line', 'pixel']).reset_index(drop=True)
-    return gcp_df
-
-
-def create_geometry(gcp_df, burst_index, lines_per_burst):
-    first_line = gcp_df.loc[gcp_df['line'] == burst_index * lines_per_burst, ['longitude', 'latitude']]
-    second_line = gcp_df.loc[gcp_df['line'] == (burst_index + 1) * lines_per_burst, ['longitude', 'latitude']]
-    x1 = first_line['longitude'].tolist()
-    y1 = first_line['latitude'].tolist()
-    x2 = second_line['longitude'].tolist()
-    y2 = second_line['latitude'].tolist()
-    x2.reverse()
-    y2.reverse()
-    x = x1 + x2
-    y = y1 + y2
-    footprint = geometry.Polygon(zip(x, y))
-    centroid = tuple([x[0] for x in footprint.centroid.xy])
-    return footprint, footprint.bounds, centroid
-
-
-def get_bounding_box(annotation_path, burst_index):
-    annotation = ET.parse(annotation_path).getroot()
-    lines_per_burst = int(annotation.findtext('.//{*}linesPerBurst'))
-    points = annotation.findall('.//{*}geolocationGridPoint')
-
-    gcp_df = create_gcp_df(points)
-    print(gcp_df)
-    bounds = create_geometry(gcp_df, burst_index, lines_per_burst)[1]
-    return bounds
-
-
 def prep_burst_job(reference_dict, secondary_dict, base_path):
     """Steps
     1. Download + parse metadata
@@ -135,27 +175,19 @@ def prep_burst_job(reference_dict, secondary_dict, base_path):
     3. Extract and write metadata files
     4. (Optional) download manifest.safe(s)
     5. Download geotiffs
+    6. Create and write job xml
     """
     return None
 
 
 if __name__ == '__main__':
-    home_dir = Path('.') / 'isce2_bursts'
-    reference = ''
-    secondary = ''
-    filename = (
-        './filename/burst_script/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.SAFE/'
-        'annotation/s1a-iw2-slc-vh-20200604t022253-20200604t022318-032861-03ce65-002.xml'
-    )
-    burst_index = 1  # we're 1 indexed most of the time
-    swath = 2
+    url_ref = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip'
+    url_sec = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.zip'
+    image_number = 1
+    burst_number = 1
+    metadata_path = Path(__file__).parent.parent.absolute() / 'tests' / 'test_data' / 'metadata.xml'
+    xml = ET.parse(metadata_path).getroot()
+    burst = BurstMetadata(url_ref, image_number, burst_number, xml)
+    # burst = download_metadata(url_ref, image_number, burst_number)
 
-    if not home_dir.exists():
-        home_dir.mkdir()
-
-    # TODO
-    # download_metadata()
-    # download_data()
-
-    bounds = get_bounding_box(filename, burst_index - 1)  # 0 indexed
-    print(bounds)
+    safe_path = spoof_safe(burst)

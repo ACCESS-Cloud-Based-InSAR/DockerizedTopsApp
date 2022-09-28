@@ -7,36 +7,58 @@ import requests
 
 from isce2_topsapp import burstio
 
-url_base = 'https://datapool.asf.alaska.edu/SLC'
+# from unittest import mock
+
+
+URL_BASE = 'https://datapool.asf.alaska.edu/SLC'
+
+"""Request Format:
+curl --get \
+     --verbose \
+     --data-urlencode "zip_url=https://datapool.asf.alaska.edu/SLC/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip" \
+     --data-urlencode "image_number=1" \
+     --data-urlencode "burst_number=1" \
+     --header "Authorization: Bearer $EDL_TOKEN" \
+     --location \
+     --output metatdata.xml \
+    https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata
+"""
 
 
 @pytest.fixture(scope='module')
-def annotation():
-    annotation_path = Path(__file__).parent.absolute() / 'test_data' / 'annotation.xml'
-    annotation = ET.parse(annotation_path).getroot()
-    return annotation
+def metadata():
+    metadata_path = Path(__file__).parent.absolute() / 'test_data' / 'metadata.xml'
+    xml = ET.parse(metadata_path).getroot()
+    return xml
 
 
-def test_create_gcp_df(annotation):
-    n_bursts = int(annotation.findall('.//burstList')[0].attrib['count'])
-    lines_per_burst = int(annotation.findtext('.//{*}linesPerBurst'))
-    gcp_df = burstio.create_gcp_df(annotation)
+@pytest.fixture(scope='module')
+def burst_metadata(metadata):
+    safe_url = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip'
+    burst_metadata = burstio.BurstMetadata(safe_url, 1, 1, metadata)
+    return burst_metadata
+
+
+def test_create_gcp_df(burst_metadata):
+    n_bursts = int(burst_metadata.annotation.findall('.//burstList')[0].attrib['count'])
+    lines_per_burst = int(burst_metadata.annotation.findtext('.//{*}linesPerBurst'))
+    points = burst_metadata.annotation.findall('.//{*}geolocationGridPoint')
+
+    gcp_df = burst_metadata.create_gcp_df(points)
     assert np.all(gcp_df.columns == ['line', 'pixel', 'latitude', 'longitude', 'height'])
     assert gcp_df.line.min() == 0
     assert gcp_df.line.max() == (n_bursts * lines_per_burst) - 1
 
 
-@pytest.mark.parametrize(
-    'index, real_box',
-    [
-        (0, (53.39892830515005, 28.68119969132844, 54.3716989017821, 28.99795274730827)),
-        (8, (53.17067752190982, 27.51599975559423, 54.09849123017585, 27.66669346258735)),
-    ],
-)
-def test_create_geometry(index, real_box, annotation):
-    lines_per_burst = int(annotation.findtext('.//{*}linesPerBurst'))
-    gcp_df = burstio.create_gcp_df(annotation)
-    box = burstio.create_geometry(gcp_df, index, lines_per_burst)[1]
+def test_create_geometry(burst_metadata):
+    lines_per_burst = int(burst_metadata.annotation.findtext('.//{*}linesPerBurst'))
+    points = burst_metadata.annotation.findall('.//{*}geolocationGridPoint')
+    burst_number = 1
+    real_box = (54.2590366824552, 28.43224815746974, 55.1845015633973, 28.74861632985042)
+
+    gcp_df = burst_metadata.create_gcp_df(points)
+    box = burst_metadata.create_geometry(gcp_df, lines_per_burst)[1]
+    assert burst_metadata.burst_number == burst_number
     assert np.all([np.isclose(a, b) for a, b in zip(box, real_box)])
 
 
@@ -46,26 +68,33 @@ def test_create_job_xml():
 
 
 # TODO figure out how to obtain OK response without downloading data
-def test_create_burst_request():
-    safe_url = f'{url_base}/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip'
-    params = burstio.generate_burst_request(safe_url, image_number=1, burst_number=1, content='metadata')
+@pytest.mark.skip(reason="api gateway is down")
+def test_create_burst_request(burst_metadata):
+    params = burst_metadata.create_burst_request(content='metadata')
     response = requests.get(**params)
     assert response.ok
 
 
-def test_create_directories(tmpdir):
+@pytest.mark.parametrize(
+    'pattern',
+    (
+        '*SAFE',
+        '*SAFE/annotation/*xml',
+        '*SAFE/annotation/calibration/calibration*xml',
+        '*SAFE/annotation/calibration/noise*xml',
+    ),
+)
+def test_spoof_safe(burst_metadata, tmpdir, pattern):
     tmpdir = Path(tmpdir)
-    head_dir = burstio.create_directories('a', 'b', tmpdir)
-
-    tmp_metadata = head_dir / 'a' / 'annotation'
-    assert tmp_metadata.exists()
+    burstio.spoof_safe(burst_metadata, tmpdir)
+    assert len(list(tmpdir.glob(pattern))) == 1
 
 
-@pytest.mark.slow()
+@pytest.mark.skip(reason="api gateway is down")
 def test_prep_burst_job():
     base_path = Path('~/Data/tmp')
-    url_ref = f'{url_base}/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip'
-    url_sec = f'{url_base}/SA/S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.zip'
+    url_ref = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip'
+    url_sec = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.zip'
     image_number = 1
     burst_number = 1
     ref_dict = {'safe_url': url_ref, 'image_number': image_number, 'burst_number': burst_number}
