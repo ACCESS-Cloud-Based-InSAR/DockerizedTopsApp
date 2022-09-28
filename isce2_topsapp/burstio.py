@@ -14,7 +14,7 @@ class BurstMetadata:
         self.safe_url = safe_url
         self.image_number = image_number
         self.burst_number = burst_number
-        self.safe_name = f'{self.safe_url.split("/")[-1][:-4]}.SAFE'
+        self.safe_name = Path(self.safe_url).with_suffix('.SAFE').name
 
         image_numbers = [int(x.attrib['source_filename'].split('-')[-1][2]) for x in metadata]
         products = [x.tag for x in metadata]
@@ -90,14 +90,34 @@ def download_metadata(safe_url, image_number, burst_number, out_file=None):
     request_params = create_burst_request(safe_url, image_number, burst_number, content='metadata')
     response = requests.get(**request_params)
     if not response.ok:
-        raise(RuntimeError('Response is not OK'))
+        raise (RuntimeError('Response is not OK'))
     metadata = ET.fromstring(response.content)
     if out_file:
         ET.ElementTree(metadata).write(out_file, encoding='UTF-8', xml_declaration=True)
     return BurstMetadata(metadata, safe_url, image_number, burst_number)
 
 
-def spoof_safe(burst, base_path=Path('.')):
+def download_manifest(safe_url, safe_name):
+    import netrc
+
+    import aiohttp
+    import fsspec
+
+    my_netrc = netrc.netrc()
+    username, _, password = my_netrc.authenticators('urs.earthdata.nasa.gov')
+    auth = aiohttp.BasicAuth(username, password)
+    storage_options = {'client_kwargs': {'trust_env': True, 'auth': auth}}
+
+    http_fs = fsspec.filesystem('https', **storage_options)
+    with http_fs.open(safe_url) as fo:
+        safe_zip = fsspec.filesystem('zip', fo=fo)
+        with safe_zip.open(str(Path(safe_name) / 'manifest.safe')) as f:
+            manifest = ET.parse(f).getroot()
+
+    return manifest
+
+
+def spoof_safe(burst, manifest, base_path=Path('.')):
     """Creates this file structure:
     SLC.SAFE/
     ├── measurement/
@@ -122,9 +142,8 @@ def spoof_safe(burst, base_path=Path('.')):
     ET.ElementTree(burst.calibration).write(
         calibration_path / burst.calibration_name, encoding='UTF-8', xml_declaration=True
     )
-    ET.ElementTree(burst.noise).write(
-        calibration_path / burst.noise_name, encoding='UTF-8', xml_declaration=True
-    )
+    ET.ElementTree(burst.noise).write(calibration_path / burst.noise_name, encoding='UTF-8', xml_declaration=True)
+    ET.ElementTree(manifest).write(safe_path / 'manifest.safe', encoding='UTF-8', xml_declaration=True)
     return safe_path
 
 
@@ -188,6 +207,7 @@ if __name__ == '__main__':
     metadata_path = Path(__file__).parent.parent.absolute() / 'tests' / 'test_data' / 'metadata.xml'
     xml = ET.parse(metadata_path).getroot()
     burst = BurstMetadata(url_ref, image_number, burst_number, xml)
+    manifest = download_manifest(burst.safe_url, burst.safe_name)
     # burst = download_metadata(url_ref, image_number, burst_number)
 
-    safe_path = spoof_safe(burst)
+    safe_path = spoof_safe(burst, manifest)
