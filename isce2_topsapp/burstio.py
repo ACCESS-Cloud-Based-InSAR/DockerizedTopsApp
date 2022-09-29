@@ -13,14 +13,13 @@ URL_BASE = 'https://datapool.asf.alaska.edu/SLC'
 
 """Request Format:
 curl --get \
-     --verbose \
-     --data-urlencode "zip_url=https://datapool.asf.alaska.edu/SLC/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip" \
-     --data-urlencode "image_number=1" \
+     --data-urlencode "zip_url=https://datapool.asf.alaska.edu/SLC/SA/S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.zip" \
+     --data-urlencode "image_number=5" \
      --data-urlencode "burst_number=1" \
      --header "Authorization: Bearer $EDL_TOKEN" \
      --location \
      --output tmp.tif \
-    https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/geotiff
+    https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/geotiff && gdalinfo tmp.tif
 """
 
 
@@ -108,23 +107,34 @@ def create_burst_request(safe_url, image_number, burst_number, content):
 
 def download_metadata(safe_url, image_number, burst_number, out_file=None):
     request_params = create_burst_request(safe_url, image_number, burst_number, content='metadata')
-    response = requests.get(**request_params)
-    if not response.ok:
-        raise (RuntimeError('Response is not OK'))
-    metadata = ET.fromstring(response.content)
-    if out_file:
-        ET.ElementTree(metadata).write(out_file, encoding='UTF-8', xml_declaration=True)
+    with requests.get(**request_params) as r:
+        if not r.ok:
+            raise (RuntimeError('Response is not OK'))
+
+        metadata = ET.fromstring(r.content)
+        if out_file:
+            ET.ElementTree(metadata).write(out_file, encoding='UTF-8', xml_declaration=True)
+
     return metadata
 
 
 def download_geotiff(safe_url, image_number, burst_number, out_file):
     request_params = create_burst_request(safe_url, image_number, burst_number, content='geotiff')
-    response = requests.get(**request_params)
-    if not response.ok:
-        raise (RuntimeError('Response is not OK'))
+
+    i = 1
+    downloaded = False
+    while (not downloaded) & (i <= 4):
+        print(f'Download attempt #{i}')
+        r = requests.get(**request_params)
+        downloaded = r.ok
+        i += 1
+
+    if not downloaded:
+        raise (RuntimeError('Download failed three times'))
 
     with open(out_file, 'wb') as f:
-        f.write(response.content)
+        f.write(r.content)
+
     return out_file
 
 
