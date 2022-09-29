@@ -97,11 +97,13 @@ def download_metadata(safe_url, image_number, burst_number, out_file=None):
     return BurstMetadata(metadata, safe_url, image_number, burst_number)
 
 
-def download_manifest(safe_url, safe_name):
+def download_manifest(safe_url, out_path):
     import netrc
 
     import aiohttp
     import fsspec
+
+    safe_name = Path(safe_url).with_suffix('.SAFE').name
 
     my_netrc = netrc.netrc()
     username, _, password = my_netrc.authenticators('urs.earthdata.nasa.gov')
@@ -112,12 +114,15 @@ def download_manifest(safe_url, safe_name):
     with http_fs.open(safe_url) as fo:
         safe_zip = fsspec.filesystem('zip', fo=fo)
         with safe_zip.open(str(Path(safe_name) / 'manifest.safe')) as f:
-            manifest = ET.parse(f).getroot()
+            manifest = f.read()
+    breakpoint()
+    with open(out_path, 'wb') as f:
+        f.write(manifest)
 
-    return manifest
+    return out_path
 
 
-def spoof_safe(burst, manifest, base_path=Path('.')):
+def spoof_safe(burst, base_path=Path('.')):
     """Creates this file structure:
     SLC.SAFE/
     ├── measurement/
@@ -143,7 +148,10 @@ def spoof_safe(burst, manifest, base_path=Path('.')):
         calibration_path / burst.calibration_name, encoding='UTF-8', xml_declaration=True
     )
     ET.ElementTree(burst.noise).write(calibration_path / burst.noise_name, encoding='UTF-8', xml_declaration=True)
-    ET.ElementTree(manifest).write(safe_path / 'manifest.safe', encoding='UTF-8', xml_declaration=True)
+
+    download_manifest(burst.safe_url, safe_path / 'manifest.safe')
+    # ET.ElementTree(manifest).write(safe_path / 'manifest.safe', encoding='UTF-8', xml_declaration=True)
+
     return safe_path
 
 
@@ -207,7 +215,6 @@ if __name__ == '__main__':
     metadata_path = Path(__file__).parent.parent.absolute() / 'tests' / 'test_data' / 'metadata.xml'
     xml = ET.parse(metadata_path).getroot()
     burst = BurstMetadata(url_ref, image_number, burst_number, xml)
-    manifest = download_manifest(burst.safe_url, burst.safe_name)
     # burst = download_metadata(url_ref, image_number, burst_number)
 
-    safe_path = spoof_safe(burst, manifest)
+    safe_path = spoof_safe(burst)
