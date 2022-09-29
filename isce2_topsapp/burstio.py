@@ -1,4 +1,7 @@
+import io
 import os
+import re
+import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -10,7 +13,7 @@ URL_BASE = 'https://datapool.asf.alaska.edu/SLC'
 
 
 class BurstMetadata:
-    def __init__(self, safe_url, image_number, burst_number, metadata):
+    def __init__(self, metadata, manifest, safe_url, image_number, burst_number):
         self.safe_url = safe_url
         self.image_number = image_number
         self.burst_number = burst_number
@@ -28,7 +31,16 @@ class BurstMetadata:
             setattr(self, files[name], content)
             setattr(self, f'{files[name]}_name', elem.attrib['source_filename'])
 
-        self.bounds = self.get_bounding_box()
+        self.manifest = manifest
+        self.manifest_name = 'manifest.safe'
+
+        file_paths = [x.attrib['href'] for x in manifest.findall('.//fileLocation')]
+        pattern = f'^./measurement/s1.*{burst_number}.tiff$'
+        self.measurement_name = [Path(x).name for x in file_paths if re.search(pattern, x)][0]
+
+        self.footprint = self.create_geometry()[0]
+        self.swath = int(self.annotation.findtext('.//{*}adsHeader/swath')[2])
+        self.polarisation = self.annotation.findtext('.//{*}adsHeader/polarisation')
 
     def reformat_gcp(self, point):
         attribs = ['line', 'pixel', 'latitude', 'longitude', 'height']
@@ -42,7 +54,11 @@ class BurstMetadata:
         gcp_df = gcp_df.sort_values(['line', 'pixel']).reset_index(drop=True)
         return gcp_df
 
-    def create_geometry(self, gcp_df, lines_per_burst):
+    def create_geometry(self):
+        points = self.annotation.findall('.//{*}geolocationGridPoint')
+        gcp_df = self.create_gcp_df(points)
+
+        lines_per_burst = int(self.annotation.findtext('.//{*}linesPerBurst'))
         line_start = self.burst_number * lines_per_burst
         line_end = (self.burst_number + 1) * lines_per_burst
         first_line = gcp_df.loc[gcp_df['line'] == line_start, ['longitude', 'latitude']]
@@ -59,14 +75,6 @@ class BurstMetadata:
         footprint = geometry.Polygon(zip(x, y))
         centroid = tuple([x[0] for x in footprint.centroid.xy])
         return footprint, footprint.bounds, centroid
-
-    def get_bounding_box(self):
-        lines_per_burst = int(self.annotation.findtext('.//{*}linesPerBurst'))
-        points = self.annotation.findall('.//{*}geolocationGridPoint')
-
-        gcp_df = self.create_gcp_df(points)
-        bounds = self.create_geometry(gcp_df, lines_per_burst)[1]
-        return bounds
 
 
 def create_burst_request(safe_url, image_number, burst_number, content):
@@ -94,7 +102,7 @@ def download_metadata(safe_url, image_number, burst_number, out_file=None):
     metadata = ET.fromstring(response.content)
     if out_file:
         ET.ElementTree(metadata).write(out_file, encoding='UTF-8', xml_declaration=True)
-    return BurstMetadata(metadata, safe_url, image_number, burst_number)
+    return metadata
 
 
 def download_geotiff(safe_url, image_number, burst_number, out_file):
@@ -111,7 +119,7 @@ def download_geotiff(safe_url, image_number, burst_number, out_file):
     return out_file
 
 
-def download_manifest(safe_url, out_file):
+def download_manifest(safe_url, out_file=None):
     import netrc
 
     import aiohttp
@@ -129,17 +137,21 @@ def download_manifest(safe_url, out_file):
         safe_zip = fsspec.filesystem('zip', fo=fo)
         with safe_zip.open(str(Path(safe_name) / 'manifest.safe')) as f:
             manifest = f.read()
-    breakpoint()
-    with open(out_file, 'wb') as f:
-        f.write(manifest)
 
-    return out_file
+    if out_file:
+        with open(out_file, 'wb') as f:
+            f.write(manifest)
+
+    manifest = ET.parse(io.BytesIO(manifest)).getroot()
+    return manifest
 
 
 def spoof_safe(burst, base_path=Path('.')):
     """Creates this file structure:
     SLC.SAFE/
+    ├── manifest.safe
     ├── measurement/
+    │   └── burst.tif
     └── annotation/
         ├── annotation.xml
         └── calbiration/
@@ -155,21 +167,56 @@ def spoof_safe(burst, base_path=Path('.')):
         if not p.exists():
             p.mkdir(parents=True)
 
-    ET.ElementTree(burst.annotation).write(
-        annotation_path / burst.annotation_name, encoding='UTF-8', xml_declaration=True
-    )
-    ET.ElementTree(burst.calibration).write(
-        calibration_path / burst.calibration_name, encoding='UTF-8', xml_declaration=True
-    )
-    ET.ElementTree(burst.noise).write(calibration_path / burst.noise_name, encoding='UTF-8', xml_declaration=True)
+    et_args = {'encoding': 'UTF-8', 'xml_declaration': True}
 
-    print('Downloading Manifest...')
-    download_manifest(burst.safe_url, safe_path / 'manifest.safe')
+    ET.ElementTree(burst.annotation).write(annotation_path / burst.annotation_name, **et_args)
+    ET.ElementTree(burst.calibration).write(calibration_path / burst.calibration_name, **et_args)
+    ET.ElementTree(burst.noise).write(calibration_path / burst.noise_name, **et_args)
+    ET.ElementTree(burst.manifest).write(safe_path / 'manifest.safe', **et_args)
 
-    print('Downloading Geotiff...')
-    download_geotiff(burst.safe_url, burst.image_number, burst.burst_number, measurement_path / 'out.tif')
+    download_geotiff(burst.safe_url, burst.image_number, burst.burst_number, measurement_path / burst.measurement_name)
 
     return safe_path
+
+
+def prep_isce2_burst_job(reference_dict, secondary_dict, base_path=Path.cwd()):
+    """Steps
+    For each burst:
+        1. Download metadata
+        2. Create BurstMetadata object
+        3. Create directory structure
+        4. Write metadata
+        5. Download and write geotiff
+    6. Create and write job xml
+    """
+    bursts = []
+    for i, params in enumerate([reference_dict, secondary_dict]):
+        print(f'Creating SAFE {i+1}...')
+        manifest = download_manifest(params['url'])
+        metadata = download_metadata(params['url'], params['image_number'], params['burst_number'])
+        burst = BurstMetadata(metadata, manifest, params['url'], params['image_number'], params['burst_number'])
+        spoof_safe(burst)
+        bursts.append(burst)
+
+    print('SAFEs created!')
+    intersection = bursts[0].footprint.intersection(bursts[0].footprint)
+    minx, miny, maxx, maxy = intersection.bounds
+
+    # topsApp expects bbox to be in order [S, N, W, E]
+    job_xml = create_job_xml(
+        str(base_path / bursts[0].safe_name),
+        str(base_path / bursts[1].safe_name),
+        bursts[0].swath,
+        bursts[0].polarisation,
+        (miny, maxy, minx, maxx),
+        False,
+        7,
+        3,
+    )
+
+    ET.ElementTree(job_xml).write(base_path / 'topsApp.xml', encoding='UTF-8', xml_declaration=True)
+
+    return base_path
 
 
 def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do_esd, range_looks, azimuth_looks):
@@ -209,19 +256,7 @@ def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do
         </component>
     </topsApp>
     '''
-    return config
-
-
-def prep_burst_job(reference_dict, secondary_dict, base_path):
-    """Steps
-    1. Download + parse metadata
-    2. Create directory structure
-    3. Extract and write metadata files
-    4. (Optional) download manifest.safe(s)
-    5. Download geotiffs
-    6. Create and write job xml
-    """
-    return None
+    return ET.fromstring(config)
 
 
 if __name__ == '__main__':
@@ -229,9 +264,9 @@ if __name__ == '__main__':
     url_sec = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.zip'
     image_number = 1
     burst_number = 1
-    metadata_path = Path(__file__).parent.parent.absolute() / 'tests' / 'test_data' / 'metadata.xml'
-    xml = ET.parse(metadata_path).getroot()
-    burst = BurstMetadata(url_ref, image_number, burst_number, xml)
-    # burst = download_metadata(url_ref, image_number, burst_number)
-
-    safe_path = spoof_safe(burst)
+    ref_dict = {'url': url_ref, 'image_number': image_number, 'burst_number': burst_number}
+    sec_dict = {'url': url_sec, 'image_number': image_number, 'burst_number': burst_number}
+    start = time.time()
+    working_path = prep_isce2_burst_job(ref_dict, sec_dict)
+    end = time.time()
+    print(f'Took {end-start:.0f} seconds')
