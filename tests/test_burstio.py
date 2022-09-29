@@ -7,22 +7,7 @@ import requests
 
 from isce2_topsapp import burstio
 
-# from unittest import mock
-
-
 URL_BASE = 'https://datapool.asf.alaska.edu/SLC'
-
-"""Request Format:
-curl --get \
-     --verbose \
-     --data-urlencode "zip_url=https://datapool.asf.alaska.edu/SLC/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip" \
-     --data-urlencode "image_number=1" \
-     --data-urlencode "burst_number=1" \
-     --header "Authorization: Bearer $EDL_TOKEN" \
-     --location \
-     --output metatdata.xml \
-    https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata
-"""
 
 
 @pytest.fixture(scope='module')

@@ -11,6 +11,18 @@ from shapely import geometry
 
 URL_BASE = 'https://datapool.asf.alaska.edu/SLC'
 
+"""Request Format:
+curl --get \
+     --verbose \
+     --data-urlencode "zip_url=https://datapool.asf.alaska.edu/SLC/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip" \
+     --data-urlencode "image_number=1" \
+     --data-urlencode "burst_number=1" \
+     --header "Authorization: Bearer $EDL_TOKEN" \
+     --location \
+     --output tmp.tif \
+    https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/geotiff
+"""
+
 
 class BurstMetadata:
     def __init__(self, metadata, manifest, safe_url, image_number, burst_number):
@@ -35,7 +47,7 @@ class BurstMetadata:
         self.manifest_name = 'manifest.safe'
 
         file_paths = [x.attrib['href'] for x in manifest.findall('.//fileLocation')]
-        pattern = f'^./measurement/s1.*{burst_number}.tiff$'
+        pattern = f'^./measurement/s1.*{image_number}.tiff$'
         self.measurement_name = [Path(x).name for x in file_paths if re.search(pattern, x)][0]
 
         self.footprint = self.create_geometry()[0]
@@ -107,15 +119,12 @@ def download_metadata(safe_url, image_number, burst_number, out_file=None):
 
 def download_geotiff(safe_url, image_number, burst_number, out_file):
     request_params = create_burst_request(safe_url, image_number, burst_number, content='geotiff')
-    request_params['stream'] = True
+    response = requests.get(**request_params)
+    if not response.ok:
+        raise (RuntimeError('Response is not OK'))
 
-    with requests.get(**request_params) as response:
-        if not response.ok:
-            raise (RuntimeError('Response is not OK'))
-        with open(out_file, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=16 * 1024):
-                f.write(chunk)
-
+    with open(out_file, 'wb') as f:
+        f.write(response.content)
     return out_file
 
 
@@ -200,7 +209,8 @@ def prep_isce2_burst_job(reference_dict, secondary_dict, base_path=Path.cwd()):
 
     print('SAFEs created!')
     intersection = bursts[0].footprint.intersection(bursts[0].footprint)
-    minx, miny, maxx, maxy = intersection.bounds
+    center = intersection.centroid.buffer(0.1)
+    minx, miny, maxx, maxy = center.bounds
 
     # topsApp expects bbox to be in order [S, N, W, E]
     job_xml = create_job_xml(
@@ -220,6 +230,7 @@ def prep_isce2_burst_job(reference_dict, secondary_dict, base_path=Path.cwd()):
 
 
 def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do_esd, range_looks, azimuth_looks):
+    bbox = list(bbox)
     geocode_list = [
         'merged/phsig.cor',
         'merged/filt_topophase.unw',
@@ -262,8 +273,8 @@ def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do
 if __name__ == '__main__':
     url_ref = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip'
     url_sec = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.zip'
-    image_number = 1
-    burst_number = 1
+    image_number = 5  # for Iran
+    burst_number = 8  # have to be careful with this, depends on ascending vs descending (should be 8 for Iran)
     ref_dict = {'url': url_ref, 'image_number': image_number, 'burst_number': burst_number}
     sec_dict = {'url': url_sec, 'image_number': image_number, 'burst_number': burst_number}
     start = time.time()
