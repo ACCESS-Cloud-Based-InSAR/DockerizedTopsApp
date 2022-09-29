@@ -73,7 +73,7 @@ def create_burst_request(safe_url, image_number, burst_number, content):
     token = os.environ['EDL_TOKEN']
     urls = {
         'metadata': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata',
-        'data': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/geotiff',
+        'geotiff': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/geotiff',
     }
 
     url = urls[content]
@@ -97,7 +97,21 @@ def download_metadata(safe_url, image_number, burst_number, out_file=None):
     return BurstMetadata(metadata, safe_url, image_number, burst_number)
 
 
-def download_manifest(safe_url, out_path):
+def download_geotiff(safe_url, image_number, burst_number, out_file):
+    request_params = create_burst_request(safe_url, image_number, burst_number, content='geotiff')
+    request_params['stream'] = True
+
+    with requests.get(**request_params) as response:
+        if not response.ok:
+            raise (RuntimeError('Response is not OK'))
+        with open(out_file, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=16 * 1024):
+                f.write(chunk)
+
+    return out_file
+
+
+def download_manifest(safe_url, out_file):
     import netrc
 
     import aiohttp
@@ -116,10 +130,10 @@ def download_manifest(safe_url, out_path):
         with safe_zip.open(str(Path(safe_name) / 'manifest.safe')) as f:
             manifest = f.read()
     breakpoint()
-    with open(out_path, 'wb') as f:
+    with open(out_file, 'wb') as f:
         f.write(manifest)
 
-    return out_path
+    return out_file
 
 
 def spoof_safe(burst, base_path=Path('.')):
@@ -149,8 +163,11 @@ def spoof_safe(burst, base_path=Path('.')):
     )
     ET.ElementTree(burst.noise).write(calibration_path / burst.noise_name, encoding='UTF-8', xml_declaration=True)
 
+    print('Downloading Manifest...')
     download_manifest(burst.safe_url, safe_path / 'manifest.safe')
-    # ET.ElementTree(manifest).write(safe_path / 'manifest.safe', encoding='UTF-8', xml_declaration=True)
+
+    print('Downloading Geotiff...')
+    download_geotiff(burst.safe_url, burst.image_number, burst.burst_number, measurement_path / 'out.tif')
 
     return safe_path
 
