@@ -5,6 +5,7 @@ import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import geopandas as gpd
 import pandas as pd
 import requests
 from shapely import geometry
@@ -13,7 +14,7 @@ URL_BASE = 'https://datapool.asf.alaska.edu/SLC'
 
 """Request Format:
 curl --get \
-     --data-urlencode "zip_url=https://datapool.asf.alaska.edu/SLC/SA/S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.zip" \
+     --data-urlencode "zip_url=https://datapool.asf.alaska.edu/SLC/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip" \
      --data-urlencode "image_number=5" \
      --data-urlencode "burst_number=1" \
      --header "Authorization: Bearer $EDL_TOKEN" \
@@ -49,32 +50,30 @@ class BurstMetadata:
         pattern = f'^./measurement/s1.*{image_number}.tiff$'
         self.measurement_name = [Path(x).name for x in file_paths if re.search(pattern, x)][0]
 
-        self.footprint = self.create_geometry()[0]
+        self.gcp_df = self.create_gcp_df()
+        self.footprint = self.create_geometry(self.gcp_df)[0]
         self.swath = int(self.annotation.findtext('.//{*}adsHeader/swath')[2])
         self.polarisation = self.annotation.findtext('.//{*}adsHeader/polarisation')
 
-    def reformat_gcp(self, point):
+    @staticmethod
+    def reformat_gcp(point):
         attribs = ['line', 'pixel', 'latitude', 'longitude', 'height']
         values = {}
         for attrib in attribs:
             values[attrib] = float(point.find(attrib).text)
         return values
 
-    def create_gcp_df(self, points):
+    def create_gcp_df(self):
+        points = self.annotation.findall('.//{*}geolocationGridPoint')
         gcp_df = pd.DataFrame([self.reformat_gcp(x) for x in points])
         gcp_df = gcp_df.sort_values(['line', 'pixel']).reset_index(drop=True)
         return gcp_df
 
-    def create_geometry(self):
-        points = self.annotation.findall('.//{*}geolocationGridPoint')
-        gcp_df = self.create_gcp_df(points)
-
-        lines_per_burst = int(self.annotation.findtext('.//{*}linesPerBurst'))
-        line_start = self.burst_number * lines_per_burst
-        line_end = (self.burst_number + 1) * lines_per_burst
-        first_line = gcp_df.loc[gcp_df['line'] == line_start, ['longitude', 'latitude']]
-        second_line = gcp_df.loc[gcp_df['line'] == line_end, ['longitude', 'latitude']]
-
+    def create_geometry(self, gcp_df):
+        burst_index = self.burst_number - 1
+        lines = int(self.annotation.findtext('.//{*}linesPerBurst'))
+        first_line = gcp_df.loc[gcp_df['line'] == burst_index * lines, ['longitude', 'latitude']]
+        second_line = gcp_df.loc[gcp_df['line'] == (burst_index + 1) * lines, ['longitude', 'latitude']]
         x1 = first_line['longitude'].tolist()
         y1 = first_line['latitude'].tolist()
         x2 = second_line['longitude'].tolist()
@@ -89,20 +88,30 @@ class BurstMetadata:
 
 
 def create_burst_request(safe_url, image_number, burst_number, content):
-    token = os.environ['EDL_TOKEN']
     urls = {
         'metadata': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata',
         'geotiff': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/geotiff',
     }
-
     url = urls[content]
-    headers = {'Authorization': f'Bearer {token}'}
+
+    # token = os.environ['EDL_TOKEN']
+    # headers = {'Authorization': f'Bearer {token}'}
+
+    cookie = os.environ['EDL_COOKIE']
+    cookies = {'asf-urs': cookie}
+
     params = {
         'zip_url': safe_url,
         'image_number': str(image_number),
         'burst_number': str(burst_number),
     }
-    return {'url': url, 'headers': headers, 'params': params}
+    request_params = {
+        'url': url,
+        # 'headers': headers,
+        'cookies': cookies,
+        'params': params,
+    }
+    return request_params
 
 
 def download_metadata(safe_url, image_number, burst_number, out_file=None):
@@ -165,7 +174,7 @@ def download_manifest(safe_url, out_file=None):
     return manifest
 
 
-def spoof_safe(burst, base_path=Path('.')):
+def spoof_safe(burst, base_path=Path('.'), download_surrounding=False):
     """Creates this file structure:
     SLC.SAFE/
     ├── manifest.safe
@@ -193,7 +202,20 @@ def spoof_safe(burst, base_path=Path('.')):
     ET.ElementTree(burst.noise).write(calibration_path / burst.noise_name, **et_args)
     ET.ElementTree(burst.manifest).write(safe_path / 'manifest.safe', **et_args)
 
-    download_geotiff(burst.safe_url, burst.image_number, burst.burst_number, measurement_path / burst.measurement_name)
+    if download_surrounding:
+        n_bursts = len(burst.annotation.find('.//burstList'))
+        names = {
+            'burst_pre.tiff': burst.burst_number - 1,
+            burst.measurement_name: burst.burst_number,
+            'burst_post.tiff': burst.burst_number + 1,
+        }
+        names = {k: v for k, v in names.items() if (v > 0) & (v <= n_bursts)}
+        for n in names:
+            download_geotiff(burst.safe_url, burst.image_number, names[n], measurement_path / n)
+    else:
+        download_geotiff(
+            burst.safe_url, burst.image_number, burst.burst_number, measurement_path / burst.measurement_name
+        )
 
     return safe_path
 
@@ -214,18 +236,25 @@ def prep_isce2_burst_job(reference_dict, secondary_dict, base_path=Path.cwd()):
         manifest = download_manifest(params['url'])
         metadata = download_metadata(params['url'], params['image_number'], params['burst_number'])
         burst = BurstMetadata(metadata, manifest, params['url'], params['image_number'], params['burst_number'])
-        spoof_safe(burst)
         bursts.append(burst)
+        spoof_safe(burst, download_surrounding=True)
 
     print('SAFEs created!')
     intersection = bursts[0].footprint.intersection(bursts[0].footprint)
-    center = intersection.centroid.buffer(0.1)
+    center = intersection.centroid.buffer(0.001)
     minx, miny, maxx, maxy = center.bounds
+
+    gdf = gpd.GeoDataFrame(
+        data=pd.DataFrame({'component': ['reference', 'secondary', 'intersection', 'center']}),
+        geometry=[bursts[0].footprint, bursts[1].footprint, intersection, center],
+        crs='EPSG:4326',
+    )
+    gdf.to_file('geometries.geojson')
 
     # topsApp expects bbox to be in order [S, N, W, E]
     job_xml = create_job_xml(
-        str(base_path / bursts[0].safe_name),
-        str(base_path / bursts[1].safe_name),
+        bursts[0].safe_name,
+        bursts[1].safe_name,
         bursts[0].swath,
         bursts[0].polarisation,
         (miny, maxy, minx, maxx),
@@ -269,7 +298,7 @@ def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do
             <property name="range looks">7</property>
             <property name="azimuth looks">3</property>
             <property name="region of interest">{bbox}</property>
-            <property name="do denseoffsets">True</property>
+            <property name="do denseoffsets">False</property>
             <property name="do ESD">{do_esd}</property>
             <property name="do unwrap">True</property>
             <property name="unwrapper name">snaphu_mcf</property>
