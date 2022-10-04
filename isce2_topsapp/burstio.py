@@ -54,6 +54,7 @@ class BurstMetadata:
         self.footprint = self.create_geometry(self.gcp_df)[0]
         self.swath = int(self.annotation.findtext('.//{*}adsHeader/swath')[2])
         self.polarisation = self.annotation.findtext('.//{*}adsHeader/polarisation')
+        self.orbit_direction = self.manifest.findtext('.//{*}pass').lower()
 
     @staticmethod
     def reformat_gcp(point):
@@ -220,6 +221,18 @@ def spoof_safe(burst, base_path=Path('.'), download_surrounding=False):
     return safe_path
 
 
+# TODO currently only validated for descending orbits
+def get_region_of_interest(poly1, poly2, asc=True):
+    bbox1 = geometry.box(*poly1.bounds)
+    bbox2 = geometry.box(*poly2.bounds)
+    intersection = bbox1.intersection(bbox2)
+    bounds = intersection.bounds
+
+    x, y = (2, 3) if asc else (0, 3)
+    roi = geometry.Point(bounds[x], bounds[y]).buffer(0.01)
+    return roi
+
+
 def prep_isce2_burst_job(reference_dict, secondary_dict, base_path=Path.cwd()):
     """Steps
     For each burst:
@@ -237,16 +250,16 @@ def prep_isce2_burst_job(reference_dict, secondary_dict, base_path=Path.cwd()):
         metadata = download_metadata(params['url'], params['image_number'], params['burst_number'])
         burst = BurstMetadata(metadata, manifest, params['url'], params['image_number'], params['burst_number'])
         bursts.append(burst)
-        spoof_safe(burst, download_surrounding=True)
+        # spoof_safe(burst, download_surrounding=False)
 
     print('SAFEs created!')
-    intersection = bursts[0].footprint.intersection(bursts[0].footprint)
-    center = intersection.centroid.buffer(0.001)
-    minx, miny, maxx, maxy = center.bounds
+    asc = bursts[0].orbit_direction == 'ascending'
+    roi = get_region_of_interest(bursts[0].footprint, bursts[0].footprint, asc)
+    minx, miny, maxx, maxy = roi.bounds
 
     gdf = gpd.GeoDataFrame(
-        data=pd.DataFrame({'component': ['reference', 'secondary', 'intersection', 'center']}),
-        geometry=[bursts[0].footprint, bursts[1].footprint, intersection, center],
+        data=pd.DataFrame({'component': ['reference', 'secondary', 'roi']}),
+        geometry=[bursts[0].footprint, bursts[1].footprint, roi],
         crs='EPSG:4326',
     )
     gdf.to_file('geometries.geojson')
