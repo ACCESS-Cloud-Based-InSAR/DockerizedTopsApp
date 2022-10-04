@@ -175,7 +175,34 @@ def download_manifest(safe_url, out_file=None):
     return manifest
 
 
-def spoof_safe(burst, base_path=Path('.'), download_surrounding=False):
+def download_swath(safe_url, measurement_path, measurement_name):
+    import netrc
+
+    import aiohttp
+    import fsspec
+
+    safe_name = Path(safe_url).with_suffix('.SAFE').name
+    swath_path = safe_name / Path('measurement') / measurement_name
+    out_path = measurement_path / measurement_name
+
+    my_netrc = netrc.netrc()
+    username, _, password = my_netrc.authenticators('urs.earthdata.nasa.gov')
+    auth = aiohttp.BasicAuth(username, password)
+    storage_options = {'client_kwargs': {'trust_env': True, 'auth': auth}}
+
+    http_fs = fsspec.filesystem('https', **storage_options)
+    with http_fs.open(safe_url) as fo:
+        safe_zip = fsspec.filesystem('zip', fo=fo)
+        with safe_zip.open(str(swath_path)) as f:
+            swath = f.read()
+
+    with open(out_path, 'wb') as f:
+        f.write(swath)
+
+    return out_path
+
+
+def spoof_safe(burst, base_path=Path('.'), download_strategy='single_burst'):
     """Creates this file structure:
     SLC.SAFE/
     ├── manifest.safe
@@ -203,7 +230,11 @@ def spoof_safe(burst, base_path=Path('.'), download_surrounding=False):
     ET.ElementTree(burst.noise).write(calibration_path / burst.noise_name, **et_args)
     ET.ElementTree(burst.manifest).write(safe_path / 'manifest.safe', **et_args)
 
-    if download_surrounding:
+    if download_strategy == 'single_burst':
+        download_geotiff(
+            burst.safe_url, burst.image_number, burst.burst_number, measurement_path / burst.measurement_name
+        )
+    elif download_strategy == 'surrounding_burst':
         n_bursts = len(burst.annotation.find('.//burstList'))
         names = {
             'burst_pre.tiff': burst.burst_number - 1,
@@ -213,10 +244,14 @@ def spoof_safe(burst, base_path=Path('.'), download_surrounding=False):
         names = {k: v for k, v in names.items() if (v > 0) & (v <= n_bursts)}
         for n in names:
             download_geotiff(burst.safe_url, burst.image_number, names[n], measurement_path / n)
-    else:
-        download_geotiff(
-            burst.safe_url, burst.image_number, burst.burst_number, measurement_path / burst.measurement_name
+    elif download_strategy == 'swath':
+        download_swath(
+            burst.safe_url,
+            measurement_path,
+            burst.measurement_name,
         )
+    else:
+        raise NotImplementedError(f'Download strategy {download_strategy} is not implemented, check spelling.')
 
     return safe_path
 
@@ -228,8 +263,8 @@ def get_region_of_interest(poly1, poly2, asc=True):
     intersection = bbox1.intersection(bbox2)
     bounds = intersection.bounds
 
-    x, y = (2, 3) if asc else (0, 3)
-    roi = geometry.Point(bounds[x], bounds[y]).buffer(0.01)
+    x, y = (0, 1) if asc else (2, 1)
+    roi = geometry.Point(bounds[x], bounds[y]).buffer(0.005)
     return roi
 
 
@@ -250,7 +285,7 @@ def prep_isce2_burst_job(reference_dict, secondary_dict, base_path=Path.cwd()):
         metadata = download_metadata(params['url'], params['image_number'], params['burst_number'])
         burst = BurstMetadata(metadata, manifest, params['url'], params['image_number'], params['burst_number'])
         bursts.append(burst)
-        # spoof_safe(burst, download_surrounding=False)
+        spoof_safe(burst, download_strategy='swath')
 
     print('SAFEs created!')
     asc = bursts[0].orbit_direction == 'ascending'
