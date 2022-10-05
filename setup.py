@@ -66,6 +66,8 @@ setup(
     entry_points={
         'console_scripts': [
             'isce2_topsapp = isce2_topsapp.__main__:main',
+            'gunw_slc = isce2_topsapp.__main__:gunw_slc',
+            'gunw_burst = isce2_topsapp.__main__:gunw_burst',
             'makeGeocube = isce2_topsapp.packaging_utils.makeGeocube:main',
             'nc_packaging = isce2_topsapp.packaging_utils.nc_packaging:main'
         ]

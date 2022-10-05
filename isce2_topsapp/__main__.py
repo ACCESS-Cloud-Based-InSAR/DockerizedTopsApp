@@ -1,9 +1,12 @@
 import json
 import netrc
 import os
-from argparse import ArgumentParser
+import sys
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from pathlib import Path
 from typing import Optional
+
+from pkg_resources import load_entry_point
 
 from isce2_topsapp import (aws, download_aux_cal, download_dem_for_isce2,
                            download_orbits, download_slcs,
@@ -75,7 +78,7 @@ def ensure_earthdata_credentials(username: Optional[str] = None, password: Optio
         )
 
 
-def main():
+def gunw_slc():
     parser = ArgumentParser()
     parser.add_argument('--username')
     parser.add_argument('--password')
@@ -127,6 +130,43 @@ def main():
     if args.bucket:
         for file in final_directory.glob('S1-GUNW*'):
             aws.upload_file_to_s3(file, args.bucket, args.bucket_prefix)
+
+
+def gunw_burst():
+    parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--username')
+    parser.add_argument('--password')
+    parser.add_argument('--bucket')
+    parser.add_argument('--bucket-prefix', default='')
+    parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--reference-scenes', type=str.split, nargs='+', required=True)
+    parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
+    parser.add_argument('--image-number', type=int, nargs=1, required=True)
+    parser.add_argument('--burst-number', type=int, nargs=1, required=True)
+    args = parser.parse_args()
+
+    ensure_earthdata_credentials(args.username, args.password)
+
+    args.reference_scenes = [item for sublist in args.reference_scenes for item in sublist]
+    args.secondary_scenes = [item for sublist in args.secondary_scenes for item in sublist]
+
+    loc_data = localize_data(args.reference_scenes,
+                             args.secondary_scenes,
+                             dry_run=args.dry_run)
+
+
+def main():
+    parser = ArgumentParser(prefix_chars='+', formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument(
+        '++process', choices=['gunw_slc', 'gunw_burst'], default='gunw_slc',
+        help='Select the HyP3 entrypoint to use'
+    )
+    args, unknowns = parser.parse_known_args()
+
+    sys.argv = [args.process, *unknowns]
+    sys.exit(
+        load_entry_point('isce2_topsapp', 'console_scripts', args.process)()
+    )
 
 
 if __name__ == '__main__':
