@@ -38,4 +38,4 @@ dependencies:
  - shapely
  - tqdm
  - dem_stitcher>=2.3.0
- - aiohttp  # only needed for manifest download
+ - aiohttp  # only needed for manifest and swath download
