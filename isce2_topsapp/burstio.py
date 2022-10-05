@@ -5,7 +5,6 @@ import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-import geopandas as gpd
 import pandas as pd
 import requests
 from shapely import geometry
@@ -292,13 +291,6 @@ def prep_isce2_burst_job(reference_dict, secondary_dict, base_path=Path.cwd()):
     roi = get_region_of_interest(bursts[0].footprint, bursts[0].footprint, asc)
     minx, miny, maxx, maxy = roi.bounds
 
-    gdf = gpd.GeoDataFrame(
-        data=pd.DataFrame({'component': ['reference', 'secondary', 'roi']}),
-        geometry=[bursts[0].footprint, bursts[1].footprint, roi],
-        crs='EPSG:4326',
-    )
-    gdf.to_file('geometries.geojson')
-
     # topsApp expects bbox to be in order [S, N, W, E]
     job_xml = create_job_xml(
         bursts[0].safe_name,
@@ -307,8 +299,8 @@ def prep_isce2_burst_job(reference_dict, secondary_dict, base_path=Path.cwd()):
         bursts[0].polarisation,
         (miny, maxy, minx, maxx),
         False,
-        7,
-        3,
+        20,
+        4,
     )
 
     ET.ElementTree(job_xml).write(base_path / 'topsApp.xml', encoding='UTF-8', xml_declaration=True)
@@ -316,7 +308,7 @@ def prep_isce2_burst_job(reference_dict, secondary_dict, base_path=Path.cwd()):
     return base_path
 
 
-def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do_esd, range_looks, azimuth_looks):
+def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do_esd, range_looks=7, azimuth_looks=3):
     bbox = list(bbox)
     geocode_list = [
         'merged/phsig.cor',
@@ -343,8 +335,8 @@ def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do
                 <property name="safe">{secondary_safe}</property>
             </component>
             <property name="swaths">[{swath}]</property>
-            <property name="range looks">7</property>
-            <property name="azimuth looks">3</property>
+            <property name="range looks">{range_looks}</property>
+            <property name="azimuth looks">{azimuth_looks}</property>
             <property name="region of interest">{bbox}</property>
             <property name="do denseoffsets">False</property>
             <property name="do ESD">{do_esd}</property>
@@ -358,10 +350,18 @@ def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do
 
 
 if __name__ == '__main__':
-    url_ref = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip'
-    url_sec = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.zip'
-    image_number = 5  # for Iran
-    burst_number = 8  # have to be careful with this, depends on ascending vs descending (should be 8 for Iran)
+    # # Iran
+    # url_ref = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip'
+    # url_sec = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.zip'
+    # image_number = 5
+    # burst_number = 8  # have to be careful with this, depends on ascending vs descending
+
+    # Greece
+    url_ref = f'{URL_BASE}/SA/S1B_IW_SLC__1SDV_20201115T162313_20201115T162340_024278_02E29D_5C54.zip'
+    url_sec = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20201203T162353_20201203T162420_035524_042744_6D5C.zip'
+    image_number = 5
+    burst_number = 1  # have to be careful with this, depends on ascending vs descending
+
     ref_dict = {'url': url_ref, 'image_number': image_number, 'burst_number': burst_number}
     sec_dict = {'url': url_sec, 'image_number': image_number, 'burst_number': burst_number}
     start = time.time()
