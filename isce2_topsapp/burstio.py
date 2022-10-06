@@ -5,6 +5,7 @@ import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterator, List, Tuple, Union
 
 import pandas as pd
 import requests
@@ -36,7 +37,7 @@ class BurstParams:
 
 
 class BurstMetadata:
-    def __init__(self, metadata, manifest, burst_params):
+    def __init__(self, metadata: ET.Element, manifest: ET.Element, burst_params: BurstParams):
         self.safe_url = burst_params.safe_url
         self.image_number = burst_params.image_number
         self.burst_number = burst_params.burst_number
@@ -99,15 +100,12 @@ class BurstMetadata:
         return footprint, footprint.bounds, centroid
 
 
-def create_burst_request(burst_params, content):
+def create_burst_request(burst_params: BurstParams, content: str) -> dict:
     urls = {
         'metadata': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata',
         'geotiff': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/geotiff',
     }
     url = urls[content]
-
-    # token = os.environ['EDL_TOKEN']
-    # headers = {'Authorization': f'Bearer {token}'}
 
     cookie = os.environ['EDL_COOKIE']
     cookies = {'asf-urs': cookie}
@@ -119,14 +117,13 @@ def create_burst_request(burst_params, content):
     }
     request_params = {
         'url': url,
-        # 'headers': headers,
         'cookies': cookies,
         'params': params,
     }
     return request_params
 
 
-def download_metadata(burst_params, out_file=None):
+def download_metadata(burst_params: BurstParams, out_file: Union[Path, str] = None) -> ET.Element:
     request_params = create_burst_request(burst_params, content='metadata')
     with requests.get(**request_params) as r:
         if not r.ok:
@@ -139,7 +136,7 @@ def download_metadata(burst_params, out_file=None):
     return metadata
 
 
-def download_geotiff(burst_params, out_file):
+def download_geotiff(burst_params: BurstParams, out_file: Union[Path, str]) -> str:
     request_params = create_burst_request(burst_params, content='geotiff')
 
     i = 1
@@ -156,10 +153,10 @@ def download_geotiff(burst_params, out_file):
     with open(out_file, 'wb') as f:
         f.write(r.content)
 
-    return out_file
+    return str(out_file)
 
 
-def download_manifest(safe_url, out_file=None):
+def download_manifest(safe_url: str, out_file: Union[Path, str] = None) -> ET.Element:
     import netrc
 
     import aiohttp
@@ -186,7 +183,7 @@ def download_manifest(safe_url, out_file=None):
     return manifest
 
 
-def download_swath(safe_url, measurement_path, measurement_name):
+def download_swath(safe_url: str, measurement_path: Path, measurement_name: str) -> str:
     import netrc
 
     import aiohttp
@@ -210,10 +207,10 @@ def download_swath(safe_url, measurement_path, measurement_name):
     with open(out_path, 'wb') as f:
         f.write(swath)
 
-    return out_path
+    return str(out_path)
 
 
-def spoof_safe(burst, base_path=Path('.'), download_strategy='single_burst'):
+def spoof_safe(burst: BurstMetadata, base_path: Path = Path('.'), download_strategy: str = 'single_burst') -> Path:
     """Creates this file structure:
     SLC.SAFE/
     ├── manifest.safe
@@ -268,7 +265,7 @@ def spoof_safe(burst, base_path=Path('.'), download_strategy='single_burst'):
 
 
 # TODO currently only validated for descending orbits
-def get_region_of_interest(poly1, poly2, asc=True):
+def get_region_of_interest(poly1: geometry.Polygon, poly2: geometry.Polygon, asc: bool = True) -> Tuple[float]:
     bbox1 = geometry.box(*poly1.bounds)
     bbox2 = geometry.box(*poly2.bounds)
     intersection = bbox1.intersection(bbox2)
@@ -280,7 +277,7 @@ def get_region_of_interest(poly1, poly2, asc=True):
     return (minx, miny, maxx, maxy)
 
 
-def localize_bursts(param_list, base_path=Path.cwd()):
+def localize_bursts(param_list: Iterator[BurstParams], base_path: Path = Path.cwd()) -> List[BurstMetadata]:
     """Steps
     For each burst:
         1. Download metadata
@@ -303,7 +300,16 @@ def localize_bursts(param_list, base_path=Path.cwd()):
     return bursts
 
 
-def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do_esd, range_looks=7, azimuth_looks=3):
+def create_job_xml(
+    reference_safe: str,
+    secondary_safe: str,
+    swath: int,
+    polarization: str,
+    bbox: Iterator[float],
+    do_esd: bool,
+    range_looks: int = 7,
+    azimuth_looks: int = 3,
+) -> ET.Element:
     bbox = list(bbox)
     geocode_list = [
         'merged/phsig.cor',
@@ -344,7 +350,7 @@ def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do
     return ET.fromstring(config)
 
 
-def prep_isce2_burst_job(ref_params, sec_params, base_path=Path.cwd()):
+def prep_isce2_burst_job(ref_params: BurstParams, sec_params: BurstParams, base_path: Path = Path.cwd()) -> Path:
     """Steps
     1. Spoof SAFE for each burst
     2. Create and write job xml
