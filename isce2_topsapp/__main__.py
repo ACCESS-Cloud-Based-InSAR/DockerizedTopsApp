@@ -204,7 +204,7 @@ def main():
     sys.argv = [args.process, *unknowns]
     # FIXME: this gets better in python 3.10
     # (process_entry_point,) = entry_points(group='console_scripts', name=args.process)
-    process_entry_point = [ep for ep in entry_points()['console_scripts'] if ep.name == 'gunw_burst'][0]
+    process_entry_point = [ep for ep in entry_points()['console_scripts'] if ep.name == args.process][0]
     sys.exit(
         process_entry_point.load()()
     )
