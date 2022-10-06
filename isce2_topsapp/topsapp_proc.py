@@ -33,6 +33,8 @@ def topsapp_processing(*,
                        extent: list,
                        dem_for_proc: str,
                        dem_for_geoc: str,
+                       azimuth_looks: int = 7,
+                       range_looks: int = 19,
                        swaths: list = None,
                        dry_run: bool = False):
     swaths = swaths or [1, 2, 3]
@@ -60,8 +62,8 @@ def topsapp_processing(*,
                                   do_unwrap=True,
                                   use_virtual_files=True,
                                   esd_coherence_threshold=-1,
-                                  azimuth_looks=7,
-                                  range_looks=19,
+                                  azimuth_looks=azimuth_looks,
+                                  range_looks=range_looks,
                                   swaths=swaths
                                   )
     with open('topsApp.xml', "w") as file:

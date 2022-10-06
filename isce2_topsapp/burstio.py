@@ -3,13 +3,16 @@ import os
 import re
 import time
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
 import requests
+from jinja2 import Template  # noqa
 from shapely import geometry
 
 URL_BASE = 'https://datapool.asf.alaska.edu/SLC'
+TEMPLATE_DIR = Path(__file__).parent / 'templates'
 
 """Request Format:
 curl --get \
@@ -23,11 +26,20 @@ curl --get \
 """
 
 
+@dataclass
+class BurstParams:
+    """Class that contains the parameters nessecary to request a burst from the API."""
+
+    safe_url: str
+    image_number: int
+    burst_number: int
+
+
 class BurstMetadata:
-    def __init__(self, metadata, manifest, safe_url, image_number, burst_number):
-        self.safe_url = safe_url
-        self.image_number = image_number
-        self.burst_number = burst_number
+    def __init__(self, metadata, manifest, burst_params):
+        self.safe_url = burst_params.safe_url
+        self.image_number = burst_params.image_number
+        self.burst_number = burst_params.burst_number
         self.safe_name = Path(self.safe_url).with_suffix('.SAFE').name
 
         image_numbers = [int(x.attrib['source_filename'].split('-')[-1][2]) for x in metadata]
@@ -46,7 +58,7 @@ class BurstMetadata:
         self.manifest_name = 'manifest.safe'
 
         file_paths = [x.attrib['href'] for x in manifest.findall('.//fileLocation')]
-        pattern = f'^./measurement/s1.*{image_number}.tiff$'
+        pattern = f'^./measurement/s1.*{self.image_number}.tiff$'
         self.measurement_name = [Path(x).name for x in file_paths if re.search(pattern, x)][0]
 
         self.gcp_df = self.create_gcp_df()
@@ -87,7 +99,7 @@ class BurstMetadata:
         return footprint, footprint.bounds, centroid
 
 
-def create_burst_request(safe_url, image_number, burst_number, content):
+def create_burst_request(burst_params, content):
     urls = {
         'metadata': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata',
         'geotiff': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/geotiff',
@@ -101,9 +113,9 @@ def create_burst_request(safe_url, image_number, burst_number, content):
     cookies = {'asf-urs': cookie}
 
     params = {
-        'zip_url': safe_url,
-        'image_number': str(image_number),
-        'burst_number': str(burst_number),
+        'zip_url': burst_params.safe_url,
+        'image_number': str(burst_params.image_number),
+        'burst_number': str(burst_params.burst_number),
     }
     request_params = {
         'url': url,
@@ -114,8 +126,8 @@ def create_burst_request(safe_url, image_number, burst_number, content):
     return request_params
 
 
-def download_metadata(safe_url, image_number, burst_number, out_file=None):
-    request_params = create_burst_request(safe_url, image_number, burst_number, content='metadata')
+def download_metadata(burst_params, out_file=None):
+    request_params = create_burst_request(burst_params, content='metadata')
     with requests.get(**request_params) as r:
         if not r.ok:
             raise (RuntimeError('Response is not OK'))
@@ -127,8 +139,8 @@ def download_metadata(safe_url, image_number, burst_number, out_file=None):
     return metadata
 
 
-def download_geotiff(safe_url, image_number, burst_number, out_file):
-    request_params = create_burst_request(safe_url, image_number, burst_number, content='geotiff')
+def download_geotiff(burst_params, out_file):
+    request_params = create_burst_request(burst_params, content='geotiff')
 
     i = 1
     downloaded = False
@@ -264,10 +276,11 @@ def get_region_of_interest(poly1, poly2, asc=True):
 
     x, y = (0, 1) if asc else (2, 1)
     roi = geometry.Point(bounds[x], bounds[y]).buffer(0.005)
-    return roi
+    minx, miny, maxx, maxy = roi.bounds
+    return (minx, miny, maxx, maxy)
 
 
-def prep_isce2_burst_job(reference_dict, secondary_dict, base_path=Path.cwd()):
+def localize_bursts(param_list, base_path=Path.cwd()):
     """Steps
     For each burst:
         1. Download metadata
@@ -275,37 +288,19 @@ def prep_isce2_burst_job(reference_dict, secondary_dict, base_path=Path.cwd()):
         3. Create directory structure
         4. Write metadata
         5. Download and write geotiff
-    6. Create and write job xml
     """
     bursts = []
-    for i, params in enumerate([reference_dict, secondary_dict]):
+    for i, params in enumerate(param_list):
         print(f'Creating SAFE {i+1}...')
-        manifest = download_manifest(params['url'])
-        metadata = download_metadata(params['url'], params['image_number'], params['burst_number'])
-        burst = BurstMetadata(metadata, manifest, params['url'], params['image_number'], params['burst_number'])
+        manifest = download_manifest(params.safe_url)
+        metadata = download_metadata(params)
+        burst = BurstMetadata(metadata, manifest, params)
         bursts.append(burst)
         spoof_safe(burst, download_strategy='swath')
 
     print('SAFEs created!')
-    asc = bursts[0].orbit_direction == 'ascending'
-    roi = get_region_of_interest(bursts[0].footprint, bursts[0].footprint, asc)
-    minx, miny, maxx, maxy = roi.bounds
 
-    # topsApp expects bbox to be in order [S, N, W, E]
-    job_xml = create_job_xml(
-        bursts[0].safe_name,
-        bursts[1].safe_name,
-        bursts[0].swath,
-        bursts[0].polarisation,
-        (miny, maxy, minx, maxx),
-        False,
-        20,
-        4,
-    )
-
-    ET.ElementTree(job_xml).write(base_path / 'topsApp.xml', encoding='UTF-8', xml_declaration=True)
-
-    return base_path
+    return bursts
 
 
 def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do_esd, range_looks=7, azimuth_looks=3):
@@ -349,22 +344,85 @@ def create_job_xml(reference_safe, secondary_safe, swath, polarization, bbox, do
     return ET.fromstring(config)
 
 
+def prep_isce2_burst_job(ref_params, sec_params, base_path=Path.cwd()):
+    """Steps
+    1. Spoof SAFE for each burst
+    2. Create and write job xml
+    """
+    ref_burst, sec_burst = localize_bursts([ref_params, sec_params], base_path)
+
+    asc = ref_burst.orbit_direction == 'ascending'
+    roi = get_region_of_interest(ref_burst.footprint, sec_burst.footprint, asc)
+    roi_isce = [roi[k] for k in [1, 3, 0, 2]]  # Expects SNWE
+
+    # new way
+    with open(TEMPLATE_DIR / 'topsapp_template.xml', 'r') as file:
+        template = Template(file.read())
+
+    topsApp_xml = template.render(
+        orbit_directory='',
+        output_reference_directory='reference',
+        output_secondary_directory='secondary',
+        ref_zip_file=ref_burst.safe_name,
+        sec_zip_file=sec_burst.safe_name,
+        region_of_interest=roi_isce,
+        demFilename='',
+        geocodeDemFilename='',
+        do_esd=False,
+        filter_strength=0.5,
+        do_unwrap=True,
+        use_virtual_files=True,
+        esd_coherence_threshold=-1,
+        azimuth_looks=4,
+        range_looks=20,
+        swaths=[ref_burst.swath],
+    )
+    with open(base_path / 'topsApp.xml', "w") as file:
+        file.write(topsApp_xml)
+
+    # # old way
+    # job_xml = create_job_xml(
+    #     ref_burst.safe_name,
+    #     sec_burst.safe_name,
+    #     ref_burst.swath,
+    #     ref_burst.polarisation,
+    #     [roi[k] for k in [1, 3, 0, 2]],  # Expects SNWE
+    #     False,
+    #     20,
+    #     4,
+    # )
+    # ET.ElementTree(job_xml).write(base_path / 'topsApp.xml', encoding='UTF-8', xml_declaration=True)
+
+    return base_path
+
+
 if __name__ == '__main__':
-    # # Iran
-    # url_ref = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip'
-    # url_sec = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.zip'
-    # image_number = 5
-    # burst_number = 8  # have to be careful with this, depends on ascending vs descending
-
-    # Greece
-    url_ref = f'{URL_BASE}/SA/S1B_IW_SLC__1SDV_20201115T162313_20201115T162340_024278_02E29D_5C54.zip'
-    url_sec = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20201203T162353_20201203T162420_035524_042744_6D5C.zip'
+    # Iran
+    url_ref = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip'
+    url_sec = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.zip'
     image_number = 5
-    burst_number = 1  # have to be careful with this, depends on ascending vs descending
+    burst_number = 8  # have to be careful with this, depends on ascending vs descending
 
-    ref_dict = {'url': url_ref, 'image_number': image_number, 'burst_number': burst_number}
-    sec_dict = {'url': url_sec, 'image_number': image_number, 'burst_number': burst_number}
+    # # Greece
+    # url_ref = f'{URL_BASE}/SA/S1B_IW_SLC__1SDV_20201115T162313_20201115T162340_024278_02E29D_5C54.zip'
+    # url_sec = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20201203T162353_20201203T162420_035524_042744_6D5C.zip'
+    # image_number = 5
+    # burst_number = 1  # have to be careful with this, depends on ascending vs descending
+
+    # ref_dict = {'url': url_ref, 'image_number': image_number, 'burst_number': burst_number}
+    # sec_dict = {'url': url_sec, 'image_number': image_number, 'burst_number': burst_number}
+
+    ref_params = BurstParams(
+        safe_url=url_ref,
+        image_number=image_number,
+        burst_number=burst_number,
+    )
+    sec_params = BurstParams(
+        safe_url=url_sec,
+        image_number=image_number,
+        burst_number=burst_number,
+    )
     start = time.time()
-    working_path = prep_isce2_burst_job(ref_dict, sec_dict)
+    working_path = prep_isce2_burst_job(ref_params, sec_params)
     end = time.time()
     print(f'Took {end-start:.0f} seconds')

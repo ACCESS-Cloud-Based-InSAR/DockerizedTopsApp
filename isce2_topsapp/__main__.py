@@ -8,7 +8,7 @@ from typing import Optional
 
 from pkg_resources import load_entry_point
 
-from isce2_topsapp import (aws, download_aux_cal, download_dem_for_isce2,
+from isce2_topsapp import (aws, burstio, download_aux_cal, download_dem_for_isce2,
                            download_orbits, download_slcs,
                            package_gunw_product, prepare_for_delivery,
                            topsapp_processing)
@@ -139,20 +139,58 @@ def gunw_burst():
     parser.add_argument('--bucket')
     parser.add_argument('--bucket-prefix', default='')
     parser.add_argument('--dry-run', action='store_true')
-    parser.add_argument('--reference-scenes', type=str.split, nargs='+', required=True)
-    parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
-    parser.add_argument('--image-number', type=int, nargs=1, required=True)
-    parser.add_argument('--burst-number', type=int, nargs=1, required=True)
+    parser.add_argument('--reference-scene', type=str, required=True)
+    parser.add_argument('--secondary-scene', type=str, required=True)
+    parser.add_argument('--image-number', type=int, required=True)
+    parser.add_argument('--burst-number', type=int, required=True)
     args = parser.parse_args()
 
     ensure_earthdata_credentials(args.username, args.password)
 
-    args.reference_scenes = [item for sublist in args.reference_scenes for item in sublist]
-    args.secondary_scenes = [item for sublist in args.secondary_scenes for item in sublist]
+    from isce2_topsapp import localize_slc
 
-    loc_data = localize_data(args.reference_scenes,
-                             args.secondary_scenes,
-                             dry_run=args.dry_run)
+    ref_resp, sec_resp = localize_slc.get_asf_slc_objects([args.reference_scene, args.secondary_scene])
+
+    ref_params = burstio.BurstParams(
+        safe_url=ref_resp.properties['url'],
+        image_number=args.image_number,
+        burst_number=args.burst_number,
+    )
+    sec_params = burstio.BurstParams(
+        safe_url=sec_resp.properties['url'],
+        image_number=args.image_number,
+        burst_number=args.burst_number,
+    )
+
+    ref_burst, sec_burst = burstio.localize_bursts([ref_params, sec_params])
+
+    intersection = ref_burst.footprint.intersection(sec_burst.footprint).bounds
+    asc = ref_burst.orbit_direction == 'ascending'
+    roi = burstio.get_region_of_interest(ref_burst.footprint, sec_burst.footprint, asc)
+
+    out_orbits = download_orbits([ref_burst.safe_name[:-5]], [sec_burst.safe_name[:-5]], dry_run=args.dry_run)
+
+    if not args.dry_run:
+        out_dem = download_dem_for_isce2(intersection)
+        _ = download_aux_cal()
+
+    # TODO fails when using the default 19x7 looks
+    topsapp_processing(
+        reference_slc_zips=ref_burst.safe_name,
+        secondary_slc_zips=sec_burst.safe_name,
+        orbit_directory=out_orbits['orbit_directory'],
+        extent=roi,
+        dem_for_proc=out_dem['full_res_dem_path'],
+        dem_for_geoc=out_dem['low_res_dem_path'],
+        azimuth_looks=4,
+        range_looks=20,
+        swaths=[ref_burst.swath],
+        dry_run=args.dry_run,
+    )
+
+    if args.bucket:
+        for file in Path('merged').glob('*geo*'):
+            aws.upload_file_to_s3(file, args.bucket, args.bucket_prefix)
 
 
 def main():
