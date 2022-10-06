@@ -8,8 +8,9 @@ from typing import Optional
 
 from pkg_resources import load_entry_point
 
-from isce2_topsapp import (aws, burstio, download_aux_cal, download_dem_for_isce2,
-                           download_orbits, download_slcs,
+from isce2_topsapp import (BurstParams, aws, download_aux_cal, download_bursts,
+                           download_dem_for_isce2, download_orbits,
+                           download_slcs, get_asf_slc_objects, get_region_of_interest,
                            package_gunw_product, prepare_for_delivery,
                            topsapp_processing)
 from isce2_topsapp.json_encoder import MetadataEncoder
@@ -147,26 +148,24 @@ def gunw_burst():
 
     ensure_earthdata_credentials(args.username, args.password)
 
-    from isce2_topsapp import localize_slc
+    ref_resp, sec_resp = get_asf_slc_objects([args.reference_scene, args.secondary_scene])
 
-    ref_resp, sec_resp = localize_slc.get_asf_slc_objects([args.reference_scene, args.secondary_scene])
-
-    ref_params = burstio.BurstParams(
+    ref_params = BurstParams(
         safe_url=ref_resp.properties['url'],
         image_number=args.image_number,
         burst_number=args.burst_number,
     )
-    sec_params = burstio.BurstParams(
+    sec_params = BurstParams(
         safe_url=sec_resp.properties['url'],
         image_number=args.image_number,
         burst_number=args.burst_number,
     )
 
-    ref_burst, sec_burst = burstio.localize_bursts([ref_params, sec_params])
+    ref_burst, sec_burst = download_bursts([ref_params, sec_params])
 
     intersection = ref_burst.footprint.intersection(sec_burst.footprint).bounds
     asc = ref_burst.orbit_direction == 'ascending'
-    roi = burstio.get_region_of_interest(ref_burst.footprint, sec_burst.footprint, asc)
+    roi = get_region_of_interest(ref_burst.footprint, sec_burst.footprint, asc)
 
     out_orbits = download_orbits([ref_burst.safe_name[:-5]], [sec_burst.safe_name[:-5]], dry_run=args.dry_run)
 

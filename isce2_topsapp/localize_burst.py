@@ -12,6 +12,7 @@ import requests
 from jinja2 import Template  # noqa
 from shapely import geometry
 
+
 URL_BASE = 'https://datapool.asf.alaska.edu/SLC'
 TEMPLATE_DIR = Path(__file__).parent / 'templates'
 
@@ -277,7 +278,7 @@ def get_region_of_interest(poly1: geometry.Polygon, poly2: geometry.Polygon, asc
     return (minx, miny, maxx, maxy)
 
 
-def localize_bursts(param_list: Iterator[BurstParams], base_path: Path = Path.cwd()) -> List[BurstMetadata]:
+def download_bursts(param_list: Iterator[BurstParams], base_path: Path = Path.cwd()) -> List[BurstMetadata]:
     """Steps
     For each burst:
         1. Download metadata
@@ -355,7 +356,7 @@ def prep_isce2_burst_job(ref_params: BurstParams, sec_params: BurstParams, base_
     1. Spoof SAFE for each burst
     2. Create and write job xml
     """
-    ref_burst, sec_burst = localize_bursts([ref_params, sec_params], base_path)
+    ref_burst, sec_burst = download_bursts([ref_params, sec_params], base_path)
 
     asc = ref_burst.orbit_direction == 'ascending'
     roi = get_region_of_interest(ref_burst.footprint, sec_burst.footprint, asc)
