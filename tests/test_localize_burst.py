@@ -75,23 +75,6 @@ def test_create_geometry(ref_burst):
     assert np.all([np.isclose(a, b) for a, b in zip(box, real_box)])
 
 
-# TODO figure out how to obtain OK response without downloading data
-@pytest.mark.skip(reason='Can be slow, only run if you have time')
-def test_burst_request():
-    safe_url = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.zip'
-    params = localize_burst.BurstParams(safe_url, 5, 8)
-    data_params, cookie_params = localize_burst.create_burst_request(params, content='metadata')
-
-    with requests.Session() as session:
-        cookie_response = session.get(**cookie_params)
-        assert cookie_response.ok
-
-        data_params['cookies']['asf-urs'] = session.cookies['asf-urs']
-        data_response = session.get(**data_params)
-
-        assert data_response.ok
-
-
 @pytest.mark.parametrize(
     'pattern',
     (
