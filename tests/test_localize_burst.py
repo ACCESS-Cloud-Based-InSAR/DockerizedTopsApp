@@ -92,7 +92,6 @@ def test_burst_request():
         assert data_response.ok
 
 
-# @pytest.mark.skip(reason='Can be slow, only run if you have time')
 @pytest.mark.parametrize(
     'pattern',
     (
