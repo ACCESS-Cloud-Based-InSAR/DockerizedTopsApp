@@ -87,44 +87,28 @@ def create_burst_request(burst_params: BurstParams, content: str) -> dict:
     urls = {
         'metadata': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata',
         'geotiff': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/geotiff',
-        'cookie': 'https://urs.earthdata.nasa.gov/oauth/authorize',
     }
-
-    cookie_payload = {
-        'response_type': 'code',
-        'client_id': 'BO_n7nTIlMljdvU6kRRB3g',
-        'redirect_uri': 'https://auth.asf.alaska.edu/login',
-    }
-
-    cookie_params = {'url': urls['cookie'], 'params': cookie_payload}
-
-    data_payload = {
+    payload = {
         'zip_url': burst_params.safe_url,
         'image_number': str(burst_params.image_number),
         'burst_number': str(burst_params.burst_number),
     }
-
-    data_params = {
+    return {
         'url': urls[content],
-        'cookies': {'asf-urs': ''},
-        'params': data_payload,
+        'params': payload,
     }
-    return data_params, cookie_params
 
 
-def download_metadata(burst_params: BurstParams, out_file: Union[Path, str] = None) -> ET.Element:
-    data_params, cookie_params = create_burst_request(burst_params, content='metadata')
+def download_metadata(
+        asf_session: requests.Session,
+        burst_params: BurstParams,
+        out_file: Union[Path, str] = None) -> ET.Element:
+    burst_request = create_burst_request(burst_params, content='metadata')
 
-    with requests.Session() as session:
-        cookie_response = session.get(**cookie_params)
-        cookie_response.raise_for_status()
+    response = asf_session.get(**burst_request)
+    response.raise_for_status()
 
-        data_params['cookies']['asf-urs'] = session.cookies['asf-urs']
-
-        data_response = session.get(**data_params)
-        data_response.raise_for_status()
-
-        metadata = ET.fromstring(data_response.content)
+    metadata = ET.fromstring(response.content)
 
     if out_file:
         ET.ElementTree(metadata).write(out_file, encoding='UTF-8', xml_declaration=True)
@@ -132,28 +116,25 @@ def download_metadata(burst_params: BurstParams, out_file: Union[Path, str] = No
     return metadata
 
 
-def download_geotiff(burst_params: BurstParams, out_file: Union[Path, str]) -> str:
-    data_params, cookie_params = create_burst_request(burst_params, content='metadata')
+def download_geotiff(
+        asf_session: requests.Session,
+        burst_params: BurstParams,
+        out_file: Union[Path, str]) -> str:
+    burst_request = create_burst_request(burst_params, content='metadata')
 
-    with requests.Session() as session:
-        cookie_response = session.get(**cookie_params)
-        cookie_response.raise_for_status()
+    i = 1
+    downloaded = False
+    while (not downloaded) and (i <= 3):
+        print(f'Download attempt #{i}')
+        response = asf_session.get(**burst_request)
+        downloaded = response.ok
+        i += 1
 
-        data_params['cookies']['asf-urs'] = session.cookies['asf-urs']
+    if not downloaded:
+        raise RuntimeError('Download failed three times')
 
-        i = 1
-        downloaded = False
-        while (not downloaded) & (i <= 3):
-            print(f'Download attempt #{i}')
-            data_response = session.get(**data_params)
-            downloaded = data_response.ok
-            i += 1
-
-        if not downloaded:
-            raise (RuntimeError('Download failed three times'))
-
-        with open(out_file, 'wb') as f:
-            f.write(data_response.content)
+    with open(out_file, 'wb') as f:
+        f.write(response.content)
 
     return str(out_file)
 
@@ -212,7 +193,11 @@ def download_swath(safe_url: str, measurement_path: Path, measurement_name: str)
     return str(out_path)
 
 
-def spoof_safe(burst: BurstMetadata, base_path: Path = Path('.'), download_strategy: str = 'single_burst') -> Path:
+def spoof_safe(
+        asf_session: requests.Session,
+        burst: BurstMetadata,
+        base_path: Path = Path('.'),
+        download_strategy: str = 'single_burst') -> Path:
     """Creates this file structure:
     SLC.SAFE/
     ├── manifest.safe
@@ -241,8 +226,11 @@ def spoof_safe(burst: BurstMetadata, base_path: Path = Path('.'), download_strat
     ET.ElementTree(burst.manifest).write(safe_path / 'manifest.safe', **et_args)
 
     if download_strategy == 'single_burst':
+        burst_params = BurstParams(
+            safe_url=burst.safe_url, image_number=burst.image_number, burst_number=burst.burst_number
+        )
         download_geotiff(
-            burst.safe_url, burst.image_number, burst.burst_number, measurement_path / burst.measurement_name
+            asf_session, burst_params, measurement_path / burst.measurement_name
         )
     elif download_strategy == 'surrounding_burst':
         n_bursts = len(burst.annotation.find('.//burstList'))
@@ -251,9 +239,12 @@ def spoof_safe(burst: BurstMetadata, base_path: Path = Path('.'), download_strat
             burst.measurement_name: burst.burst_number,
             'burst_post.tiff': burst.burst_number + 1,
         }
-        names = {k: v for k, v in names.items() if (v > 0) & (v <= n_bursts)}
+        names = {k: v for k, v in names.items() if 0 < v <= n_bursts}
         for n in names:
-            download_geotiff(burst.safe_url, burst.image_number, names[n], measurement_path / n)
+            burst_params = BurstParams(
+                safe_url=burst.safe_url, image_number=burst.image_number, burst_number=names[n]
+            )
+            download_geotiff(asf_session, burst_params, measurement_path / n)
     elif download_strategy == 'swath':
         download_swath(
             burst.safe_url,
@@ -267,7 +258,10 @@ def spoof_safe(burst: BurstMetadata, base_path: Path = Path('.'), download_strat
 
 
 # TODO currently only validated for descending orbits
-def get_region_of_interest(poly1: geometry.Polygon, poly2: geometry.Polygon, asc: bool = True) -> Tuple[float]:
+def get_region_of_interest(
+        poly1: geometry.Polygon,
+        poly2: geometry.Polygon,
+        asc: bool = True) -> Tuple[float, float, float, float]:
     bbox1 = geometry.box(*poly1.bounds)
     bbox2 = geometry.box(*poly2.bounds)
     intersection = bbox1.intersection(bbox2)
@@ -276,9 +270,24 @@ def get_region_of_interest(poly1: geometry.Polygon, poly2: geometry.Polygon, asc
     x, y = (0, 1) if asc else (2, 1)
     roi = geometry.Point(bounds[x], bounds[y]).buffer(0.005)
     minx, miny, maxx, maxy = roi.bounds
-    return (minx, miny, maxx, maxy)
+    return minx, miny, maxx, maxy
 
 
+def get_asf_session() -> requests.Session:
+    # requests will automatically use the netrc file:
+    # https://requests.readthedocs.io/en/latest/user/authentication/#netrc-authentication
+    session = requests.Session()
+    payload = {
+        'response_type': 'code',
+        'client_id': 'BO_n7nTIlMljdvU6kRRB3g',
+        'redirect_uri': 'https://auth.asf.alaska.edu/login',
+    }
+    response = session.get('https://urs.earthdata.nasa.gov/oauth/authorize', params=payload)
+    response.raise_for_status()
+    return session
+
+
+# TODO base_path is not used, can we remove it?
 def download_bursts(param_list: Iterator[BurstParams], base_path: Path = Path.cwd()) -> List[BurstMetadata]:
     """Steps
     For each burst:
@@ -288,14 +297,15 @@ def download_bursts(param_list: Iterator[BurstParams], base_path: Path = Path.cw
         4. Write metadata
         5. Download and write geotiff
     """
+    asf_session = get_asf_session()
     bursts = []
     for i, params in enumerate(param_list):
         print(f'Creating SAFE {i+1}...')
         manifest = download_manifest(params.safe_url)
-        metadata = download_metadata(params)
+        metadata = download_metadata(asf_session, params)
         burst = BurstMetadata(metadata, manifest, params)
         bursts.append(burst)
-        spoof_safe(burst, download_strategy='swath')
+        spoof_safe(asf_session, burst, download_strategy='swath')
 
     print('SAFEs created!')
 
