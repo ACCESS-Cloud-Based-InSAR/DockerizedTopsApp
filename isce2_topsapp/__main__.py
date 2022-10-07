@@ -144,6 +144,8 @@ def gunw_burst():
     parser.add_argument('--secondary-scene', type=str, required=True)
     parser.add_argument('--image-number', type=int, required=True)
     parser.add_argument('--burst-number', type=int, required=True)
+    parser.add_argument('--azimuth-looks', type=int, default=2)
+    parser.add_argument('--range-looks', type=int, default=10)
     args = parser.parse_args()
 
     ensure_earthdata_credentials(args.username, args.password)
@@ -170,6 +172,7 @@ def gunw_burst():
     out_orbits = download_orbits([ref_burst.safe_name[:-5]], [sec_burst.safe_name[:-5]], dry_run=args.dry_run)
 
     if not args.dry_run:
+        # TODO this is likely not the optimal geometry to pass to this function
         out_dem = download_dem_for_isce2(intersection)
         _ = download_aux_cal()
 
@@ -181,8 +184,8 @@ def gunw_burst():
         extent=roi,
         dem_for_proc=out_dem['full_res_dem_path'],
         dem_for_geoc=out_dem['low_res_dem_path'],
-        azimuth_looks=4,
-        range_looks=20,
+        azimuth_looks=args.azimuth_looks,
+        range_looks=args.range_looks,
         swaths=[ref_burst.swath],
         dry_run=args.dry_run,
     )
