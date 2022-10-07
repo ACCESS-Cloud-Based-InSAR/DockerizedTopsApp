@@ -105,6 +105,7 @@ def download_metadata(
         burst_params: BurstParams,
         out_file: Union[Path, str] = None) -> ET.Element:
     burst_request = create_burst_request(burst_params, content='metadata')
+    burst_request['cookies'] = {'asf-urs':asf_session.cookies['asf-urs']}
 
     response = asf_session.get(**burst_request)
     response.raise_for_status()
@@ -122,6 +123,7 @@ def download_geotiff(
         burst_params: BurstParams,
         out_file: Union[Path, str]) -> str:
     burst_request = create_burst_request(burst_params, content='metadata')
+    burst_request['cookies'] = {'asf-urs':asf_session.cookies['asf-urs']}
 
     i = 1
     downloaded = False
