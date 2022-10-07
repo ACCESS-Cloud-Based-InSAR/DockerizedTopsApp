@@ -1,6 +1,5 @@
 import io
 import re
-import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
@@ -8,11 +7,7 @@ from typing import Iterator, List, Tuple, Union
 
 import pandas as pd
 import requests
-from jinja2 import Template  # noqa
 from shapely import geometry
-
-URL_BASE = 'https://datapool.asf.alaska.edu/SLC'
-TEMPLATE_DIR = Path(__file__).parent / 'templates'
 
 
 @dataclass
@@ -305,137 +300,3 @@ def download_bursts(param_list: Iterator[BurstParams], base_path: Path = Path.cw
     print('SAFEs created!')
 
     return bursts
-
-
-def create_job_xml(
-    reference_safe: str,
-    secondary_safe: str,
-    swath: int,
-    polarization: str,
-    bbox: Iterator[float],
-    do_esd: bool,
-    range_looks: int = 7,
-    azimuth_looks: int = 3,
-) -> ET.Element:
-    bbox = list(bbox)
-    geocode_list = [
-        'merged/phsig.cor',
-        'merged/filt_topophase.unw',
-        'merged/los.rdr',
-        'merged/topophase.flat',
-        'merged/filt_topophase.flat',
-        'merged/topophase.cor',
-        'merged/filt_topophase.unw.conncomp',
-    ]
-
-    config = f'''<?xml version="1.0" encoding="UTF-8"?>
-    <topsApp>
-        <component name="topsinsar">
-            <property name="Sensor name">SENTINEL1</property>
-            <component name="reference">
-                <property name="output directory">reference</property>
-                <property name="polarization">'{polarization.lower()}'</property>
-                <property name="safe">{reference_safe}</property>
-            </component>
-            <component name="secondary">
-                <property name="output directory">secondary</property>
-                <property name="polarization">'{polarization.lower()}'</property>
-                <property name="safe">{secondary_safe}</property>
-            </component>
-            <property name="swaths">[{swath}]</property>
-            <property name="range looks">{range_looks}</property>
-            <property name="azimuth looks">{azimuth_looks}</property>
-            <property name="region of interest">{bbox}</property>
-            <property name="do denseoffsets">False</property>
-            <property name="do ESD">{do_esd}</property>
-            <property name="do unwrap">True</property>
-            <property name="unwrapper name">snaphu_mcf</property>
-            <property name="geocode list">{geocode_list}</property>
-        </component>
-    </topsApp>
-    '''
-    return ET.fromstring(config)
-
-
-def prep_isce2_burst_job(ref_params: BurstParams, sec_params: BurstParams, base_path: Path = Path.cwd()) -> Path:
-    """Steps
-    1. Spoof SAFE for each burst
-    2. Create and write job xml
-    """
-    ref_burst, sec_burst = download_bursts([ref_params, sec_params], base_path)
-
-    asc = ref_burst.orbit_direction == 'ascending'
-    roi = get_region_of_interest(ref_burst.footprint, sec_burst.footprint, asc)
-    roi_isce = [roi[k] for k in [1, 3, 0, 2]]  # Expects SNWE
-
-    # new way
-    with open(TEMPLATE_DIR / 'topsapp_template.xml', 'r') as file:
-        template = Template(file.read())
-
-    topsApp_xml = template.render(
-        orbit_directory='',
-        output_reference_directory='reference',
-        output_secondary_directory='secondary',
-        ref_zip_file=ref_burst.safe_name,
-        sec_zip_file=sec_burst.safe_name,
-        region_of_interest=roi_isce,
-        demFilename='',
-        geocodeDemFilename='',
-        do_esd=False,
-        filter_strength=0.5,
-        do_unwrap=True,
-        use_virtual_files=True,
-        esd_coherence_threshold=-1,
-        azimuth_looks=4,
-        range_looks=20,
-        swaths=[ref_burst.swath],
-    )
-    with open(base_path / 'topsApp.xml', "w") as file:
-        file.write(topsApp_xml)
-
-    # # old way
-    # job_xml = create_job_xml(
-    #     ref_burst.safe_name,
-    #     sec_burst.safe_name,
-    #     ref_burst.swath,
-    #     ref_burst.polarisation,
-    #     [roi[k] for k in [1, 3, 0, 2]],  # Expects SNWE
-    #     False,
-    #     20,
-    #     4,
-    # )
-    # ET.ElementTree(job_xml).write(base_path / 'topsApp.xml', encoding='UTF-8', xml_declaration=True)
-
-    return base_path
-
-
-if __name__ == '__main__':
-    # Iran
-    url_ref = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip'
-    url_sec = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20200616T022252_20200616T022319_033036_03D3A3_5D11.zip'
-    image_number = 5
-    burst_number = 8  # have to be careful with this, depends on ascending vs descending
-
-    # # Greece
-    # url_ref = f'{URL_BASE}/SA/S1B_IW_SLC__1SDV_20201115T162313_20201115T162340_024278_02E29D_5C54.zip'
-    # url_sec = f'{URL_BASE}/SA/S1A_IW_SLC__1SDV_20201203T162353_20201203T162420_035524_042744_6D5C.zip'
-    # image_number = 5
-    # burst_number = 1  # have to be careful with this, depends on ascending vs descending
-
-    # ref_dict = {'url': url_ref, 'image_number': image_number, 'burst_number': burst_number}
-    # sec_dict = {'url': url_sec, 'image_number': image_number, 'burst_number': burst_number}
-
-    ref_params = BurstParams(
-        safe_url=url_ref,
-        image_number=image_number,
-        burst_number=burst_number,
-    )
-    sec_params = BurstParams(
-        safe_url=url_sec,
-        image_number=image_number,
-        burst_number=burst_number,
-    )
-    start = time.time()
-    working_path = prep_isce2_burst_job(ref_params, sec_params)
-    end = time.time()
-    print(f'Took {end-start:.0f} seconds')
