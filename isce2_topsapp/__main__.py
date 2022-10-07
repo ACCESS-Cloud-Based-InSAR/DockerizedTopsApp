@@ -3,10 +3,10 @@ import netrc
 import os
 import sys
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
+from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Optional
 
-from pkg_resources import load_entry_point
 
 from isce2_topsapp import (BurstParams, aws, download_aux_cal, download_bursts,
                            download_dem_for_isce2, download_orbits,
@@ -201,8 +201,11 @@ def main():
     args, unknowns = parser.parse_known_args()
 
     sys.argv = [args.process, *unknowns]
+    # FIXME: this gets better in python 3.10
+    # (process_entry_point,) = entry_points(group='console_scripts', name=args.process)
+    process_entry_point = [ep for ep in entry_points()['console_scripts'] if ep.name == args.process][0]
     sys.exit(
-        load_entry_point('isce2_topsapp', 'console_scripts', args.process)()
+        process_entry_point.load()()
     )
 
 
