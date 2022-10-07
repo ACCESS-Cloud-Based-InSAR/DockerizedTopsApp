@@ -1,5 +1,6 @@
 import io
 import re
+import copy
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
@@ -33,7 +34,7 @@ class BurstMetadata:
         files = {'product': 'annotation', 'calibration': 'calibration', 'noise': 'noise'}
         for name in files:
             elem = metadata[combos.index((self.image_number, name))]
-            content = elem.find('content')
+            content = copy.deepcopy(elem.find('content'))
             content.tag = 'product'
             setattr(self, files[name], content)
             setattr(self, f'{files[name]}_name', elem.attrib['source_filename'])
