@@ -1,5 +1,4 @@
 import io
-import os
 import re
 import time
 import xml.etree.ElementTree as ET
@@ -12,20 +11,8 @@ import requests
 from jinja2 import Template  # noqa
 from shapely import geometry
 
-
 URL_BASE = 'https://datapool.asf.alaska.edu/SLC'
 TEMPLATE_DIR = Path(__file__).parent / 'templates'
-
-"""Request Format:
-curl --get \
-     --data-urlencode "zip_url=https://datapool.asf.alaska.edu/SLC/SA/S1A_IW_SLC__1SDV_20200604T022251_20200604T022318_032861_03CE65_7C85.zip" \
-     --data-urlencode "image_number=5" \
-     --data-urlencode "burst_number=1" \
-     --header "Authorization: Bearer $EDL_TOKEN" \
-     --location \
-     --output tmp.tif \
-    https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/geotiff && gdalinfo tmp.tif
-"""
 
 
 @dataclass
@@ -105,54 +92,73 @@ def create_burst_request(burst_params: BurstParams, content: str) -> dict:
     urls = {
         'metadata': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata',
         'geotiff': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/geotiff',
+        'cookie': 'https://urs.earthdata.nasa.gov/oauth/authorize',
     }
-    url = urls[content]
 
-    cookie = os.environ['EDL_COOKIE']
-    cookies = {'asf-urs': cookie}
+    cookie_payload = {
+        'response_type': 'code',
+        'client_id': 'BO_n7nTIlMljdvU6kRRB3g',
+        'redirect_uri': 'https://auth.asf.alaska.edu/login',
+    }
 
-    params = {
+    cookie_params = {'url': urls['cookie'], 'params': cookie_payload}
+
+    data_payload = {
         'zip_url': burst_params.safe_url,
         'image_number': str(burst_params.image_number),
         'burst_number': str(burst_params.burst_number),
     }
-    request_params = {
-        'url': url,
-        'cookies': cookies,
-        'params': params,
+
+    data_params = {
+        'url': urls[content],
+        'cookies': {'asf-urs': ''},
+        'params': data_payload,
     }
-    return request_params
+    return data_params, cookie_params
 
 
 def download_metadata(burst_params: BurstParams, out_file: Union[Path, str] = None) -> ET.Element:
-    request_params = create_burst_request(burst_params, content='metadata')
-    with requests.get(**request_params) as r:
-        if not r.ok:
-            raise (RuntimeError('Response is not OK'))
+    data_params, cookie_params = create_burst_request(burst_params, content='metadata')
 
-        metadata = ET.fromstring(r.content)
-        if out_file:
-            ET.ElementTree(metadata).write(out_file, encoding='UTF-8', xml_declaration=True)
+    with requests.Session() as session:
+        cookie_response = session.get(**cookie_params)
+        cookie_response.raise_for_status()
+
+        data_params['cookies']['asf-urs'] = session.cookies['asf-urs']
+
+        data_response = session.get(**data_params)
+        data_response.raise_for_status()
+
+        metadata = ET.fromstring(data_response.content)
+
+    if out_file:
+        ET.ElementTree(metadata).write(out_file, encoding='UTF-8', xml_declaration=True)
 
     return metadata
 
 
 def download_geotiff(burst_params: BurstParams, out_file: Union[Path, str]) -> str:
-    request_params = create_burst_request(burst_params, content='geotiff')
+    data_params, cookie_params = create_burst_request(burst_params, content='metadata')
 
-    i = 1
-    downloaded = False
-    while (not downloaded) & (i <= 4):
-        print(f'Download attempt #{i}')
-        r = requests.get(**request_params)
-        downloaded = r.ok
-        i += 1
+    with requests.Session() as session:
+        cookie_response = session.get(**cookie_params)
+        cookie_response.raise_for_status()
 
-    if not downloaded:
-        raise (RuntimeError('Download failed three times'))
+        data_params['cookies']['asf-urs'] = session.cookies['asf-urs']
 
-    with open(out_file, 'wb') as f:
-        f.write(r.content)
+        i = 1
+        downloaded = False
+        while (not downloaded) & (i <= 3):
+            print(f'Download attempt #{i}')
+            data_response = session.get(**data_params)
+            downloaded = data_response.ok
+            i += 1
+
+        if not downloaded:
+            raise (RuntimeError('Download failed three times'))
+
+        with open(out_file, 'wb') as f:
+            f.write(data_response.content)
 
     return str(out_file)
 
