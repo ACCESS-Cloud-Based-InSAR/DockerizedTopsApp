@@ -32,6 +32,7 @@ dependencies:
  - papermill
  - pytest
  - pytest-cov
+ - pytest-mock
  - rasterio
  - setuptools
  - setuptools_scm
