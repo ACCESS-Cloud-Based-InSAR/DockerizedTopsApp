@@ -166,8 +166,8 @@ def gunw_burst():
     ref_burst, sec_burst = download_bursts([ref_params, sec_params])
 
     intersection = ref_burst.footprint.intersection(sec_burst.footprint).bounds
-    asc = ref_burst.orbit_direction == 'ascending'
-    roi = get_region_of_interest(ref_burst.footprint, sec_burst.footprint, asc)
+    is_ascending = ref_burst.orbit_direction == 'ascending'
+    roi = get_region_of_interest(ref_burst.footprint, sec_burst.footprint, is_ascending=is_ascending)
 
     orbits = download_orbits([ref_burst.safe_name[:-5]], [sec_burst.safe_name[:-5]], dry_run=args.dry_run)
 

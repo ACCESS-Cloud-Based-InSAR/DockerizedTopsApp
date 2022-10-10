@@ -261,13 +261,13 @@ def spoof_safe(
 def get_region_of_interest(
         poly1: geometry.Polygon,
         poly2: geometry.Polygon,
-        asc: bool = True) -> Tuple[float, float, float, float]:
+        is_ascending: bool = True) -> Tuple[float, float, float, float]:
     bbox1 = geometry.box(*poly1.bounds)
     bbox2 = geometry.box(*poly2.bounds)
     intersection = bbox1.intersection(bbox2)
     bounds = intersection.bounds
 
-    x, y = (0, 1) if asc else (2, 1)
+    x, y = (0, 1) if is_ascending else (2, 1)
     roi = geometry.Point(bounds[x], bounds[y]).buffer(0.005)
     minx, miny, maxx, maxy = roi.bounds
     return minx, miny, maxx, maxy
