@@ -150,7 +150,7 @@ def gunw_burst():
 
     ensure_earthdata_credentials(args.username, args.password)
 
-    ref_resp, sec_resp = get_asf_slc_objects([args.reference_scene, args.secondary_scene])
+    ref_obj, sec_obj = get_asf_slc_objects([args.reference_scene, args.secondary_scene])
 
     ref_params = BurstParams(
         safe_url=ref_resp.properties['url'],
