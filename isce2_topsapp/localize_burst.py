@@ -124,13 +124,11 @@ def download_geotiff(
     burst_request = create_burst_request(burst_params, content='metadata')
     burst_request['cookies'] = {'asf-urs':asf_session.cookies['asf-urs']}
 
-    i = 1
-    downloaded = False
-    while (not downloaded) and (i <= 3):
-        print(f'Download attempt #{i}')
+    for ii in range(1, 4):
+        print(f'Download attempt #{ii}')
         response = asf_session.get(**burst_request)
-        downloaded = response.ok
-        i += 1
+        if (downloaded := response.ok):
+            break
 
     if not downloaded:
         raise RuntimeError('Download failed three times')
