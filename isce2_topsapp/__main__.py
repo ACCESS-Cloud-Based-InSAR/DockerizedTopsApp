@@ -173,7 +173,7 @@ def gunw_burst():
 
     if not args.dry_run:
         # TODO this is likely not the optimal geometry to pass to this function
-        out_dem = download_dem_for_isce2(intersection)
+        dem = download_dem_for_isce2(intersection)
         _ = download_aux_cal()
 
     # TODO fails when using the default 19x7 looks
