@@ -14,7 +14,6 @@ from shapely import geometry
 @dataclass
 class BurstParams:
     """Class that contains the parameters nessecary to request a burst from the API."""
-
     safe_url: str
     image_number: int
     burst_number: int
