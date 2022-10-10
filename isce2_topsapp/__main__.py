@@ -153,12 +153,12 @@ def gunw_burst():
     ref_obj, sec_obj = get_asf_slc_objects([args.reference_scene, args.secondary_scene])
 
     ref_params = BurstParams(
-        safe_url=ref_resp.properties['url'],
+        safe_url=ref_obj.properties['url'],
         image_number=args.image_number,
         burst_number=args.burst_number,
     )
     sec_params = BurstParams(
-        safe_url=sec_resp.properties['url'],
+        safe_url=sec_obj.properties['url'],
         image_number=args.image_number,
         burst_number=args.burst_number,
     )
@@ -180,10 +180,10 @@ def gunw_burst():
     topsapp_processing(
         reference_slc_zips=ref_burst.safe_name,
         secondary_slc_zips=sec_burst.safe_name,
-        orbit_directory=out_orbits['orbit_directory'],
+        orbit_directory=orbits['orbit_directory'],
         extent=roi,
-        dem_for_proc=out_dem['full_res_dem_path'],
-        dem_for_geoc=out_dem['low_res_dem_path'],
+        dem_for_proc=dem['full_res_dem_path'],
+        dem_for_geoc=dem['low_res_dem_path'],
         azimuth_looks=args.azimuth_looks,
         range_looks=args.range_looks,
         swaths=[ref_burst.swath],
