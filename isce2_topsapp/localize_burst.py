@@ -287,8 +287,7 @@ def get_asf_session() -> requests.Session:
     return session
 
 
-# TODO base_path is not used, can we remove it?
-def download_bursts(param_list: Iterator[BurstParams], base_path: Path = Path.cwd()) -> List[BurstMetadata]:
+def download_bursts(param_list: Iterator[BurstParams]) -> List[BurstMetadata]:
     """Steps
     For each burst:
         1. Download metadata
