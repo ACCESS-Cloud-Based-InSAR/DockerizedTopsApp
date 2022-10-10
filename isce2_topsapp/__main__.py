@@ -169,7 +169,7 @@ def gunw_burst():
     asc = ref_burst.orbit_direction == 'ascending'
     roi = get_region_of_interest(ref_burst.footprint, sec_burst.footprint, asc)
 
-    out_orbits = download_orbits([ref_burst.safe_name[:-5]], [sec_burst.safe_name[:-5]], dry_run=args.dry_run)
+    orbits = download_orbits([ref_burst.safe_name[:-5]], [sec_burst.safe_name[:-5]], dry_run=args.dry_run)
 
     if not args.dry_run:
         # TODO this is likely not the optimal geometry to pass to this function
