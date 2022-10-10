@@ -1,19 +1,28 @@
-import io
-import re
 import copy
+import io
+import netrc
+import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator, List, Tuple, Union
 
+import aiohttp
+import fsspec
 import pandas as pd
 import requests
 from shapely import geometry
+
+URLS = {
+    'metadata': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata',
+    'geotiff': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/geotiff',
+}
 
 
 @dataclass
 class BurstParams:
     """Class that contains the parameters nessecary to request a burst from the API."""
+
     safe_url: str
     image_number: int
     burst_number: int
@@ -28,11 +37,11 @@ class BurstMetadata:
 
         image_numbers = [int(x.attrib['source_filename'].split('-')[-1][2]) for x in metadata]
         products = [x.tag for x in metadata]
-        combos = list(zip(image_numbers, products))
+        image_numbers_and_products = list(zip(image_numbers, products))
 
         files = {'product': 'annotation', 'calibration': 'calibration', 'noise': 'noise'}
         for name in files:
-            elem = metadata[combos.index((self.image_number, name))]
+            elem = metadata[image_numbers_and_products.index((self.image_number, name))]
             content = copy.deepcopy(elem.find('content'))
             content.tag = 'product'
             setattr(self, files[name], content)
@@ -84,27 +93,22 @@ class BurstMetadata:
 
 
 def create_burst_request(burst_params: BurstParams, content: str) -> dict:
-    urls = {
-        'metadata': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/metadata',
-        'geotiff': 'https://g6rmelgj3m.execute-api.us-west-2.amazonaws.com/geotiff',
-    }
     payload = {
         'zip_url': burst_params.safe_url,
         'image_number': str(burst_params.image_number),
         'burst_number': str(burst_params.burst_number),
     }
     return {
-        'url': urls[content],
+        'url': URLS[content],
         'params': payload,
     }
 
 
 def download_metadata(
-        asf_session: requests.Session,
-        burst_params: BurstParams,
-        out_file: Union[Path, str] = None) -> ET.Element:
+    asf_session: requests.Session, burst_params: BurstParams, out_file: Union[Path, str] = None
+) -> ET.Element:
     burst_request = create_burst_request(burst_params, content='metadata')
-    burst_request['cookies'] = {'asf-urs':asf_session.cookies['asf-urs']}
+    burst_request['cookies'] = {'asf-urs': asf_session.cookies['asf-urs']}
 
     response = asf_session.get(**burst_request)
     response.raise_for_status()
@@ -117,17 +121,14 @@ def download_metadata(
     return metadata
 
 
-def download_geotiff(
-        asf_session: requests.Session,
-        burst_params: BurstParams,
-        out_file: Union[Path, str]) -> str:
+def download_geotiff(asf_session: requests.Session, burst_params: BurstParams, out_file: Union[Path, str]) -> str:
     burst_request = create_burst_request(burst_params, content='metadata')
-    burst_request['cookies'] = {'asf-urs':asf_session.cookies['asf-urs']}
+    burst_request['cookies'] = {'asf-urs': asf_session.cookies['asf-urs']}
 
     for ii in range(1, 4):
         print(f'Download attempt #{ii}')
         response = asf_session.get(**burst_request)
-        if (downloaded := response.ok):
+        if downloaded := response.ok:
             break
 
     if not downloaded:
@@ -140,10 +141,6 @@ def download_geotiff(
 
 
 def download_manifest(safe_url: str, out_file: Union[Path, str] = None) -> ET.Element:
-    import netrc
-
-    import aiohttp
-    import fsspec
 
     safe_name = Path(safe_url).with_suffix('.SAFE').name
 
@@ -167,11 +164,6 @@ def download_manifest(safe_url: str, out_file: Union[Path, str] = None) -> ET.El
 
 
 def download_swath(safe_url: str, measurement_path: Path, measurement_name: str) -> str:
-    import netrc
-
-    import aiohttp
-    import fsspec
-
     safe_name = Path(safe_url).with_suffix('.SAFE').name
     swath_path = safe_name / Path('measurement') / measurement_name
     out_path = measurement_path / measurement_name
@@ -194,10 +186,11 @@ def download_swath(safe_url: str, measurement_path: Path, measurement_name: str)
 
 
 def spoof_safe(
-        asf_session: requests.Session,
-        burst: BurstMetadata,
-        base_path: Path = Path('.'),
-        download_strategy: str = 'single_burst') -> Path:
+    asf_session: requests.Session,
+    burst: BurstMetadata,
+    base_path: Path = Path('.'),
+    download_strategy: str = 'single_burst',
+) -> Path:
     """Creates this file structure:
     SLC.SAFE/
     ├── manifest.safe
@@ -229,9 +222,7 @@ def spoof_safe(
         burst_params = BurstParams(
             safe_url=burst.safe_url, image_number=burst.image_number, burst_number=burst.burst_number
         )
-        download_geotiff(
-            asf_session, burst_params, measurement_path / burst.measurement_name
-        )
+        download_geotiff(asf_session, burst_params, measurement_path / burst.measurement_name)
     elif download_strategy == 'surrounding_burst':
         n_bursts = len(burst.annotation.find('.//burstList'))
         names = {
@@ -241,9 +232,7 @@ def spoof_safe(
         }
         names = {k: v for k, v in names.items() if 0 < v <= n_bursts}
         for n in names:
-            burst_params = BurstParams(
-                safe_url=burst.safe_url, image_number=burst.image_number, burst_number=names[n]
-            )
+            burst_params = BurstParams(safe_url=burst.safe_url, image_number=burst.image_number, burst_number=names[n])
             download_geotiff(asf_session, burst_params, measurement_path / n)
     elif download_strategy == 'swath':
         download_swath(
@@ -259,9 +248,8 @@ def spoof_safe(
 
 # TODO currently only validated for descending orbits
 def get_region_of_interest(
-        poly1: geometry.Polygon,
-        poly2: geometry.Polygon,
-        is_ascending: bool = True) -> Tuple[float, float, float, float]:
+    poly1: geometry.Polygon, poly2: geometry.Polygon, is_ascending: bool = True
+) -> Tuple[float, float, float, float]:
     bbox1 = geometry.box(*poly1.bounds)
     bbox2 = geometry.box(*poly2.bounds)
     intersection = bbox1.intersection(bbox2)
@@ -269,8 +257,8 @@ def get_region_of_interest(
 
     x, y = (0, 1) if is_ascending else (2, 1)
     roi = geometry.Point(bounds[x], bounds[y]).buffer(0.005)
-    minx, miny, maxx, maxy = roi.bounds
-    return minx, miny, maxx, maxy
+    bounds = roi.bounds  # returns (minx, miny, maxx, maxy)
+    return bounds
 
 
 def get_asf_session() -> requests.Session:
