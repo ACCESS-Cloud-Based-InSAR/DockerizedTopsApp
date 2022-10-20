@@ -49,6 +49,18 @@ This is reflected in the [`sample_run.sh`](sample_run.sh).
 
 To be even more explicity, you can use [`tee`](https://en.wikipedia.org/wiki/Tee_(command)) to record output to both including `> >(tee -a topsapp_img.out) 2> >(tee -a topsapp_img.err >&2)`.
 
+### Customizations
+
+#### Estimating Ionospheric Phase Delay
+
+This example shows how to obtain a layer with ionsopheric phase delay. The SLCs are over the Arabian peninusula where the ionosphere can be seen:
+
+```
+isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20221002T151520_20221002T151543_045265_056931_E517 \
+              --secondary-scenes S1A_IW_SLC__1SDV_20220908T151520_20220908T151542_044915_055D68_78EC \
+              --estimate-ionosphere-delay True
+```
+
 # Running with Docker (locally or on a server)
 
 1. When running locally with root privileges (i.e. at your local workstation), build the docker image using:
