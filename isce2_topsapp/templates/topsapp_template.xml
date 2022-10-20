@@ -22,6 +22,8 @@
     <property name="geocodeDemFilename">{{ geocodeDemFilename }}</property>
     <property name="do unwrap">True</property>
     <property name="unwrapper name">snaphu_mcf</property>
+    <property name="do ionospheric phase estimation">{{ estimate_ionosphere_delay }}</property>
+    <property name="apply ionospheric phase correction">False</property>
     <property name="do ESD">{{ do_esd }}</property>
     <property name="ESD coherence threshold">{{ esd_coherence_threshold }}</property>
     <property name="use virtual files">{{ use_virtual_files }}</property>

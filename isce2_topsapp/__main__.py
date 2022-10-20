@@ -88,6 +88,7 @@ def gunw_slc():
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--reference-scenes', type=str.split, nargs='+', required=True)
     parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
+    parser.add_argument('--estimate-ionosphere-delay', type=bool, default=False)
     args = parser.parse_args()
 
     ensure_earthdata_credentials(args.username, args.password)
@@ -110,9 +111,10 @@ def gunw_slc():
                        secondary_slc_zips=loc_data['sec_paths'],
                        orbit_directory=loc_data['orbit_directory'],
                        extent=loc_data['extent'],
+                       estimate_ionosphere_delay=args.estimate_ionosphere_delay,
                        dem_for_proc=loc_data['full_res_dem_path'],
                        dem_for_geoc=loc_data['low_res_dem_path'],
-                       dry_run=args.dry_run
+                       dry_run=args.dry_run,
                        )
 
     ref_properties = loc_data['reference_properties']
@@ -146,6 +148,7 @@ def gunw_burst():
     parser.add_argument('--burst-number', type=int, required=True)
     parser.add_argument('--azimuth-looks', type=int, default=2)
     parser.add_argument('--range-looks', type=int, default=10)
+    parser.add_argument('--estimate-ionosphere-delay', type=bool, default=False)
     args = parser.parse_args()
 
     ensure_earthdata_credentials(args.username, args.password)
@@ -184,6 +187,7 @@ def gunw_burst():
         extent=roi,
         dem_for_proc=dem['full_res_dem_path'],
         dem_for_geoc=dem['low_res_dem_path'],
+        estimate_ionosphere_delay=args.estimate_ionosphere_delay,
         azimuth_looks=args.azimuth_looks,
         range_looks=args.range_looks,
         swaths=[ref_burst.swath],
