@@ -58,7 +58,8 @@ This example shows how to obtain a layer with ionsopheric phase delay. The SLCs 
 ```
 isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20221002T151520_20221002T151543_045265_056931_E517 \
               --secondary-scenes S1A_IW_SLC__1SDV_20220908T151520_20220908T151542_044915_055D68_78EC \
-              --estimate-ionosphere-delay True
+              --estimate-ionosphere-delay True \
+              > topsapp_img.out 2> topsapp_img.err
 ```
 
 # Running with Docker (locally or on a server)
