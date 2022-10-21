@@ -25,6 +25,15 @@ TOPSAPP_STEPS = ['startup',
 
 TEMPLATE_DIR = Path(__file__).parent/'templates'
 
+GEOCODE_LIST_BASE = ['merged/phsig.cor',
+                     'merged/filt_topophase.unw',
+                     'merged/los.rdr',
+                     'merged/topophase.flat',
+                     'merged/filt_topophase.flat',
+                     'merged/filt_topophase_2stage.unw',
+                     'merged/topophase.cor',
+                     'merged/filt_topophase.unw.conncomp']
+
 
 def topsapp_processing(*,
                        reference_slc_zips: list,
@@ -50,6 +59,10 @@ def topsapp_processing(*,
     with open(TEMPLATE_DIR/'topsapp_template.xml', 'r') as file:
         template = Template(file.read())
 
+    geocode_list = GEOCODE_LIST_BASE.copy()
+    if estimate_ionosphere_delay:
+        geocode_list.append('merged/topophase.ion')
+
     topsApp_xml = template.render(orbit_directory=orbit_directory,
                                   output_reference_directory='reference',
                                   output_secondary_directory='secondary',
@@ -66,7 +79,8 @@ def topsapp_processing(*,
                                   estimate_ionosphere_delay=estimate_ionosphere_delay,
                                   azimuth_looks=azimuth_looks,
                                   range_looks=range_looks,
-                                  swaths=swaths
+                                  swaths=swaths,
+                                  geocode_list=geocode_list
                                   )
     with open('topsApp.xml', "w") as file:
         file.write(topsApp_xml)

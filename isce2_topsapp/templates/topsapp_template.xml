@@ -27,6 +27,6 @@
     <property name="do ESD">{{ do_esd }}</property>
     <property name="ESD coherence threshold">{{ esd_coherence_threshold }}</property>
     <property name="use virtual files">{{ use_virtual_files }}</property>
-    <property name="geocode list">['merged/phsig.cor', 'merged/filt_topophase.unw', 'merged/los.rdr', 'merged/topophase.flat', 'merged/filt_topophase.flat', 'merged/filt_topophase_2stage.unw', 'merged/topophase.cor', 'merged/filt_topophase.unw.conncomp']</property>
+    <property name="geocode list">{{ geocode_list }}</property>
   </component>
 </topsApp>
