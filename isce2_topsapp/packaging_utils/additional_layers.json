@@ -1,0 +1,10 @@
+{"ionosphere": {"dst_group": "/science/grids/corrections/derived/ionosphere",
+                             "input_relative_path": "merged/topophase.ion.geo",
+                             "attr": {"_FillValue": 0,
+                                      "standard_name": "ionospherePhaseCorrection",
+                                      "long_name": "ionospherePhaseCorrection",
+                                      "description": "Estimated ionosphere phase correction"
+                                      }
+                             }
+
+}

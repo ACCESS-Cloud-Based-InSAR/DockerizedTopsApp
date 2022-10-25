@@ -121,10 +121,16 @@ def gunw_slc():
     sec_properties = loc_data['secondary_properties']
     extent = loc_data['extent']
 
+    additional_2d_layers = []
+    if args.estimate_ionosphere_delay:
+        additional_2d_layers.append('ionosphere')
+
+    additional_2d_layers = additional_2d_layers or None
     nc_path = package_gunw_product(isce_data_directory=Path.cwd(),
                                    reference_properties=ref_properties,
                                    secondary_properties=sec_properties,
-                                   extent=extent
+                                   extent=extent,
+                                   additional_2d_layers=additional_2d_layers
                                    )
 
     # Move final product to current working directory

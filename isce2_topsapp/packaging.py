@@ -10,6 +10,8 @@ from dateparser import parse
 
 import isce2_topsapp
 from isce2_topsapp.templates import read_netcdf_packaging_template
+from isce2_topsapp.packaging_utils.additional_layers import add_2d_layer
+
 
 DATASET_VERSION = '2.0.6'
 
@@ -215,7 +217,8 @@ def package_gunw_product(*,
                          isce_data_directory: Union[str, Path],
                          reference_properties: list,
                          secondary_properties: list,
-                         extent: list) -> Path:
+                         extent: list,
+                         additional_2d_layers: list = None) -> Path:
     """Creates a GUNW standard product netcdf from the ISCE outputs and some
     initial metadata.
 
@@ -243,5 +246,8 @@ def package_gunw_product(*,
 
     out_nc_file = perform_netcdf_packaging(isce_data_dir=isce_data_directory,
                                            gunw_id=gunw_id)
+
+    if additional_2d_layers is not None:
+        [additional_2d_layers(layer, out_nc_file) for layer in additional_2d_layers]
 
     return out_nc_file
