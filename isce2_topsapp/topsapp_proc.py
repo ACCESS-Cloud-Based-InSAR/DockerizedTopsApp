@@ -46,7 +46,9 @@ def topsapp_processing(*,
                        azimuth_looks: int = 7,
                        range_looks: int = 19,
                        swaths: list = None,
-                       dry_run: bool = False):
+                       dry_run: bool = False,
+                       do_esd: bool = False,
+                       esd_coherence_threshold: float = .7):
     swaths = swaths or [1, 2, 3]
     # for [ymin, ymax, xmin, xmax]
     extent_isce = [extent[k] for k in [1, 3, 0, 2]]
@@ -71,11 +73,11 @@ def topsapp_processing(*,
                                   region_of_interest=extent_isce,
                                   demFilename=dem_for_proc,
                                   geocodeDemFilename=dem_for_geoc,
-                                  do_esd=False,
                                   filter_strength=.5,
                                   do_unwrap=True,
                                   use_virtual_files=True,
-                                  esd_coherence_threshold=-1,
+                                  do_esd=do_esd,
+                                  esd_coherence_threshold=esd_coherence_threshold,
                                   estimate_ionosphere_delay=estimate_ionosphere_delay,
                                   azimuth_looks=azimuth_looks,
                                   range_looks=range_looks,

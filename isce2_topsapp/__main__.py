@@ -89,7 +89,14 @@ def gunw_slc():
     parser.add_argument('--reference-scenes', type=str.split, nargs='+', required=True)
     parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
     parser.add_argument('--estimate-ionosphere-delay', type=bool, default=False)
+    parser.add_argument('--do-esd', type=bool, default=False)
+    parser.add_argument('--esd_coherence_threshold', type=float, default=-1)
     args = parser.parse_args()
+
+    do_esd_arg = (args.esd_coherence_treshold != -1) == args.do_esd
+    if not do_esd_arg:
+        raise ValueError('If ESD is turned on, specify esd_coherence_threshold between 0 and 1; '
+                         'Otherwise, do not or set the threshold to -1')
 
     ensure_earthdata_credentials(args.username, args.password)
 
@@ -112,6 +119,8 @@ def gunw_slc():
                        orbit_directory=loc_data['orbit_directory'],
                        extent=loc_data['extent'],
                        estimate_ionosphere_delay=args.estimate_ionosphere_delay,
+                       do_esd=args.do_esd,
+                       esd_coherence_threshold=args.esd_coherence_threshold,
                        dem_for_proc=loc_data['full_res_dem_path'],
                        dem_for_geoc=loc_data['low_res_dem_path'],
                        dry_run=args.dry_run,
