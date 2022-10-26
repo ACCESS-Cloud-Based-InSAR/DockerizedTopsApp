@@ -90,10 +90,10 @@ def gunw_slc():
     parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
     parser.add_argument('--estimate-ionosphere-delay', type=bool, default=False)
     parser.add_argument('--do-esd', type=bool, default=False)
-    parser.add_argument('--esd_coherence_threshold', type=float, default=-1)
+    parser.add_argument('--esd-coherence-threshold', type=float, default=-1)
     args = parser.parse_args()
 
-    do_esd_arg = (args.esd_coherence_treshold != -1) == args.do_esd
+    do_esd_arg = (args.esd_coherence_threshold != -1) == args.do_esd
     if not do_esd_arg:
         raise ValueError('If ESD is turned on, specify esd_coherence_threshold between 0 and 1; '
                          'Otherwise, do not or set the threshold to -1')
