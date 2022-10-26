@@ -9,9 +9,8 @@ import numpy as np
 from dateparser import parse
 
 import isce2_topsapp
-from isce2_topsapp.templates import read_netcdf_packaging_template
 from isce2_topsapp.packaging_utils.additional_layers import add_2d_layer
-
+from isce2_topsapp.templates import read_netcdf_packaging_template
 
 DATASET_VERSION = '2.0.6'
 
@@ -193,7 +192,7 @@ def perform_netcdf_packaging(*,
     isce_data_dir = Path(isce_data_dir)
     merged_dir = isce_data_dir/'merged'
     metadata_path = merged_dir/'metadata.h5'
-    assert(metadata_path.exists())
+    assert metadata_path.exists()
 
     # Write config file
     _write_json_config(gunw_id=gunw_id,
@@ -209,7 +208,7 @@ def perform_netcdf_packaging(*,
     out_nc_file = merged_dir/f'{gunw_id}.nc'
 
     # Check if the netcdf file was created
-    assert(out_nc_file.exists())
+    assert out_nc_file.exists()
     return out_nc_file
 
 
@@ -248,6 +247,6 @@ def package_gunw_product(*,
                                            gunw_id=gunw_id)
 
     if additional_2d_layers is not None:
-        [additional_2d_layers(layer, out_nc_file) for layer in additional_2d_layers]
+        [add_2d_layer(layer, out_nc_file) for layer in additional_2d_layers]
 
     return out_nc_file
