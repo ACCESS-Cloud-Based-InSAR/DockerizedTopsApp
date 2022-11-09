@@ -13,6 +13,8 @@ def add_2d_layer(layer_name: str, netcdf_path: Path) -> Path:
 
     ds = xr.open_dataset(layer_data['input_relative_path'],
                          engine='rasterio')
+
+    # Renaming ensures correct geo-referencing with spatial_ref grid mapping
     ds = ds.rename({'x': 'longitude',
                     'y': 'latitude',
                     'band_data': layer_name})
@@ -20,6 +22,8 @@ def add_2d_layer(layer_name: str, netcdf_path: Path) -> Path:
                                  'standard_name': 'latitude'})
     ds['longitude'].attrs.update({'long_name': 'longitude',
                                   'standard_name': 'longitude'})
+
+    # removes channel (aka band) dimension
     ds = ds.squeeze(['band'], drop=True)
     ds[layer_name].attrs.update(layer_data['attrs'])
 
