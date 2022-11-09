@@ -56,8 +56,8 @@ To be even more explicity, you can use [`tee`](https://en.wikipedia.org/wiki/Tee
 This example shows how to obtain a layer with ionsopheric phase delay. The SLCs are over the Arabian peninusula where the ionosphere can be seen:
 
 ```
-isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20221002T151520_20221002T151543_045265_056931_E517 \
-              --secondary-scenes S1A_IW_SLC__1SDV_20220908T151520_20220908T151542_044915_055D68_78EC \
+isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20171117T145926_20171117T145953_008323_00EBAB_AFB8 \
+              --secondary-scenes S1A_IW_SLC__1SDV_20171111T150004_20171111T150032_019219_0208AF_EE89 \
               --estimate-ionosphere-delay True \
               --do-esd True \
               --esd-coherence-threshold .5 \
