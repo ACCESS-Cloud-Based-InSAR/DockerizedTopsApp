@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4]
+
+### Added
+* Provide prototype (internal) for burst analysis thanks to Forrest Williams and Joseph Kennedy (see PR #73)
+* CLI (and API) can switch between burst and SLC ifg generation thanks to entry point magic (see PR #73 for details)
+* Exposes Ionosphere correction in CLI (and API)
+* Exposes ESD and ESD threshold in CLI (and API)
+
 
 ## [0.1.3]
 
