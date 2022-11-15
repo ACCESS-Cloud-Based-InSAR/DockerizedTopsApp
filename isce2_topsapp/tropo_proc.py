@@ -92,7 +92,11 @@ def compute_tropo_delay_for_insar_pair(*,
     # Wavelenth of S1 in meters according to
     # https://sentinels.copernicus.eu/web/sentinel/technical-guides/sentinel-1-sar/sar-instrument
     lambda_s1 = .055465763
+
+    # This does the differential delay for all variables in the cube i.e. for all levels and both variables
+    # `hydro` and `wet`
     ds_delay = (ds_ref - ds_sec) * (lambda_s1) / (4 * np.pi)
+
     out_path = 'tropo_delay.nc'
     ds_delay.to_netcdf(out_path)
     return out_path
