@@ -74,7 +74,7 @@ def compute_tropo_delay_for_insar_pair(*,
                                                     bounding_box=bounding_box,
                                                     cube_spacing_in_m=cube_spacing_in_m,
                                                     output_epsg_number=output_epsg_number,
-                                                    yml_name='reference_raider.yml'
+                                                    yml_name='reference_raider'
                                                     )
 
     sec_delay_cube_path = calculate_tropo_acq_delay(acq_datetime=sec_acq_datetime,
@@ -83,7 +83,7 @@ def compute_tropo_delay_for_insar_pair(*,
                                                     bounding_box=bounding_box,
                                                     cube_spacing_in_m=cube_spacing_in_m,
                                                     output_epsg_number=output_epsg_number,
-                                                    yml_name='secondary_raider.yml'
+                                                    yml_name='secondary_raider'
                                                     )
 
     ds_ref = xr.open_dataset(ref_delay_cube_path, engine='rasterio')
