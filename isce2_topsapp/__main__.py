@@ -7,12 +7,14 @@ from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Optional
 
+import pandas as pd
 
 from isce2_topsapp import (BurstParams, aws, download_aux_cal, download_bursts,
                            download_dem_for_isce2, download_orbits,
-                           download_slcs, get_asf_slc_objects, get_region_of_interest,
-                           package_gunw_product, prepare_for_delivery,
-                           topsapp_processing)
+                           download_slcs, get_asf_slc_objects,
+                           get_region_of_interest, package_gunw_product,
+                           prepare_for_delivery, topsapp_processing,
+                           tropo_processing)
 from isce2_topsapp.json_encoder import MetadataEncoder
 
 
@@ -91,6 +93,7 @@ def gunw_slc():
     parser.add_argument('--estimate-ionosphere-delay', type=bool, default=False)
     parser.add_argument('--do-esd', type=bool, default=False)
     parser.add_argument('--esd-coherence-threshold', type=float, default=-1)
+    parser.add_argument('--tropospheric-delay', type=bool, default=-False)
     args = parser.parse_args()
 
     do_esd_arg = (args.esd_coherence_threshold != -1) == args.do_esd
@@ -130,6 +133,21 @@ def gunw_slc():
     sec_properties = loc_data['secondary_properties']
     extent = loc_data['extent']
 
+    if args.tropospheric_delay:
+        # Compute tropospheric delay for reference scene
+
+        # If there are multiple reference, take the mean (they should be contiguous)
+        ref_acq_datetime = pd.Series([pd.to_datetime(item['startTime'])
+                                      for item in loc_data['reference_properties']]).mean()
+        tropo_processing(acq_datetime=ref_acq_datetime,
+                         # We can handle more at some point
+                         weather_model_name='ERA5',
+                         # Should be extent of IFG in xmin, xmax, ymin, ymax
+                         bounding_box=loc_data['extent'],
+                         # There could be many - only choosing one
+                         orbit_path=loc_data['reference_orbits'][0])
+
+    # Packaging
     additional_2d_layers = []
     if args.estimate_ionosphere_delay:
         additional_2d_layers.append('ionosphere')

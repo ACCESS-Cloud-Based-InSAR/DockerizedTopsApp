@@ -1,0 +1,45 @@
+look_dir: right
+
+date_group:
+  date_start:
+  date_end:
+  date_step:
+  date_list:  [{{ date }}]
+
+time_group:
+  time: "{{ time }}"
+  end_time:
+
+weather_model: {{ weather_model_name }}
+
+aoi_group:
+  lat_file:
+  lon_file:
+  height_file_rdr:
+  station_file:
+  bounding_box: {{ bounding_box_str }}
+  utm_zone:
+  grid_x:
+  grid_y:
+
+height_group:
+  dem:
+  use_dem_latlon: False
+  height_file_rdr:
+  height_levels: "-500 0 500 1000 1500 2000 2500 3000 3500 4000 4500 5000 5500 6000 6500 7000 7500 8000 8500 9000"
+
+los_group:
+  ray_trace: True  # Use projected slant delay by default
+  zref: # Integration height. Only used in raytracing.
+  los_file:
+  los_convention: isce
+  los_cube:
+  orbit_file: {{ orbit_path }}
+
+runtime_group:
+  verbose: True
+  raster_format: nc # Can be any rasterio-compatible format
+  output_directory: .
+  weather_model_directory: weather_files
+  cube_spacing_in_m: {{ cube_spacing_in_m }}
+  output_projection:  {{ output_epsg_number }}

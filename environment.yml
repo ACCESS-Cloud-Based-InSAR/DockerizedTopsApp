@@ -4,21 +4,33 @@ channels:
  - anaconda
  - defaults
 dependencies:
- - python>=3.8,<3.10
- - pip
+ - python>=3.10
  - affine
+ - aiohttp  # only needed for manifest and swath download
  - asf_search>=3.0.4
  - boto3
+ - cdsapi
+ - cfgrib
+ - cmake
+ - cxx-compiler
+ - cython
+ - dask
  - dateparser
+ - dem_stitcher>=2.3.0
+ - ecmwf-api-client
  - flake8
  - flake8-blind-except
  - flake8-builtins
  - flake8-import-order
  - gdal
  - geopandas
+ - h5netcdf
+ - h5py
+ - herbie-data
  - hyp3lib>=1.7
  - ipykernel
  - isce2
+ - isce3
  - jinja2
  - joblib
  - jsonschema==3.2.0
@@ -30,14 +42,18 @@ dependencies:
  - numpy
  - pandas
  - papermill
+ - pip
+ - progressbar
  - pytest
  - pytest-cov
  - pytest-mock
  - rasterio
  - rioxarray
+ - s3fs
  - setuptools
  - setuptools_scm
  - shapely
+ - sysroot_linux-64
  - tqdm
- - dem_stitcher>=2.3.0
- - aiohttp  # only needed for manifest and swath download
+ - pip:
+   - git+https://github.com/dbekaert/RAiDER.git
