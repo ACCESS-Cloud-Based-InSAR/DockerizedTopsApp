@@ -15,7 +15,8 @@ def calculate_tropo_acq_delay(*,
                               weather_model_name: str,
                               bounding_box: list,
                               cube_spacing_in_m: float = 2_000,
-                              output_epsg_number: int = 4326) -> Path:
+                              output_epsg_number: int = 4326,
+                              yml_name: str = 'run_raider') -> Path:
 
     with open(TEMPLATE_DIR/'raider_template.yml', 'r') as file:
         template = Template(file.read())
@@ -38,7 +39,7 @@ def calculate_tropo_acq_delay(*,
                                  orbit_path=orbit_path
                                  )
 
-    with open('run_raider.yml', "w") as file:
+    with open(f'{yml_name}.yml', "w") as file:
         file.write(raider_yml)
 
     cmd = 'raiderDelay.py run_raider.yml'
@@ -49,7 +50,7 @@ def calculate_tropo_acq_delay(*,
         raise ValueError('Raider failed; check logs and standard i/o')
 
     d = acq_datetime.strftime('%Y%m%d')
-    t = acq_datetime.strftime('%H:%M:%S')
+    t = acq_datetime.strftime('%H%M%S')
     out_nc = Path(f'{weather_model_name}_tropo_{d}T{t}_std.nc')
 
     if not out_nc.exists():
@@ -72,7 +73,8 @@ def compute_tropo_delay_for_insar_pair(*,
                                                     weather_model_name=weather_model_name,
                                                     bounding_box=bounding_box,
                                                     cube_spacing_in_m=cube_spacing_in_m,
-                                                    output_epsg_number=output_epsg_number
+                                                    output_epsg_number=output_epsg_number,
+                                                    yml_name='reference_raider.yml'
                                                     )
 
     sec_delay_cube_path = calculate_tropo_acq_delay(acq_datetime=sec_acq_datetime,
@@ -80,7 +82,8 @@ def compute_tropo_delay_for_insar_pair(*,
                                                     weather_model_name=weather_model_name,
                                                     bounding_box=bounding_box,
                                                     cube_spacing_in_m=cube_spacing_in_m,
-                                                    output_epsg_number=output_epsg_number
+                                                    output_epsg_number=output_epsg_number,
+                                                    yml_name='secondary_raider.yml'
                                                     )
 
     ds_ref = xr.open_dataset(ref_delay_cube_path, engine='rasterio')
