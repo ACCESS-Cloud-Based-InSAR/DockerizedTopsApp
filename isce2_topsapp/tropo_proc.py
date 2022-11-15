@@ -42,7 +42,7 @@ def calculate_tropo_acq_delay(*,
     with open(f'{yml_name}.yml', "w") as file:
         file.write(raider_yml)
 
-    cmd = 'raiderDelay.py run_raider.yml'
+    cmd = f'raiderDelay.py {yml_name}.yml'
     result = subprocess.run(cmd,
                             shell=True)
 
