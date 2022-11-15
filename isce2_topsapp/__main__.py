@@ -9,12 +9,13 @@ from typing import Optional
 
 import pandas as pd
 
-from isce2_topsapp import (BurstParams, aws, download_aux_cal, download_bursts,
+from isce2_topsapp import (BurstParams, aws,
+                           compute_tropo_delay_for_insar_pair,
+                           download_aux_cal, download_bursts,
                            download_dem_for_isce2, download_orbits,
                            download_slcs, get_asf_slc_objects,
                            get_region_of_interest, package_gunw_product,
-                           prepare_for_delivery, topsapp_processing,
-                           tropo_processing)
+                           prepare_for_delivery, topsapp_processing)
 from isce2_topsapp.json_encoder import MetadataEncoder
 
 
@@ -134,18 +135,22 @@ def gunw_slc():
     extent = loc_data['extent']
 
     if args.tropospheric_delay:
-        # Compute tropospheric delay for reference scene
 
         # If there are multiple reference, take the mean (they should be contiguous)
         ref_acq_datetime = pd.Series([pd.to_datetime(item['startTime'])
                                       for item in loc_data['reference_properties']]).mean()
-        tropo_processing(acq_datetime=ref_acq_datetime,
-                         # We can handle more at some point
-                         weather_model_name='ERA5',
-                         # Should be extent of IFG in xmin, xmax, ymin, ymax
-                         bounding_box=loc_data['extent'],
-                         # There could be many - only choosing one
-                         orbit_path=loc_data['reference_orbits'][0])
+        sec_acq_datetime = pd.Series([pd.to_datetime(item['startTime'])
+                                      for item in loc_data['secondary_properties']]).mean()
+        tropo_cube_path = compute_tropo_delay_for_insar_pair(ref_acq_datetime=ref_acq_datetime,
+                                                             sec_acq_datetime=sec_acq_datetime,
+                                                             weather_model_name='ERA5',
+                                                             ref_orbit_path=loc_data['reference_orbits'][0],
+                                                             sec_orbit_path=loc_data['secondary_orbits'][0],
+                                                             # Should be extent of IFG in xmin, xmax, ymin, ymax
+                                                             bounding_box=loc_data['extent'],
+                                                             cube_spacing_in_m=2000,
+                                                             output_epsg_number=4326
+                                                             )
 
     # Packaging
     additional_2d_layers = []
