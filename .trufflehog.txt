@@ -2,4 +2,4 @@
 .*/templates/.*
 tests/sample_loc_metadata.json
 Dockerfile
-tests/test_data/*.xml
+tests/test_data/
