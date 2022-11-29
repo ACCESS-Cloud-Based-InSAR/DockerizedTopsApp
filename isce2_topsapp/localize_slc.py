@@ -60,8 +60,8 @@ def download_slcs(reference_ids: list,
     secondary_props = [ob.properties for ob in secondary_obs]
 
     # Check the number of objects is the same as inputs
-    assert(len(reference_obs) == len(reference_ids))
-    assert(len(secondary_obs) == len(secondary_ids))
+    assert len(reference_obs) == len(reference_ids)
+    assert len(secondary_obs) == len(secondary_ids)
 
     intersection_geo = check_geometry(reference_obs, secondary_obs)
 
