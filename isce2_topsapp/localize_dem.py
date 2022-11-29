@@ -13,7 +13,7 @@ from shapely.geometry import box
 
 def tag_dem_xml_as_ellipsoidal(dem_path: Path) -> str:
     xml_path = str(dem_path) + '.xml'
-    assert(Path(xml_path).exists())
+    assert Path(xml_path).exists()
     tree = etree.parse(xml_path)
     root = tree.getroot()
 
