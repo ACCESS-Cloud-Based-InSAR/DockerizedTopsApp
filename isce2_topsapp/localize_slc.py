@@ -40,11 +40,11 @@ def check_geometry(reference_obs: list,
 
     # Two geometries must intersect for their to be an interferogram
     intersection_geo = secondary_geo.intersection(reference_geo)
-    assert(not intersection_geo.is_empty)
+    assert not intersection_geo.is_empty
 
     # if they are not Polygons they are multipolygons and not valid
-    assert(isinstance(secondary_geo, Polygon))
-    assert(isinstance(reference_geo, Polygon))
+    assert isinstance(secondary_geo, Polygon)
+    assert isinstance(reference_geo, Polygon)
     return intersection_geo
 
 
