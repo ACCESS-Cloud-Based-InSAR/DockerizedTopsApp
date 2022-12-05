@@ -17,7 +17,7 @@
     <property name="range looks">{{ range_looks }}</property>
     <property name="azimuth looks">{{ azimuth_looks }}</property>
     <property name="filter strength">{{ filter_strength }}</property>
-    <!-- <property name="region of interest">{{ region_of_interest }}</property> -->
+    <property name="region of interest">{{ region_of_interest }}</property>
     <property name="demFilename">{{ demFilename }}</property>
     <property name="geocodeDemFilename">{{ geocodeDemFilename }}</property>
     <property name="do unwrap">True</property>

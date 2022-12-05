@@ -11,7 +11,7 @@ from dateparser import parse
 import isce2_topsapp
 from isce2_topsapp.templates import read_netcdf_packaging_template
 
-DATASET_VERSION = '2.0.5'
+DATASET_VERSION = '2.0.6'
 
 
 """Warning: the packaging scripts were written as command line scripts and
@@ -191,7 +191,7 @@ def perform_netcdf_packaging(*,
     isce_data_dir = Path(isce_data_dir)
     merged_dir = isce_data_dir/'merged'
     metadata_path = merged_dir/'metadata.h5'
-    assert(metadata_path.exists())
+    assert metadata_path.exists()
 
     # Write config file
     _write_json_config(gunw_id=gunw_id,
@@ -207,7 +207,7 @@ def perform_netcdf_packaging(*,
     out_nc_file = merged_dir/f'{gunw_id}.nc'
 
     # Check if the netcdf file was created
-    assert(out_nc_file.exists())
+    assert out_nc_file.exists()
     return out_nc_file
 
 
