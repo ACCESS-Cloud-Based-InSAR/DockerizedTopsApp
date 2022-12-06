@@ -6,6 +6,8 @@ from shapely.geometry import GeometryCollection, Polygon, shape
 from shapely.ops import unary_union
 from tqdm import tqdm
 
+from .dateline import unwrap_geometry
+
 
 def get_asf_slc_objects(slc_ids: list) -> list:
 
@@ -30,10 +32,22 @@ def get_session():
     return session
 
 
+def _unwrap_one(geometry: Polygon):
+    xmin, _, xmax, _ = geometry.bounds
+    if (xmin < -150) and (xmax > 150):
+        return unwrap_geometry(geometry)
+    else:
+        return geometry
+
+
 def check_geometry(reference_obs: list,
                    secondary_obs: list) -> GeometryCollection:
     reference_geos = [shape(r.geojson()['geometry']) for r in reference_obs]
     secondary_geos = [shape(r.geojson()['geometry']) for r in secondary_obs]
+
+    # Only unwrapes if (xmin < -150) and (xmax > 150)
+    reference_geos = list(map(_unwrap_one, reference_geos))
+    secondary_geos = list(map(_unwrap_one, secondary_geos))
 
     reference_geo = unary_union(reference_geos)
     secondary_geo = unary_union(secondary_geos)
@@ -81,6 +95,7 @@ def download_slcs(reference_ids: list,
                             desc='Downloading SLCs'))
 
     n0 = len(reference_obs)
+
     return {'ref_paths': results[:n0],
             'sec_paths': results[n0:],
             'extent': list(intersection_geo.bounds),
