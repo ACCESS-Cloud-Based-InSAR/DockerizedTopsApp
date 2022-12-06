@@ -38,5 +38,5 @@ dependencies:
  - setuptools_scm
  - shapely
  - tqdm
- - dem_stitcher>=2.3.1
+ - dem_stitcher>=2.4.0
  - aiohttp  # only needed for manifest and swath download
