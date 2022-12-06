@@ -3,7 +3,7 @@ from shapely.geometry import Polygon
 
 def unwrap_geometry(geometry: Polygon) -> Polygon:
     """
-    Moves geometry into eastern hemisphere by subtracting 360 degrees longitude from all eastern hemisphere points.
+    Moves geometry into western hemisphere by subtracting 360 degrees longitude from all eastern hemisphere points.
     """
     coords = geometry.boundary.coords
 
