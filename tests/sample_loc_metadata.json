@@ -100,8 +100,8 @@
       "processingLevel": "SLC",
       "sceneName": "S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9",
       "sensor": "C-SAR",
-      "startTime": "2021-07-23T01:49:47.000000Z",
-      "stopTime": "2021-07-23T01:50:14.000000Z",
+      "startTime": "2021-07-23T01:49:47.00000Z",
+      "stopTime": "2021-07-23T01:50:14.00000Z",
       "url": "https://datapool.asf.alaska.edu/SLC/SB/S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9.zip"
     }
   ],
@@ -129,8 +129,8 @@
       "processingLevel": "SLC",
       "sceneName": "S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C",
       "sensor": "C-SAR",
-      "startTime": "2021-07-11T01:50:11.000000Z",
-      "stopTime": "2021-07-11T01:50:38.000000Z",
+      "startTime": "2021-07-11T01:50:11.000Z",
+      "stopTime": "2021-07-11T01:50:38.000Z",
       "url": "https://datapool.asf.alaska.edu/SLC/SB/S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C.zip"
     },
     {
@@ -156,8 +156,8 @@
       "processingLevel": "SLC",
       "sceneName": "S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404",
       "sensor": "C-SAR",
-      "startTime": "2021-07-11T01:49:47.000000Z",
-      "stopTime": "2021-07-11T01:50:13.000000Z",
+      "startTime": "2021-07-11T01:49:47.000Z",
+      "stopTime": "2021-07-11T01:50:13.000Z",
       "url": "https://datapool.asf.alaska.edu/SLC/SB/S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404.zip"
     },
     {
@@ -183,8 +183,8 @@
       "processingLevel": "SLC",
       "sceneName": "S1B_IW_SLC__1SDV_20210711T014922_20210711T014949_027740_034F80_859D",
       "sensor": "C-SAR",
-      "startTime": "2021-07-11T01:49:22.000000Z",
-      "stopTime": "2021-07-11T01:49:49.000000Z",
+      "startTime": "2021-07-11T01:49:22.000Z",
+      "stopTime": "2021-07-11T01:49:49.000Z",
       "url": "https://datapool.asf.alaska.edu/SLC/SB/S1B_IW_SLC__1SDV_20210711T014922_20210711T014949_027740_034F80_859D.zip"
     }
   ],
