@@ -4,3 +4,4 @@ tests/sample_loc_metadata.json
 Dockerfile
 tests/test_data/sec_manifest.xml
 tests/test_data/ref_manifest.xml
+tests/test_data/

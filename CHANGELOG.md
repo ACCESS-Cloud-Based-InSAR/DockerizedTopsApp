@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.4]
+## [0.2.2]
 
 ### Added
 * Provide prototype (internal) for burst analysis thanks to Forrest Williams and Joseph Kennedy (see PR #73)
@@ -14,8 +14,15 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Exposes Ionosphere correction in CLI (and API)
 * Exposes ESD and ESD threshold in CLI (and API)
 
+## [0.2.1]
 
-## [0.1.3]
+* Fixes write of start/stop sensing times due to changes in ASF Search v5.0.0 (see #79)
+
+
+## [0.2.0]
+
+### Added
+* A prototype burst processing skeleton (non-functional)
 
 ### Changed
 * Uses updated API dem-stitcher for square resolution cells and translation/resampling (>=2.2.0)
@@ -24,7 +31,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 * Uses dem-stitcher>=v2.3.0, which by default, fills in `glo-30` tiles that are missing over Armenia and Azerbaijan with the available `glo-90` tiles (upsampled).
-
+* Uses dem-stitcher>=v2.3.1 to fix URLs for `glo-30` and `srtm_v3`
 ## [0.1.2]
 
 ### Fixed

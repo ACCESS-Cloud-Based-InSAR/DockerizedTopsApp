@@ -113,6 +113,24 @@ def gen_browse_imagery(nc_path: Path,
     return out_path
 
 
+def format_time_string(time_str: str) -> str:
+    """Generates formatted string for ingest schema using built in python manipulations.
+    New ASF API provides time string as 2022-05-20T07:11:01.000Z and we need 6 decimal places
+    at end of string, specifically, 2022-05-20T07:11:01.000000Z
+    """
+    assert time_str[-1] == 'Z'
+
+    # removes Z at end and focuses in on decimal
+    temp = time_str[:-1].split('.')
+
+    # update the split string with required decimals
+    temp[-1] = f'{int(temp[-1]):06d}'
+
+    # rejoin and return
+    formatted_time_str = '.'.join(temp)
+    return f'{formatted_time_str}Z'
+
+
 def format_metadata(nc_path: Path,
                     all_metadata: dict) -> dict:
 
@@ -124,6 +142,9 @@ def format_metadata(nc_path: Path,
     sec_props = all_metadata['secondary_properties'][0]
     b_perp = read_baseline_perp(nc_path).mean()
 
+    startTime_f = format_time_string(ref_props["startTime"])
+    stopTime_f = format_time_string(ref_props["stopTime"])
+
     metadata = {}
     # get 4 corners of bounding box of the geometry; default is 5 returning
     # to start point
@@ -131,8 +152,8 @@ def format_metadata(nc_path: Path,
     metadata.update({"ogr_bbox": ogr_bbox,
                      "reference_scenes": all_metadata['reference_scenes'],
                      "secondary_scenes": all_metadata['secondary_scenes'],
-                     "sensing_start": f'{ref_props["startTime"]}Z',
-                     "sensing_stop": f'{ref_props["stopTime"]}Z',
+                     "sensing_start": startTime_f,
+                     "sensing_stop": stopTime_f,
                      "orbit_number": [int(ref_props['orbit']),
                                       int(sec_props['orbit'])],
                      "platform": [ref_props['platform'], sec_props['platform']],
