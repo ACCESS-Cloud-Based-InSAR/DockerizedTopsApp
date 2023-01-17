@@ -255,6 +255,24 @@
                         {
                           "group" : [
                             {
+                              "name" : "derived",
+                              "content" : [
+                                {
+                                  "group" : [
+                                    {
+                                      "name" : "ionosphere",
+                                      "content" : [
+                                      {
+                                          "dataset" : [
+                                          {
+                                            "name" : "ionosphere",
+                                            "type" : "str",
+                                            "description" : "placeholder dummy: [2D]"
+                                          }]
+                                      }]
+                                    }]
+                                }]
+                            },{
                               "name" : "external",
                               "content" : [
                                 {
