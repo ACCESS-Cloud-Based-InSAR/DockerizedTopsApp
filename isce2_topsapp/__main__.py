@@ -116,6 +116,9 @@ def gunw_slc():
                              region_of_interest=args.region_of_interest)
     # TODO: either remove this or ensure it is passed to CMR metadata
     loc_data['frame_id'] = args.frame_id
+    if args.frame_id >= 0:
+        if not args.region_of_interest:
+            raise RuntimeError('If you specify frame_id, then must specify region_of_interest')
 
     # Allows for easier re-inspection of processing, packaging, and delivery
     # after job completes
