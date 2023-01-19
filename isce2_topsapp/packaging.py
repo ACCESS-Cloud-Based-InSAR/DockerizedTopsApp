@@ -5,14 +5,19 @@ import subprocess
 from pathlib import Path
 from typing import Union
 
+import h5py
 import numpy as np
 from dateparser import parse
 
 import isce2_topsapp
 from isce2_topsapp.packaging_utils.additional_layers import add_2d_layer
+from isce2_topsapp.packaging_utils.ionosphere import format_ionosphere_for_gunw
 from isce2_topsapp.templates import read_netcdf_packaging_template
 
 DATASET_VERSION = '2.0.6'
+
+
+PERMISSIBLE_2D_LAYERS = ['ionosphere']
 
 
 """Warning: the packaging scripts were written as command line scripts and
@@ -212,6 +217,30 @@ def perform_netcdf_packaging(*,
     return out_nc_file
 
 
+def package_additional_layers_into_gunw(gunw_path: Path,
+                                        isce_data_directory: Path,
+                                        additional_2d_layers: list):
+    # Current workflow of additional layers
+    # 1. Do any additional processing/formatting outside of GUNW
+    # 2. Add layer into GUNW
+    # 3. Update Version
+    if not set(additional_2d_layers).issubset(set(PERMISSIBLE_2D_LAYERS)):
+        raise RuntimeError('Additional 2d layers must be subset of '
+                           f'{PERMISSIBLE_2D_LAYERS}')
+
+    if 'ionosphere' in additional_2d_layers:
+        # current working directory is ISCE directory
+        _ = format_ionosphere_for_gunw(isce_data_directory, gunw_path)
+
+    # Assumes ionosphere raster is written to specific path
+    [add_2d_layer(layer, gunw_path) for layer in additional_2d_layers]
+
+    # Update
+    with h5py.File(gunw_path, mode='a') as file:
+        file.attrs.modify('version', '1c')
+    return gunw_path
+
+
 def package_gunw_product(*,
                          isce_data_directory: Union[str, Path],
                          reference_properties: list,
@@ -223,14 +252,16 @@ def package_gunw_product(*,
 
     Parameters
     ----------
-    isce_data_directory
+    isce_data_directory: str | path
         Where the ISCE outputs are relative to current working directory
-    reference_properties
+    reference_properties: list
         Each item a dictionary per ASF API including ID, starttime, etc.
-    secondary_properties
+    secondary_properties: list
         Each item a dictionary per ASF API including ID, starttime, etc
-    extent
+    extent: list
         List of extents ([xmin, ymin, xmax, ymax])
+    additional_2d_layers: list
+        List of 2d layers to add. Currently, supported is ionosphere.
 
     Returns
     -------
@@ -247,6 +278,7 @@ def package_gunw_product(*,
                                            gunw_id=gunw_id)
 
     if additional_2d_layers is not None:
-        [add_2d_layer(layer, out_nc_file) for layer in additional_2d_layers]
-
+        package_additional_layers_into_gunw(out_nc_file,
+                                            isce_data_directory,
+                                            additional_2d_layers)
     return out_nc_file

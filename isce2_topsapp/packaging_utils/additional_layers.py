@@ -8,7 +8,7 @@ LAYER_JSON = Path(__file__).parents[0] / 'additional_layers.json'
 ADDITIONAL_LAYERS = json.load(open(LAYER_JSON))
 
 
-def add_2d_layer(layer_name: str, netcdf_path: Path) -> Path:
+def add_2d_layer(layer_name: str, gunw_netcdf_path: Path) -> Path:
     """
     Combines a lot of standard formatting of the netcdf via rioxarray and
     deletes the previous placeholder (we assume it exists via the placeholder).
@@ -22,8 +22,11 @@ def add_2d_layer(layer_name: str, netcdf_path: Path) -> Path:
     dst_variable = layer_data['dst_variable']
 
     # The layers generally already exist within the file
-    with h5py.File(netcdf_path, mode='a') as file:
-        del file[dst_group][dst_variable]
+    with h5py.File(gunw_netcdf_path, mode='a') as file:
+        if dst_group in file:
+            for key in file[dst_group].keys():
+                del file[dst_group][key]
+            del file[dst_group]
 
     ds = xr.open_dataset(layer_data['input_relative_path'],
                          engine='rasterio')
@@ -41,8 +44,8 @@ def add_2d_layer(layer_name: str, netcdf_path: Path) -> Path:
     ds = ds.squeeze(['band'], drop=True)
     ds[layer_name].attrs.update(layer_data['attrs'])
 
-    ds.to_netcdf(netcdf_path,
+    ds.to_netcdf(gunw_netcdf_path,
                  group=layer_data['dst_group'],
                  mode='a')
 
-    return netcdf_path
+    return gunw_netcdf_path
