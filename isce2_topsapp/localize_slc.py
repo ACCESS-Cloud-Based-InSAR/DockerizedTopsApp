@@ -2,7 +2,7 @@ import netrc
 from concurrent.futures import ThreadPoolExecutor
 
 import asf_search as asf
-from shapely.geometry import GeometryCollection, Polygon, box, shape
+from shapely.geometry import GeometryCollection, box, shape
 from shapely.ops import unary_union
 from tqdm import tqdm
 
