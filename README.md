@@ -49,9 +49,9 @@ This is reflected in the [`sample_run.sh`](sample_run.sh).
 
 To be even more explicity, you can use [`tee`](https://en.wikipedia.org/wiki/Tee_(command)) to record output to both including `> >(tee -a topsapp_img.out) 2> >(tee -a topsapp_img.err >&2)`.
 
-### Customizations
+## Customizations
 
-#### Estimating Ionospheric Phase Delay and ESD
+### Estimating Ionospheric Phase Delay and ESD
 
 This example shows how to obtain a layer with ionsopheric phase delay. The SLCs are over the Arabian peninusula where the ionosphere can be seen:
 
@@ -62,6 +62,31 @@ isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20171117T145926_20171117T14595
               --do-esd True \
               --esd-coherence-threshold .5 \
               > topsapp_img.out 2> topsapp_img.err
+```
+
+### Using "fixed frames" (experimental)
+
+Sentinel-1 Frames are not constant over passes. We generate fixed frames [here](https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-generation) and enumerate interferograms using this [repo](https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator). This is highly experimental. We then ensure ISCE processes only over the frame. The key is overlap. We provide some examples of the additional options (you will need to run this in *two* separate directories because ISCE2 outputs are organized with respect to the working directory of the processing). For one frame over CA:
+```
+isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20230113T135954_20230113T140021_046766_059B44_981B \
+                                 S1A_IW_SLC__1SDV_20230113T140019_20230113T140046_046766_059B44_A9C1 \
+                                 S1A_IW_SLC__1SDV_20230113T140044_20230113T140111_046766_059B44_FBB8 \
+              --secondary-scenes S1A_IW_SLC__1SDV_20221208T135956_20221208T140023_046241_05897B_86FA \
+                                 S1A_IW_SLC__1SDV_20221208T140021_20221208T140048_046241_05897B_8EBC \
+                                 S1A_IW_SLC__1SDV_20221208T140046_20221208T140113_046241_05897B_28A9 \
+              --region-of-interest -120.902529 35.257855 -117.740922 37.231403 \
+              --frame-id 19965 \
+              > topsapp_img_f19965.out 2> topsapp_img_f19965.err
+```
+and an overlapping frame:
+```
+isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20230113T140019_20230113T140046_046766_059B44_A9C1 \
+                                 S1A_IW_SLC__1SDV_20230113T140044_20230113T140111_046766_059B44_FBB8 \
+              --secondary-scenes S1A_IW_SLC__1SDV_20221208T140021_20221208T140048_046241_05897B_8EBC \
+                                 S1A_IW_SLC__1SDV_20221208T140046_20221208T140113_046241_05897B_28A9 \
+              --region-of-interest -121.167298 33.929114 -118.055825 35.904876 \
+              --frame-id 19966 \
+              > topsapp_img_f19966.out 2> topsapp_img_f19966.err
 ```
 
 # Running with Docker (locally or on a server)
