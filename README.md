@@ -49,6 +49,21 @@ This is reflected in the [`sample_run.sh`](sample_run.sh).
 
 To be even more explicity, you can use [`tee`](https://en.wikipedia.org/wiki/Tee_(command)) to record output to both including `> >(tee -a topsapp_img.out) 2> >(tee -a topsapp_img.err >&2)`.
 
+### Customizations
+
+#### Estimating Ionospheric Phase Delay and ESD
+
+This example shows how to obtain a layer with ionsopheric phase delay. The SLCs are over the Arabian peninusula where the ionosphere can be seen:
+
+```
+isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20171117T145926_20171117T145953_008323_00EBAB_AFB8 \
+              --secondary-scenes S1A_IW_SLC__1SDV_20171111T150004_20171111T150032_019219_0208AF_EE89 \
+              --estimate-ionosphere-delay True \
+              --do-esd True \
+              --esd-coherence-threshold .5 \
+              > topsapp_img.out 2> topsapp_img.err
+```
+
 # Running with Docker (locally or on a server)
 
 1. When running locally with root privileges (i.e. at your local workstation), build the docker image using:
