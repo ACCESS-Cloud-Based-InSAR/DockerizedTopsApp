@@ -99,6 +99,7 @@ tests/out/*.ipynb
 !tests/localize-data.ipynb
 /isce2_topsapp.egg-info/
 !tests/prepare-for-delivery.ipynb
+!tests/solid_earth_tides.ipynb
 
 # Jsons in Test Directory
 tests/**/*.json

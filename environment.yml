@@ -29,6 +29,7 @@ dependencies:
  - notebook
  - numpy
  - pandas
+ - pysolid
  - papermill
  - pytest
  - pytest-cov

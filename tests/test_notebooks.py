@@ -4,7 +4,8 @@ import papermill as pm
 import pytest
 
 notebooks = ['localize-data.ipynb',
-             'prepare-for-delivery.ipynb']
+             'prepare-for-delivery.ipynb',
+             'solid_earth_tides.ipynb']
 
 
 @pytest.mark.parametrize('notebook_name', notebooks)
