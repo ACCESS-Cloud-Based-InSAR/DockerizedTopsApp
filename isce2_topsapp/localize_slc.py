@@ -2,6 +2,7 @@ import netrc
 from concurrent.futures import ThreadPoolExecutor
 
 import asf_search as asf
+import geopandas as gpd
 from shapely.geometry import GeometryCollection, box, shape
 from shapely.ops import unary_union
 from tqdm import tqdm
@@ -32,12 +33,16 @@ def get_session():
 
 def check_geometry(reference_obs: list,
                    secondary_obs: list,
-                   region_of_interest: list) -> GeometryCollection:
+                   frame_id: int = -1) -> GeometryCollection:
     reference_geos = [shape(r.geojson()['geometry']) for r in reference_obs]
     secondary_geos = [shape(r.geojson()['geometry']) for r in secondary_obs]
 
     reference_geo = unary_union(reference_geos)
     secondary_geo = unary_union(secondary_geos)
+
+    # if they are not Polygons they are multipolygons and not valid
+    connected_ref = (reference_geo.geom_type == 'Polygon')
+    connected_sec = (secondary_geo.geom_type == 'Polygon')
 
     # Two geometries must intersect for their to be an interferogram
     intersection_geo = secondary_geo.intersection(reference_geo)
@@ -46,16 +51,16 @@ def check_geometry(reference_obs: list,
                            'is empty')
 
     # Update the area of interest based on user specification
-    if region_of_interest is not None:
-        region_of_interest_geo = box(*region_of_interest)
-        if not region_of_interest_geo.intersects(intersection_geo):
-            raise RuntimeError('Region of interest does not overlap with IFG '
-                               'area (ref and sec overlap)')
+    if frame_id != -1:
+        df_frames = gpd.read_file('s3://s1-gunw-frames/s1_frames.geojson',
+                                  bbox=intersection_geo.bounds)
+        df_frame = df_frames[df_frames.frame_id == frame_id].reset_index()
+        if df_frame.empty:
+            raise RuntimeError('Frame area does not overlap with IFG '
+                               'area (i.e. ref and sec overlap)')
+        region_of_interest_geo = box(*df_frame.total_bounds)
         intersection_geo = region_of_interest_geo
 
-    # if they are not Polygons they are multipolygons and not valid
-    connected_ref = (reference_geo.geom_type == 'Polygon')
-    connected_sec = (secondary_geo.geom_type == 'Polygon')
     if (not connected_sec) or (not connected_ref):
         raise RuntimeError('Reference and/or secondary dates were not connected'
                            ' in their coverage (multipolygons)')
@@ -64,7 +69,7 @@ def check_geometry(reference_obs: list,
 
 def download_slcs(reference_ids: list,
                   secondary_ids: list,
-                  region_of_interest: list = None,
+                  frame_id: int = -1,
                   max_workers_for_download: int = 5,
                   dry_run: bool = False) -> dict:
     reference_obs = get_asf_slc_objects(reference_ids)
@@ -80,7 +85,7 @@ def download_slcs(reference_ids: list,
 
     intersection_geo = check_geometry(reference_obs,
                                       secondary_obs,
-                                      region_of_interest=region_of_interest)
+                                      frame_id=frame_id)
 
     def download_one(resp):
         session = get_session()

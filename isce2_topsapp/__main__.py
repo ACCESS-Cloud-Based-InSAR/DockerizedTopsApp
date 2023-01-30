@@ -18,7 +18,7 @@ from isce2_topsapp.json_encoder import MetadataEncoder
 
 def localize_data(reference_scenes: list,
                   secondary_scenes: list,
-                  region_of_interest: list,
+                  frame_id: int = -1,
                   dry_run: bool = False) -> dict:
     """The dry-run prevents gets necessary metadata from SLCs and orbits.
 
@@ -28,7 +28,7 @@ def localize_data(reference_scenes: list,
     """
     out_slc = download_slcs(reference_scenes,
                             secondary_scenes,
-                            region_of_interest=region_of_interest,
+                            frame_id=frame_id,
                             dry_run=dry_run)
 
     out_orbits = download_orbits(reference_scenes,
@@ -91,8 +91,6 @@ def gunw_slc():
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--reference-scenes', type=str.split, nargs='+', required=True)
     parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
-    parser.add_argument('--region-of-interest', type=float, nargs=4, default=None,
-                        help='xmin ymin xmax ymax in epgs:4326', required=False)
     parser.add_argument('--estimate-ionosphere-delay', type=bool, default=False)
     parser.add_argument('--frame-id', type=int, default=-1)
     parser.add_argument('--do-esd', type=bool, default=False)
@@ -113,12 +111,8 @@ def gunw_slc():
     loc_data = localize_data(args.reference_scenes,
                              args.secondary_scenes,
                              dry_run=args.dry_run,
-                             region_of_interest=args.region_of_interest)
-    # TODO: either remove this or ensure it is passed to CMR metadata
+                             frame_id=args.frame_id)
     loc_data['frame_id'] = args.frame_id
-    if args.frame_id >= 0:
-        if not args.region_of_interest:
-            raise RuntimeError('If you specify frame_id, then must specify region_of_interest')
 
     # Allows for easier re-inspection of processing, packaging, and delivery
     # after job completes
