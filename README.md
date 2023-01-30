@@ -74,7 +74,6 @@ isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20230113T135954_20230113T14002
               --secondary-scenes S1A_IW_SLC__1SDV_20221208T135956_20221208T140023_046241_05897B_86FA \
                                  S1A_IW_SLC__1SDV_20221208T140021_20221208T140048_046241_05897B_8EBC \
                                  S1A_IW_SLC__1SDV_20221208T140046_20221208T140113_046241_05897B_28A9 \
-              --region-of-interest -120.902529 35.257855 -117.740922 37.231403 \
               --frame-id 19965 \
               > topsapp_img_f19965.out 2> topsapp_img_f19965.err
 ```
@@ -84,7 +83,6 @@ isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20230113T140019_20230113T14004
                                  S1A_IW_SLC__1SDV_20230113T140044_20230113T140111_046766_059B44_FBB8 \
               --secondary-scenes S1A_IW_SLC__1SDV_20221208T140021_20221208T140048_046241_05897B_8EBC \
                                  S1A_IW_SLC__1SDV_20221208T140046_20221208T140113_046241_05897B_28A9 \
-              --region-of-interest -121.167298 33.929114 -118.055825 35.904876 \
               --frame-id 19966 \
               > topsapp_img_f19966.out 2> topsapp_img_f19966.err
 ```
