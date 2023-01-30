@@ -44,6 +44,10 @@ def check_geometry(reference_obs: list,
     connected_ref = (reference_geo.geom_type == 'Polygon')
     connected_sec = (secondary_geo.geom_type == 'Polygon')
 
+    if (not connected_sec) or (not connected_ref):
+        raise RuntimeError('Reference and/or secondary dates were not connected'
+                           ' in their coverage (multipolygons)')
+
     # Two geometries must intersect for their to be an interferogram
     intersection_geo = secondary_geo.intersection(reference_geo)
     if intersection_geo.is_empty:
@@ -60,10 +64,6 @@ def check_geometry(reference_obs: list,
                                'area (i.e. ref and sec overlap)')
         region_of_interest_geo = box(*df_frame.total_bounds)
         intersection_geo = region_of_interest_geo
-
-    if (not connected_sec) or (not connected_ref):
-        raise RuntimeError('Reference and/or secondary dates were not connected'
-                           ' in their coverage (multipolygons)')
     return intersection_geo
 
 
