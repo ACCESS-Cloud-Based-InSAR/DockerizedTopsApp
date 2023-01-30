@@ -24,7 +24,8 @@ def localize_data(reference_scenes: list,
 
     Can be used to run workflow without redownloading data (except DEM).
 
-    region_of_interest is in xmin, ymin, xmax, ymax format (epsg: 4326)
+    Fixed frames are found here: s3://s1-gunw-frames/s1_frames.geojson
+    And discussed in the readme.
     """
     out_slc = download_slcs(reference_scenes,
                             secondary_scenes,
