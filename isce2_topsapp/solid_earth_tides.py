@@ -160,4 +160,3 @@ def update_gunw_with_solid_earth_tide(gunw_path: Path) -> Path:
                                   mode='a',
                                   group=se_tide_group)
     return gunw_path
-
