@@ -11,8 +11,8 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 * Provide prototype (internal) for burst analysis thanks to Forrest Williams and Joseph Kennedy (see PR #73)
 * CLI (and API) can switch between burst and SLC ifg generation thanks to entry point magic (see PR #73 for details)
-* Exposes Ionosphere correction in CLI (and API)
-* Exposes ESD and ESD threshold in CLI (and API)
+* Exposes a number of new corrections/ISCE2 processing options including: `ionosphere`, `ESD` and `ESD threshold` arguments in CLI. Examples in README.
+* Exposes `frame-id` parameter for fixed frame cropping. Discussion, references, and examples in README.
 
 ## [0.2.1]
 
