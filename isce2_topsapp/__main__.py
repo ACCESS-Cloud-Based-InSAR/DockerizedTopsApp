@@ -85,6 +85,7 @@ def ensure_earthdata_credentials(username: Optional[str] = None, password: Optio
 def string_is_true(s: str) -> bool:
     return s.lower() == 'true'
 
+
 def gunw_slc():
     parser = ArgumentParser()
     parser.add_argument('--username')
