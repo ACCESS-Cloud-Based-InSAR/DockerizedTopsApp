@@ -1,5 +1,3 @@
-import argparse
-
 import pytest
 
 from isce2_topsapp.__main__ import ensure_earthdata_credentials, true_false_string_argument
