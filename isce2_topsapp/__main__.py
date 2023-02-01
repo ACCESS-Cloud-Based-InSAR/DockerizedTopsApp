@@ -82,8 +82,11 @@ def ensure_earthdata_credentials(username: Optional[str] = None, password: Optio
         )
 
 
-def string_is_true(s: str) -> bool:
-    return s.lower() == 'true'
+def true_false_string_argument(s: str) -> bool:
+    s = s.lower()
+    if s not in ('true', 'false'):
+        raise ValueError('Only the strings `true` or `false` (any capitalization) may be provided.')
+    return s == 'true'
 
 
 def gunw_slc():
@@ -97,9 +100,9 @@ def gunw_slc():
     parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
     parser.add_argument('--region-of-interest', type=float, nargs=4, default=None,
                         help='xmin ymin xmax ymax in epgs:4326', required=False)
-    parser.add_argument('--estimate-ionosphere-delay', type=string_is_true, default=False)
+    parser.add_argument('--estimate-ionosphere-delay', type=true_false_string_argument, default=False)
     parser.add_argument('--frame-id', type=int, default=-1)
-    parser.add_argument('--do-esd', type=string_is_true, default=False)
+    parser.add_argument('--do-esd', type=true_false_string_argument, default=False)
     parser.add_argument('--esd-coherence-threshold', type=float, default=-1.)
     args = parser.parse_args()
 
@@ -181,7 +184,7 @@ def gunw_burst():
     parser.add_argument('--burst-number', type=int, required=True)
     parser.add_argument('--azimuth-looks', type=int, default=2)
     parser.add_argument('--range-looks', type=int, default=10)
-    parser.add_argument('--estimate-ionosphere-delay', type=string_is_true, default=False)
+    parser.add_argument('--estimate-ionosphere-delay', type=true_false_string_argument, default=False)
     args = parser.parse_args()
 
     ensure_earthdata_credentials(args.username, args.password)
