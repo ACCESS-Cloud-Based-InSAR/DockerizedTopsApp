@@ -1,6 +1,6 @@
 import pytest
 
-from isce2_topsapp.__main__ import ensure_earthdata_credentials, true_false_string_argument, esd_threshold_argument
+from isce2_topsapp.__main__ import ensure_earthdata_credentials, esd_threshold_argument, true_false_string_argument
 
 
 def test_main_check_earthdata_credentials_prefer_netrc(tmp_path, monkeypatch):
