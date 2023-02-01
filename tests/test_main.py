@@ -104,4 +104,3 @@ def test_esd_threshold_argument():
         esd_threshold_argument('-0.1')
     with pytest.raises(ValueError):
         esd_threshold_argument('1.1')
-
