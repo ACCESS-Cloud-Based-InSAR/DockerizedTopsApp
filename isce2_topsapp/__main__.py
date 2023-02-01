@@ -1,4 +1,5 @@
 import json
+import math
 import netrc
 import os
 import sys
@@ -89,6 +90,18 @@ def true_false_string_argument(s: str) -> bool:
     return s == 'true'
 
 
+def esd_threshold_argument(threshold: str) -> float:
+    threshold = float(threshold)
+
+    if math.isclose(threshold, -1.):
+        return threshold
+
+    if (0. > threshold) or (threshold > 1.):
+        raise ValueError('ESD coherence threshold should be a value between 0 and 1,'
+                         ' or -1 for no ESD correction')
+    return threshold
+
+
 def gunw_slc():
     parser = ArgumentParser()
     parser.add_argument('--username')
@@ -102,14 +115,8 @@ def gunw_slc():
                         help='xmin ymin xmax ymax in epgs:4326', required=False)
     parser.add_argument('--estimate-ionosphere-delay', type=true_false_string_argument, default=False)
     parser.add_argument('--frame-id', type=int, default=-1)
-    parser.add_argument('--do-esd', type=true_false_string_argument, default=False)
     parser.add_argument('--esd-coherence-threshold', type=float, default=-1.)
     args = parser.parse_args()
-
-    do_esd_arg = (args.esd_coherence_threshold != -1) == args.do_esd
-    if not do_esd_arg:
-        raise ValueError('If ESD is turned on, specify esd_coherence_threshold between 0 and 1; '
-                         'Otherwise, do not or set the threshold to -1')
 
     ensure_earthdata_credentials(args.username, args.password)
 
@@ -140,7 +147,7 @@ def gunw_slc():
                        # Region of interest is passed to topsapp via 'extent' key in loc_data
                        extent=loc_data['extent'],
                        estimate_ionosphere_delay=args.estimate_ionosphere_delay,
-                       do_esd=do_esd_arg,
+                       do_esd=args.esd_coherence_threshold >= 0.,
                        esd_coherence_threshold=args.esd_coherence_threshold,
                        dem_for_proc=loc_data['full_res_dem_path'],
                        dem_for_geoc=loc_data['low_res_dem_path'],
