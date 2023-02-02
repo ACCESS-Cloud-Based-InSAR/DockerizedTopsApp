@@ -41,5 +41,3 @@ dependencies:
  - tqdm
  - dem_stitcher>=2.3.1
  - aiohttp  # only needed for manifest and swath download
- - pip:
-   - git+https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator.git
