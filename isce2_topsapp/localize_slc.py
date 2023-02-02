@@ -1,11 +1,18 @@
 import netrc
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import asf_search as asf
 import geopandas as gpd
-from shapely.geometry import GeometryCollection, box, shape
+from shapely.geometry import GeometryCollection, shape
 from shapely.ops import unary_union
 from tqdm import tqdm
+
+
+def get_global_gunw_frames():
+    data_dir = Path(__file__).parent / 'data'
+    path_to_frames_zip = data_dir / 's1_frames.geojson.zip'
+    return gpd.read_file(path_to_frames_zip)
 
 
 def get_asf_slc_objects(slc_ids: list) -> list:
@@ -56,14 +63,13 @@ def check_geometry(reference_obs: list,
 
     # Update the area of interest based on frame_id
     if frame_id != -1:
-        df_frames = gpd.read_file('s3://s1-gunw-frames/s1_frames.geojson',
-                                  bbox=intersection_geo.bounds)
+        df_frames = get_global_gunw_frames()
         ind = df_frames.frame_id == frame_id
         df_frame = df_frames[ind].reset_index(drop=True)
-        if df_frame.empty:
+        frame_geo = df_frame.geometry[0]
+        if not frame_geo.interects(intersection_geo):
             raise RuntimeError('Frame area does not overlap with IFG '
                                'area (i.e. ref and sec overlap)')
-        frame_geo = box(*df_frame.total_bounds)
         intersection_geo = frame_geo
     return intersection_geo
 
