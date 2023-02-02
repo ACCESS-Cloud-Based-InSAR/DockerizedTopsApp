@@ -4,7 +4,7 @@ channels:
  - anaconda
  - defaults
 dependencies:
- - python
+ - python>=3.8,<3.10
  - pip
  - affine
  - asf_search>=5.0.0
