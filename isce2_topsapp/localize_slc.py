@@ -54,16 +54,17 @@ def check_geometry(reference_obs: list,
         raise RuntimeError('The overlap between reference and secondary scenes '
                            'is empty')
 
-    # Update the area of interest based on user specification
+    # Update the area of interest based on frame_id
     if frame_id != -1:
         df_frames = gpd.read_file('s3://s1-gunw-frames/s1_frames.geojson',
                                   bbox=intersection_geo.bounds)
-        df_frame = df_frames[df_frames.frame_id == frame_id].reset_index()
+        ind = df_frames.frame_id == frame_id
+        df_frame = df_frames[ind].reset_index(drop=True)
         if df_frame.empty:
             raise RuntimeError('Frame area does not overlap with IFG '
                                'area (i.e. ref and sec overlap)')
-        region_of_interest_geo = box(*df_frame.total_bounds)
-        intersection_geo = region_of_interest_geo
+        frame_geo = box(*df_frame.total_bounds)
+        intersection_geo = frame_geo
     return intersection_geo
 
 
