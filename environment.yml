@@ -4,7 +4,7 @@ channels:
  - anaconda
  - defaults
 dependencies:
- - python>=3.8,<3.10
+ - python
  - pip
  - affine
  - asf_search>=5.0.0
@@ -41,3 +41,5 @@ dependencies:
  - tqdm
  - dem_stitcher>=2.3.1
  - aiohttp  # only needed for manifest and swath download
+ - pip:
+   - git+https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator.git
