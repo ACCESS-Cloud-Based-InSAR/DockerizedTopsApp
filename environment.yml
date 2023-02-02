@@ -34,10 +34,12 @@ dependencies:
  - pytest-cov
  - pytest-mock
  - rasterio
+ - rioxarray
+ - xarray
+ - scipy<1.10
  - setuptools
  - setuptools_scm
  - shapely
- - scipy<1.10
  - tqdm
  - dem_stitcher>=2.3.1
  - aiohttp  # only needed for manifest and swath download
