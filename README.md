@@ -59,10 +59,10 @@ This example shows how to obtain a layer with ionsopheric phase delay. The SLCs 
 isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20171117T145926_20171117T145953_008323_00EBAB_AFB8 \
               --secondary-scenes S1A_IW_SLC__1SDV_20171111T150004_20171111T150032_019219_0208AF_EE89 \
               --estimate-ionosphere-delay True \
-              --do-esd True \
               --esd-coherence-threshold .5 \
               > topsapp_img.out 2> topsapp_img.err
 ```
+Not including `--esd-coherence-threshold` means no ESD correction will be applied. The ESD threshold refers to a coherence value and therefore must be in $[0, 1]$.
 
 ### Using "fixed frames" (experimental)
 
