@@ -1,11 +1,10 @@
 import pytest
 
-from isce2_topsapp.localize_slc import (download_slcs,
-                                        get_intersection_geo,
+from isce2_topsapp.localize_slc import (check_date_order,
                                         check_flight_direction,
-                                        check_track_numbers,
-                                        check_date_order,
-                                        get_asf_slc_objects)
+                                        check_track_numbers, download_slcs,
+                                        get_asf_slc_objects,
+                                        get_intersection_geo)
 
 
 def test_intersection_geometry():
@@ -29,6 +28,52 @@ def test_intersection_geometry():
 
     with pytest.raises(ValueError):
         get_intersection_geo(ref_ob, sec_ob)
+
+
+def test_bad_flight_direction():
+    # Overlapping areas, same day, Ascending/Descending
+    ref_ids = ['S1A_IW_SLC__1SDV_20221121T015133_20221121T015200_045986_0580C5_EBF0']
+    sec_ids = ['S1A_IW_SLC__1SDV_20221121T135136_20221121T135203_045993_058110_0FB0']
+
+    ref_obs = get_asf_slc_objects(ref_ids)
+    sec_obs = get_asf_slc_objects(sec_ids)
+
+    ref_props = [ob.properties for ob in ref_obs]
+    sec_props = [ob.properties for ob in sec_obs]
+
+    assert not check_flight_direction(ref_props + sec_props)
+
+
+def test_sequential_tracks():
+    # Tracks 86 and 87
+    slc_ids = ['S1A_IW_SLC__1SDV_20220830T153309_20220830T153343_044784_055914_7B42',
+               'S1A_IW_SLC__1SDV_20220830T153244_20220830T153311_044783_055914_19AE']
+    slc_obs = get_asf_slc_objects(slc_ids)
+    props = [ob.properties for ob in slc_obs]
+
+    assert check_track_numbers(props)
+
+
+def test_bad_tracks_with_same_flight_direction():
+    slc_ids = ['S1A_IW_SLC__1SDV_20220830T153244_20220830T153311_044783_055914_19AE',
+               'S1A_IW_SLC__1SDV_20220823T154053_20220823T154119_044681_05559C_4B0E']
+    slc_obs = get_asf_slc_objects(slc_ids)
+    props = [ob.properties for ob in slc_obs]
+
+    assert not check_track_numbers(props)
+
+
+def test_bad_date_order():
+    ref_ids = ['S1A_IW_SLC__1SDV_20220422T141557_20220422T141624_042887_051EA4_CD2E']
+    sec_ids = ['S1A_IW_SLC__1SDV_20220504T141557_20220504T141624_043062_05246D_3C67']
+
+    ref_obs = get_asf_slc_objects(ref_ids)
+    sec_obs = get_asf_slc_objects(sec_ids)
+
+    ref_props = [ob.properties for ob in ref_obs]
+    sec_props = [ob.properties for ob in sec_obs]
+
+    assert not check_date_order(ref_props, sec_props)
 
 
 def test_bad_frame_with_intersection():
