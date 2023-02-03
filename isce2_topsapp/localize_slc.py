@@ -4,6 +4,7 @@ from pathlib import Path
 
 import asf_search as asf
 import geopandas as gpd
+from dateparser import parse
 from shapely.geometry import GeometryCollection, shape
 from shapely.ops import unary_union
 from tqdm import tqdm
@@ -38,9 +39,9 @@ def get_session():
     return session
 
 
-def check_geometry(reference_obs: list,
-                   secondary_obs: list,
-                   frame_id: int = -1) -> GeometryCollection:
+def get_intersection_geo(reference_obs: list,
+                         secondary_obs: list,
+                         frame_id: int = -1) -> GeometryCollection:
     reference_geos = [shape(r.geojson()['geometry']) for r in reference_obs]
     secondary_geos = [shape(r.geojson()['geometry']) for r in secondary_obs]
 
@@ -52,14 +53,14 @@ def check_geometry(reference_obs: list,
     connected_sec = (secondary_geo.geom_type == 'Polygon')
 
     if (not connected_sec) or (not connected_ref):
-        raise RuntimeError('Reference and/or secondary dates were not connected'
-                           ' in their coverage (multipolygons)')
+        raise ValueError('Reference and/or secondary dates were not connected'
+                         ' in their coverage (multipolygons)')
 
     # Two geometries must intersect for their to be an interferogram
     intersection_geo = secondary_geo.intersection(reference_geo)
     if intersection_geo.is_empty:
-        raise RuntimeError('The overlap between reference and secondary scenes '
-                           'is empty')
+        raise ValueError('The overlap between reference and secondary scenes '
+                         'is empty')
 
     # Update the area of interest based on frame_id
     if frame_id != -1:
@@ -67,11 +68,44 @@ def check_geometry(reference_obs: list,
         ind = df_frames.frame_id == frame_id
         df_frame = df_frames[ind].reset_index(drop=True)
         frame_geo = df_frame.geometry[0]
-        if not frame_geo.interects(intersection_geo):
-            raise RuntimeError('Frame area does not overlap with IFG '
-                               'area (i.e. ref and sec overlap)')
+        if not frame_geo.intersects(intersection_geo):
+            raise ValueError('Frame area does not overlap with IFG '
+                             'area (i.e. ref and sec overlap)')
         intersection_geo = frame_geo
     return intersection_geo
+
+
+def ensure_repeat_pass_time_small(slc_properties: list,
+                                  maximum_minutes_between_acq=2):
+    """Make sure all the dictionaries of startTime are within 5 minutes"""
+    dates = [parse(prop['startTime']) for prop in slc_properties]
+    dates = sorted(dates)
+    minutes_apart_from_first_acq = [(date - dates[0]).seconds for date in dates]
+    return all([minutes_apart <= maximum_minutes_between_acq * 60
+                for minutes_apart in minutes_apart_from_first_acq])
+
+
+def check_flight_direction(slc_properties: list) -> bool:
+    unique_look_direction = set([prop['flightDirection']
+                                 for prop in slc_properties])
+    return len(unique_look_direction) == 1
+
+
+def check_date_order(ref_properties: list, sec_properties: list) -> bool:
+    ref_date = parse(ref_properties[0]['startTime'])
+    sec_date = parse(sec_properties[0]['startTime'])
+    return sec_date < ref_date
+
+
+def check_track_numbers(slc_properties: list):
+    path_numbers = [prop['pathNumber'] for prop in slc_properties]
+    path_numbers = sorted(list(set(path_numbers)))
+    if len(path_numbers) == 1:
+        return True
+    if len(path_numbers) == 2:
+        if ((path_numbers[1] - path_numbers[0]) == 1):
+            return True
+    return False
 
 
 def download_slcs(reference_ids: list,
@@ -86,13 +120,32 @@ def download_slcs(reference_ids: list,
     reference_props = [ob.properties for ob in reference_obs]
     secondary_props = [ob.properties for ob in secondary_obs]
 
+    minutes_apart = 2
+    if not ensure_repeat_pass_time_small(reference_props,
+                                         maximum_minutes_between_acq=minutes_apart):
+        raise ValueError('The reference SLCs are more than {minutes_apart} min'
+                         'apart from the initial acq. in this pass')
+    if not ensure_repeat_pass_time_small(secondary_props,
+                                         maximum_minutes_between_acq=minutes_apart):
+        raise ValueError('The secondary SLCs are more than {minutes_apart} min'
+                         'apart from the initial acq. in this pass')
+
+    if not check_flight_direction(reference_props + secondary_props):
+        raise ValueError('The SLCs are not all Descending or Ascending')
+
+    if not check_track_numbers(reference_props + secondary_props):
+        raise ValueError('The SLCs do not belong to the same track (or sequential tracks)')
+
+    if not check_date_order(reference_props, secondary_props):
+        raise ValueError('Reference date must occur after secondary date')
+
     # Check the number of objects is the same as inputs
     assert len(reference_obs) == len(reference_ids)
     assert len(secondary_obs) == len(secondary_ids)
 
-    intersection_geo = check_geometry(reference_obs,
-                                      secondary_obs,
-                                      frame_id=frame_id)
+    intersection_geo = get_intersection_geo(reference_obs,
+                                            secondary_obs,
+                                            frame_id=frame_id)
 
     def download_one(resp):
         session = get_session()
