@@ -1,4 +1,5 @@
 import json
+import math
 import netrc
 import os
 import sys
@@ -84,6 +85,25 @@ def ensure_earthdata_credentials(username: Optional[str] = None, password: Optio
         )
 
 
+def true_false_string_argument(s: str) -> bool:
+    s = s.lower()
+    if s not in ('true', 'false'):
+        raise ValueError('Only the strings `true` or `false` (any capitalization) may be provided.')
+    return s == 'true'
+
+
+def esd_threshold_argument(threshold: str) -> float:
+    threshold = float(threshold)
+
+    if math.isclose(threshold, -1.):
+        return threshold
+
+    if (0. > threshold) or (threshold > 1.):
+        raise ValueError('ESD coherence threshold should be a value between 0 and 1,'
+                         ' or -1 for no ESD correction')
+    return threshold
+
+
 def gunw_slc():
     parser = ArgumentParser()
     parser.add_argument('--username')
@@ -95,17 +115,11 @@ def gunw_slc():
     parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
     parser.add_argument('--region-of-interest', type=float, nargs=4, default=None,
                         help='xmin ymin xmax ymax in epgs:4326', required=False)
-    parser.add_argument('--estimate-ionosphere-delay', type=bool, default=False)
+    parser.add_argument('--estimate-ionosphere-delay', type=true_false_string_argument, default=False)
     parser.add_argument('--frame-id', type=int, default=-1)
-    parser.add_argument('--compute-solid-earth-tide', type=bool, default=False)
-    parser.add_argument('--do-esd', type=bool, default=False)
-    parser.add_argument('--esd-coherence-threshold', type=float, default=-1)
+    parser.add_argument('--compute-solid-earth-tide', type=true_false_string_argument, default=False)
+    parser.add_argument('--esd-coherence-threshold', type=float, default=-1.)
     args = parser.parse_args()
-
-    do_esd_arg = (args.esd_coherence_threshold != -1) == args.do_esd
-    if not do_esd_arg:
-        raise ValueError('If ESD is turned on, specify esd_coherence_threshold between 0 and 1; '
-                         'Otherwise, do not or set the threshold to -1')
 
     ensure_earthdata_credentials(args.username, args.password)
 
@@ -136,7 +150,7 @@ def gunw_slc():
                        # Region of interest is passed to topsapp via 'extent' key in loc_data
                        extent=loc_data['extent'],
                        estimate_ionosphere_delay=args.estimate_ionosphere_delay,
-                       do_esd=args.do_esd,
+                       do_esd=args.esd_coherence_threshold >= 0.,
                        esd_coherence_threshold=args.esd_coherence_threshold,
                        dem_for_proc=loc_data['full_res_dem_path'],
                        dem_for_geoc=loc_data['low_res_dem_path'],
@@ -186,7 +200,7 @@ def gunw_burst():
     parser.add_argument('--burst-number', type=int, required=True)
     parser.add_argument('--azimuth-looks', type=int, default=2)
     parser.add_argument('--range-looks', type=int, default=10)
-    parser.add_argument('--estimate-ionosphere-delay', type=bool, default=False)
+    parser.add_argument('--estimate-ionosphere-delay', type=true_false_string_argument, default=False)
     args = parser.parse_args()
 
     ensure_earthdata_credentials(args.username, args.password)
