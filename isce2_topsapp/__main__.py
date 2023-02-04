@@ -173,7 +173,7 @@ def gunw_slc():
                                    additional_2d_layers=additional_2d_layers,
                                    )
 
-    if args.compute_solid_earth_tides:
+    if args.compute_solid_earth_tide:
         nc_path = update_gunw_with_solid_earth_tide(nc_path)
         # Update to 1c
         with h5py.File(nc_path, mode='a') as file:
