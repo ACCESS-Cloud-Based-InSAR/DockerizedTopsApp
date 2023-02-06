@@ -137,17 +137,21 @@ def export_se_tides_to_dataset(gunw_path: str,
     solidtide_corr_ds = xr.open_dataset(gunw_path,
                                         group=group)
 
-    solidtide_corr_ds = solidtide_corr_ds.rename({'longitudeMeta': 'x',
-                                                  'latitudeMeta': 'y'})
+    solidtide_corr_ds = solidtide_corr_ds.rename({'longitudeMeta': 'longitude',
+                                                  'latitudeMeta': 'latitude',
+                                                  'heightsMeta': 'height'})
     attrs = {'description': 'Solid Earth tide',
              'units': 'radians',
              'long_name': lyr_name,
              'standard_name': lyr_name}
 
-    dim_order = ['heightsMeta', 'y', 'x']
+    dim_order = ['height', 'latitude', 'longitude']
     solidtide_corr_ds[lyr_name] = (dim_order, tide_los)
     solidtide_corr_ds[lyr_name].attrs.update(attrs)
-    return solidtide_corr_ds[[lyr_name]]
+    solidtide_corr_ds = solidtide_corr_ds[[lyr_name]]
+    solidtide_corr_ds.rio.write_crs('epsg:4326', inplace=True)
+    solidtide_corr_ds['solidEarthTide'].rio.write_nodata(np.nan, inplace=True)
+    return solidtide_corr_ds
 
 
 def update_gunw_with_solid_earth_tide(gunw_path: Path) -> Path:
