@@ -36,6 +36,8 @@ dependencies:
  - pytest-mock
  - rasterio
  - rioxarray
+ - xarray
+ - scipy<1.10
  - setuptools
  - setuptools_scm
  - scipy<1.10
