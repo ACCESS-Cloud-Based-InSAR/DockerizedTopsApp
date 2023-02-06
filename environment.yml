@@ -18,7 +18,7 @@ dependencies:
  - geopandas
  - hyp3lib>=1.7
  - ipykernel
- - isce2
+ - isce2==2.6.1
  - jinja2
  - joblib
  - jsonschema==3.2.0
@@ -27,7 +27,7 @@ dependencies:
  - matplotlib
  - netcdf4
  - notebook
- - numpy
+ - numpy<1.24
  - pandas
  - papermill
  - pytest
@@ -35,6 +35,8 @@ dependencies:
  - pytest-mock
  - rasterio
  - rioxarray
+ - xarray
+ - scipy<1.10
  - setuptools
  - setuptools_scm
  - shapely

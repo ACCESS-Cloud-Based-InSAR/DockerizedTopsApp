@@ -102,3 +102,6 @@ tests/out/*.ipynb
 
 # Jsons in Test Directory
 tests/**/*.json
+
+# Use geojson zip file for data
+!isce2_topsapp/data/s1_frames.geojson.zip
