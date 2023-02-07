@@ -8,6 +8,7 @@ from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Optional
 
+import h5py
 
 from isce2_topsapp import (BurstParams, aws, download_aux_cal, download_bursts,
                            download_dem_for_isce2, download_orbits,
@@ -15,6 +16,7 @@ from isce2_topsapp import (BurstParams, aws, download_aux_cal, download_bursts,
                            package_gunw_product, prepare_for_delivery,
                            topsapp_processing)
 from isce2_topsapp.json_encoder import MetadataEncoder
+from isce2_topsapp.solid_earth_tides import update_gunw_with_solid_earth_tide
 
 
 def localize_data(reference_scenes: list,
@@ -114,6 +116,7 @@ def gunw_slc():
     parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
     parser.add_argument('--estimate-ionosphere-delay', type=true_false_string_argument, default=False)
     parser.add_argument('--frame-id', type=int, default=-1)
+    parser.add_argument('--compute-solid-earth-tide', type=true_false_string_argument, default=False)
     parser.add_argument('--esd-coherence-threshold', type=float, default=-1.)
     args = parser.parse_args()
 
@@ -162,8 +165,14 @@ def gunw_slc():
                                    reference_properties=ref_properties,
                                    secondary_properties=sec_properties,
                                    extent=extent,
-                                   additional_2d_layers=additional_2d_layers
+                                   additional_2d_layers=additional_2d_layers,
                                    )
+
+    if args.compute_solid_earth_tide:
+        nc_path = update_gunw_with_solid_earth_tide(nc_path)
+        # Update to 1c
+        with h5py.File(nc_path, mode='a') as file:
+            file.attrs.modify('version', '1c')
 
     # Move final product to current working directory
     final_directory = prepare_for_delivery(nc_path, loc_data)

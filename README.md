@@ -64,6 +64,17 @@ isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20171117T145926_20171117T14595
 ```
 Not including `--esd-coherence-threshold` means no ESD correction will be applied. The ESD threshold refers to a coherence value and therefore must be in $[0, 1]$.
 
+### Apply Solid Earth Tide Correction
+
+```
+isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9 \
+              --secondary-scenes S1B_IW_SLC__1SDV_20210711T014922_20210711T014949_027740_034F80_859D \
+                                 S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404 \
+                                 S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C \
+              --compute-solid-earth-tide True \
+              > topsapp_img_set.out 2> topsapp_img_set.err
+```
+
 ### Using "fixed frames" (experimental)
 
 Sentinel-1 Frames are not constant over passes. We generate fixed frames [here](https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-generation) and enumerate interferograms using this [repo](https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator). This is highly experimental. We then ensure ISCE processes only over the frame. The key is overlap. We provide some examples of the additional options (you will need to run this in *two* separate directories because ISCE2 outputs are organized with respect to the working directory of the processing). For one frame over CA:

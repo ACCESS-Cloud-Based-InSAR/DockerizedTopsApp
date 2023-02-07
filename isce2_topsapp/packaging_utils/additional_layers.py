@@ -24,9 +24,12 @@ def add_2d_layer(layer_name: str, gunw_netcdf_path: Path) -> Path:
     # The layers generally already exist within the file
     with h5py.File(gunw_netcdf_path, mode='a') as file:
         if dst_group in file:
-            for key in file[dst_group].keys():
-                del file[dst_group][key]
-            del file[dst_group]
+            # Delete the variable to be written to
+            if dst_variable in file[dst_group]:
+                del file[dst_group][dst_variable]
+            # Delete the group if there are no variables left
+            if len(file[dst_group].keys()) == 0:
+                del file[dst_group]
 
     ds = xr.open_dataset(layer_data['input_relative_path'],
                          engine='rasterio')

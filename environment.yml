@@ -29,6 +29,7 @@ dependencies:
  - notebook
  - numpy<1.24
  - pandas
+ - pysolid
  - papermill
  - pytest
  - pytest-cov
@@ -39,6 +40,7 @@ dependencies:
  - scipy<1.10
  - setuptools
  - setuptools_scm
+ - scipy<1.10
  - shapely
  - tqdm
  - dem_stitcher>=2.3.1
