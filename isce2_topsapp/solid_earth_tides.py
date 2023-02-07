@@ -151,7 +151,7 @@ def export_se_tides_to_dataset(gunw_path: str,
     solidtide_corr_ds = solidtide_corr_ds[[lyr_name]]
     solidtide_corr_ds = solidtide_corr_ds.astype(np.float32)
     solidtide_corr_ds.rio.write_crs('epsg:4326', inplace=True)
-    solidtide_corr_ds['solidEarthTide'].rio.write_nodata(np.nan, inplace=True)
+    solidtide_corr_ds['solidEarthTide'].rio.write_nodata(0, inplace=True)
     return solidtide_corr_ds
 
 
