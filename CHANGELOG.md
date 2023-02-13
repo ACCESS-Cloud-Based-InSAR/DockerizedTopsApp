@@ -6,19 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.3]
-
-### Added
-* Added support to compute and embed solid earth tide correction layers into GUNW products (see PR #91)
-
 ## [0.2.2]
 
 ### Added
+* Added support to compute and embed solid earth tide correction layers into GUNW products (see PR #91)
 * Provide prototype (internal) for burst analysis thanks to Forrest Williams and Joseph Kennedy (see PR #73)
 * CLI (and API) can switch between burst and SLC ifg generation thanks to entry point magic (see PR #73 for details)
 * Exposes a number of new corrections/ISCE2 processing options including: `ionosphere`, and `ESD threshold` arguments in CLI. Examples in README.
 * Exposes `frame-id` parameter for fixed frame cropping. Discussion, references, and examples in README.
 * Pins ISCE2 version to 2.6.1 and numpy / scipy to previous versions (see environment.yml) - to be amended when newest ISCE2 build is sorted out
+* Includes `frame_id` in json metadata for CMR handshake
+* Updates `sensing_start` and `sensing_stop` with secondary and reference start times, respectively.
 
 ## [0.2.1]
 
