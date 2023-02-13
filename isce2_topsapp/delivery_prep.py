@@ -142,8 +142,8 @@ def format_metadata(nc_path: Path,
     sec_props = all_metadata['secondary_properties'][0]
     b_perp = read_baseline_perp(nc_path).mean()
 
-    startTime_f = format_time_string(ref_props["startTime"])
-    stopTime_f = format_time_string(ref_props["stopTime"])
+    sec_start_time_formatted = format_time_string(sec_props["startTime"])
+    ref_start_time_formatted = format_time_string(ref_props["startTime"])
 
     metadata = {}
     # get 4 corners of bounding box of the geometry; default is 5 returning
@@ -152,8 +152,9 @@ def format_metadata(nc_path: Path,
     metadata.update({"ogr_bbox": ogr_bbox,
                      "reference_scenes": all_metadata['reference_scenes'],
                      "secondary_scenes": all_metadata['secondary_scenes'],
-                     "sensing_start": startTime_f,
-                     "sensing_stop": stopTime_f,
+                     "sensing_start": sec_start_time_formatted,
+                     "sensing_stop": ref_start_time_formatted,
+                     "frame_id": all_metadata['frame_id'],
                      "orbit_number": [int(ref_props['orbit']),
                                       int(sec_props['orbit'])],
                      "platform": [ref_props['platform'], sec_props['platform']],

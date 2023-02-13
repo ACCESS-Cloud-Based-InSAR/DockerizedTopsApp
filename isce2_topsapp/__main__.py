@@ -47,6 +47,7 @@ def localize_data(reference_scenes: list,
 
     out = {'reference_scenes': reference_scenes,
            'secondary_scenes': secondary_scenes,
+           'frame_id': frame_id,
            **out_slc,
            **out_dem,
            **out_aux_cal,
