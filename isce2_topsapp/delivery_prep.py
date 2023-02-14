@@ -162,7 +162,7 @@ def format_metadata(nc_path: Path,
                      "orbit_direction": ref_props['flightDirection'].lower(),
                      "dataset_type": 'slc',
                      "product_type": 'interferogram',
-                     "polarization": "HH",
+                     "polarization": "VV",
                      "look_direction": 'right',
                      "track_number": int(ref_props['pathNumber']),
                      "perpendicular_baseline":  round(float(b_perp), 4)
