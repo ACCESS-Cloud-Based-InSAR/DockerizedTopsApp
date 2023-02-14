@@ -1,5 +1,6 @@
-import pytest
 import warnings
+
+import pytest
 
 from isce2_topsapp.localize_slc import (check_date_order,
                                         check_flight_direction,
