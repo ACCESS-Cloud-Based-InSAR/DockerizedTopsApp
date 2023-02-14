@@ -6,10 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.3]
-
 ### Added
-* Added support to compute and embed solid earth tide correction layers into GUNW products (see PR #91)
 
 ## [0.2.2]
 
@@ -19,6 +16,8 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Exposes a number of new corrections/ISCE2 processing options including: `ionosphere`, and `ESD threshold` arguments in CLI. Examples in README.
 * Exposes `frame-id` parameter for fixed frame cropping. Discussion, references, and examples in README.
 * Pins ISCE2 version to 2.6.1 and numpy / scipy to previous versions (see environment.yml) - to be amended when newest ISCE2 build is sorted out
+* Added support to compute and embed solid earth tide correction layers into GUNW products (see PR #91)
+* Raises warning if there is at least 80% of water in the IFG area using Natural Earth Land mask.
 
 ## [0.2.1]
 

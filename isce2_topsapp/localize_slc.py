@@ -1,11 +1,12 @@
 import netrc
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from warnings import warn
 
 import asf_search as asf
 import geopandas as gpd
 from dateparser import parse
-from shapely.geometry import GeometryCollection, shape
+from shapely.geometry import GeometryCollection, Polygon, shape
 from shapely.ops import unary_union
 from tqdm import tqdm
 
@@ -108,6 +109,14 @@ def check_track_numbers(slc_properties: list):
     return False
 
 
+def get_percent_water_from_ne_land(ifg_geo: Polygon):
+    """Gets percent_water using Natural Earth Low Res Mask"""
+    df_world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+    world_geo = df_world.geometry.unary_union
+    land_overlap = world_geo.intersection(ifg_geo)
+    return (1 - land_overlap.area / ifg_geo.area) * 100
+
+
 def download_slcs(reference_ids: list,
                   secondary_ids: list,
                   frame_id: int = -1,
@@ -146,6 +155,12 @@ def download_slcs(reference_ids: list,
     intersection_geo = get_intersection_geo(reference_obs,
                                             secondary_obs,
                                             frame_id=frame_id)
+
+    percent_water_low_res = get_percent_water_from_ne_land(intersection_geo)
+    if percent_water_low_res >= 80:
+        warn(f'The IFG is {percent_water_low_res:1.2f}% water; '
+             'If there are not enough bursts over land - ISCE2 will fail.',
+             category=RuntimeWarning)
 
     def download_one(resp):
         session = get_session()
