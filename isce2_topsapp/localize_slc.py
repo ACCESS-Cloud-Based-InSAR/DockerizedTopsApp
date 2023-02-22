@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 def get_global_gunw_frames():
     data_dir = Path(__file__).parent / 'data'
-    path_to_frames_zip = data_dir / 's1_frames.geojson.zip'
+    path_to_frames_zip = data_dir / 'gunw_frame_footprints.geojson.zip'
     return gpd.read_file(path_to_frames_zip)
 
 
