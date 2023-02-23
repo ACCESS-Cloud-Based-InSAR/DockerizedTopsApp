@@ -170,7 +170,7 @@ def gunw_slc():
     if args.compute_solid_earth_tide:
         nc_path = update_gunw_with_solid_earth_tide(nc_path)
 
-    if args.compute_solid_earth_tide or additional_2d_layers:
+    if args.compute_solid_earth_tide or args.estimate_ionosphere_delay:
         update_gunw_internal_version_attribute(nc_path, new_version='1c')
 
     # Move final product to current working directory
