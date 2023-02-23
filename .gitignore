@@ -105,4 +105,4 @@ tests/out/*.ipynb
 tests/**/*.json
 
 # Use geojson zip file for data
-!isce2_topsapp/data/gunw_frame_footprints.geojson.zip
+!isce2_topsapp/data/s1_gunw_frame_footprints.geojson.zip
