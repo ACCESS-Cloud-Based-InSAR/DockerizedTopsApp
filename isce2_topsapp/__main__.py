@@ -8,14 +8,13 @@ from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Optional
 
-import h5py
-
 from isce2_topsapp import (BurstParams, aws, download_aux_cal, download_bursts,
                            download_dem_for_isce2, download_orbits,
-                           download_slcs, get_asf_slc_objects, get_region_of_interest,
-                           package_gunw_product, prepare_for_delivery,
-                           topsapp_processing)
+                           download_slcs, get_asf_slc_objects,
+                           get_region_of_interest, package_gunw_product,
+                           prepare_for_delivery, topsapp_processing)
 from isce2_topsapp.json_encoder import MetadataEncoder
+from isce2_topsapp.packaging import update_gunw_internal_version_attribute
 from isce2_topsapp.solid_earth_tides import update_gunw_with_solid_earth_tide
 
 
@@ -170,9 +169,9 @@ def gunw_slc():
 
     if args.compute_solid_earth_tide:
         nc_path = update_gunw_with_solid_earth_tide(nc_path)
-        # Update to 1c
-        with h5py.File(nc_path, mode='a') as file:
-            file.attrs.modify('version', '1c')
+
+    if args.compute_solid_earth_tide or additional_2d_layers:
+        update_gunw_internal_version_attribute(nc_path, new_version='1c')
 
     # Move final product to current working directory
     final_directory = prepare_for_delivery(nc_path, loc_data)
