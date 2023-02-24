@@ -84,6 +84,7 @@ conf/settings.conf
 *.wgs84
 *.TGZ
 **/PICKLE/
+**/aux_cal/
 
 # Log files
 *.log
