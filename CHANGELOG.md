@@ -6,7 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### Added
 
 ## [0.2.2]
 
@@ -20,6 +19,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 * Uses dem-stitcher 2.4.0 to resolve #89 - ensures only polygonal intersection of tiles
+* Ensures that when Solid Earth Tide or Ionosphere is added to GUNW, that the internal version attribute is updated from '1b' to '1c'
 
 ## [0.2.1]
 
