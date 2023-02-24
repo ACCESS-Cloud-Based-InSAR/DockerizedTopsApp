@@ -5,7 +5,7 @@ from pathlib import Path
 import asf_search as asf
 import geopandas as gpd
 from dateparser import parse
-from shapely.geometry import GeometryCollection, shape, Polygon
+from shapely.geometry import GeometryCollection, Polygon, shape
 from shapely.ops import unary_union
 from tqdm import tqdm
 
