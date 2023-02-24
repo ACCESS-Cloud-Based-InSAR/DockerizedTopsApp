@@ -16,6 +16,10 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Exposes `frame-id` parameter for fixed frame cropping. Discussion, references, and examples in README.
 * Frame extents are added as geojson in repository as zip file.
 * Pins ISCE2 version to 2.6.1 and numpy / scipy to previous versions (see environment.yml) - to be amended when newest ISCE2 build is sorted out
+* Added support to compute and embed solid earth tide correction layers into GUNW products (see PR #91)
+
+## Fixed
+* Ensures that when Solid Earth Tide or Ionosphere is added to GUNW, that the internal version attribute is updated from '1b' to '1c'
 
 ## [0.2.1]
 
