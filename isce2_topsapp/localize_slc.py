@@ -181,7 +181,15 @@ def download_slcs(reference_ids: list,
     return {'ref_paths': results[:n0],
             'sec_paths': results[n0:],
             'extent': list(ifg_geo.bounds),
+            # For frames:
+            # This is the expected extent with the submitted ROI bounds below,
+            # i.e. all the bursts that overlap with the bbox - this will be used
+            # to request the DEM extent which will be larger than the frame
             'gunw_geo': ifg_geo,
+            # For frames:
+            # Want to follow latitude aligned frames for ROI bbox field in ISCE2
+            # This will be smaller than the actual ifg_geo/gunw_geo which
+            # includes all the bursts that overlap this processing geometry.
             'processing_extent': list(processing_geo.bounds),
             'reference_properties': reference_props,
             'secondary_properties': secondary_props
