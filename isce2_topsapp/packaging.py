@@ -34,6 +34,15 @@ was changed during runtime of `F`.
 """
 
 
+def update_gunw_internal_version_attribute(nc_path: Path, new_version='1c'):
+    with h5py.File(nc_path, mode='a') as file:
+        # Deleting attribute removes the type information so there is no
+        # truncation and a simple string can be written.
+        if 'version' in file.attrs:
+            del file.attrs['version']
+        file.attrs['version'] = new_version
+
+
 def get_gunw_hash_id(reference_ids: list, secondary_ids: list) -> str:
     all_ids = json.dumps([' '.join(sorted(reference_ids)),
                           ' '.join(sorted(secondary_ids))
