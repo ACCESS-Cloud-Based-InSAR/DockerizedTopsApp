@@ -5,15 +5,29 @@ from pathlib import Path
 import asf_search as asf
 import geopandas as gpd
 from dateparser import parse
-from shapely.geometry import GeometryCollection, shape
+from shapely.geometry import GeometryCollection, shape, Polygon
 from shapely.ops import unary_union
 from tqdm import tqdm
 
 
-def get_global_gunw_frames():
+def get_gunw_extent_from_frame_id(frame_id) -> Polygon:
     data_dir = Path(__file__).parent / 'data'
     path_to_frames_zip = data_dir / 's1_gunw_frame_footprints.geojson.zip'
-    return gpd.read_file(path_to_frames_zip)
+    df_gunw_extent = gpd.read_file(path_to_frames_zip)
+    ind = df_gunw_extent.frame_id == frame_id
+    df_gunw = df_gunw_extent[ind].reset_index(drop=True)
+    gunw_geo = df_gunw.geometry[0]
+    return gunw_geo
+
+
+def get_processing_geo_from_frame_id(frame_id: int) -> Polygon:
+    data_dir = Path(__file__).parent / 'data'
+    path_to_frames_zip = data_dir / 's1_frames_latitude_aligned.geojson.zip'
+    df_frames = gpd.read_file(path_to_frames_zip)
+    ind = df_frames.frame_id == frame_id
+    df_frame = df_frames[ind].reset_index(drop=True)
+    processing_geo = df_frame.geometry[0]
+    return processing_geo
 
 
 def get_asf_slc_objects(slc_ids: list) -> list:
@@ -39,9 +53,9 @@ def get_session():
     return session
 
 
-def get_intersection_geo(reference_obs: list,
-                         secondary_obs: list,
-                         frame_id: int = -1) -> GeometryCollection:
+def get_interferogram_geo(reference_obs: list,
+                          secondary_obs: list,
+                          frame_id: int = -1) -> GeometryCollection:
     reference_geos = [shape(r.geojson()['geometry']) for r in reference_obs]
     secondary_geos = [shape(r.geojson()['geometry']) for r in secondary_obs]
 
@@ -57,22 +71,19 @@ def get_intersection_geo(reference_obs: list,
                          ' in their coverage (multipolygons)')
 
     # Two geometries must intersect for their to be an interferogram
-    intersection_geo = secondary_geo.intersection(reference_geo)
-    if intersection_geo.is_empty:
+    ifg_geo = secondary_geo.intersection(reference_geo)
+    if ifg_geo.is_empty:
         raise ValueError('The overlap between reference and secondary scenes '
                          'is empty')
 
     # Update the area of interest based on frame_id
     if frame_id != -1:
-        df_frames = get_global_gunw_frames()
-        ind = df_frames.frame_id == frame_id
-        df_frame = df_frames[ind].reset_index(drop=True)
-        frame_geo = df_frame.geometry[0]
-        if not frame_geo.intersects(intersection_geo):
+        gunw_geo = get_gunw_extent_from_frame_id(frame_id)
+        if not gunw_geo.intersects(ifg_geo):
             raise ValueError('Frame area does not overlap with IFG '
                              'area (i.e. ref and sec overlap)')
-        intersection_geo = frame_geo
-    return intersection_geo
+        ifg_geo = gunw_geo
+    return ifg_geo
 
 
 def ensure_repeat_pass_time_small(slc_properties: list,
@@ -143,9 +154,9 @@ def download_slcs(reference_ids: list,
     assert len(reference_obs) == len(reference_ids)
     assert len(secondary_obs) == len(secondary_ids)
 
-    intersection_geo = get_intersection_geo(reference_obs,
-                                            secondary_obs,
-                                            frame_id=frame_id)
+    ifg_geo = get_interferogram_geo(reference_obs,
+                                    secondary_obs,
+                                    frame_id=frame_id)
 
     def download_one(resp):
         session = get_session()
@@ -153,6 +164,10 @@ def download_slcs(reference_ids: list,
         if not dry_run:
             resp.download(path='.', session=session)
         return file_name
+
+    processing_geo = ifg_geo
+    if frame_id != -1:
+        processing_geo = get_processing_geo_from_frame_id(frame_id)
 
     all_obs = reference_obs + secondary_obs
     n = len(all_obs)
@@ -165,8 +180,9 @@ def download_slcs(reference_ids: list,
     n0 = len(reference_obs)
     return {'ref_paths': results[:n0],
             'sec_paths': results[n0:],
-            'extent': list(intersection_geo.bounds),
-            'intersection_geo': intersection_geo,
+            'extent': list(ifg_geo.bounds),
+            'gunw_geo': ifg_geo,
+            'processing_extent': list(processing_geo.bounds),
             'reference_properties': reference_props,
             'secondary_properties': secondary_props
             }

@@ -143,7 +143,7 @@ def gunw_slc():
                        secondary_slc_zips=loc_data['sec_paths'],
                        orbit_directory=loc_data['orbit_directory'],
                        # Region of interest is passed to topsapp via 'extent' key in loc_data
-                       extent=loc_data['extent'],
+                       extent=loc_data['processing_extent'],
                        estimate_ionosphere_delay=args.estimate_ionosphere_delay,
                        do_esd=args.esd_coherence_threshold >= 0.,
                        esd_coherence_threshold=args.esd_coherence_threshold,
