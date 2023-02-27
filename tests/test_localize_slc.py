@@ -4,7 +4,7 @@ from isce2_topsapp.localize_slc import (check_date_order,
                                         check_flight_direction,
                                         check_track_numbers, download_slcs,
                                         get_asf_slc_objects,
-                                        get_intersection_geo)
+                                        get_interferogram_geo)
 
 
 def test_intersection_geometry():
@@ -16,7 +16,7 @@ def test_intersection_geometry():
     sec_ob = get_asf_slc_objects(sec_ids)
 
     with pytest.raises(ValueError):
-        get_intersection_geo(ref_ob, sec_ob)
+        get_interferogram_geo(ref_ob, sec_ob)
 
     # Disconnected Secondary
     ref_ids = ['S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9']
@@ -27,7 +27,7 @@ def test_intersection_geometry():
     sec_ob = get_asf_slc_objects(sec_ids)
 
     with pytest.raises(ValueError):
-        get_intersection_geo(ref_ob, sec_ob)
+        get_interferogram_geo(ref_ob, sec_ob)
 
 
 def test_bad_flight_direction():
@@ -87,7 +87,7 @@ def test_bad_frame_with_intersection():
     sec_ob = get_asf_slc_objects(sec_ids)
 
     with pytest.raises(ValueError):
-        get_intersection_geo(ref_ob, sec_ob, frame_id=frame_id)
+        get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id)
 
 
 reference_list = [
