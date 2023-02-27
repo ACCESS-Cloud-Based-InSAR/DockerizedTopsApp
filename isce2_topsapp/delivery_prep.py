@@ -142,8 +142,12 @@ def format_metadata(nc_path: Path,
     sec_props = all_metadata['secondary_properties'][0]
     b_perp = read_baseline_perp(nc_path).mean()
 
-    sec_start_time_formatted = format_time_string(sec_props["startTime"])
     ref_start_time_formatted = format_time_string(ref_props["startTime"])
+    ref_stop_time_formatted = format_time_string(ref_props["startTime"])
+
+    # We assume that temporal baseline are best captured as integer days
+    # This is true for current spaceborne satellite imaging
+    temporal_baseline = (ref_props["startTime"] - sec_props["startTime"]).days
 
     metadata = {}
     # get 4 corners of bounding box of the geometry; default is 5 returning
@@ -152,9 +156,10 @@ def format_metadata(nc_path: Path,
     metadata.update({"ogr_bbox": ogr_bbox,
                      "reference_scenes": all_metadata['reference_scenes'],
                      "secondary_scenes": all_metadata['secondary_scenes'],
-                     "sensing_start": sec_start_time_formatted,
-                     "sensing_stop": ref_start_time_formatted,
+                     "sensing_start": ref_start_time_formatted,
+                     "sensing_stop": ref_stop_time_formatted,
                      "frame_id": all_metadata['frame_id'],
+                     "temporal_baseline_days": temporal_baseline,
                      "orbit_number": [int(ref_props['orbit']),
                                       int(sec_props['orbit'])],
                      "platform": [ref_props['platform'], sec_props['platform']],
