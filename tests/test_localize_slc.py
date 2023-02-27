@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 
 from isce2_topsapp.localize_slc import (check_date_order,
@@ -61,6 +63,24 @@ def test_bad_tracks_with_same_flight_direction():
     props = [ob.properties for ob in slc_obs]
 
     assert not check_track_numbers(props)
+
+
+def test_warnings_over_water():
+
+    # Intersection over water
+    ref_ids = ['S1B_IW_SLC__1SDV_20211210T153506_20211210T153533_029965_0393C6_D840']
+    sec_ids = ['S1A_IW_SLC__1SDV_20211122T153535_20211122T153602_040686_04D3DB_520A']
+
+    with pytest.warns(RuntimeWarning):
+        download_slcs(ref_ids, sec_ids, frame_id=-1, dry_run=True)
+
+    # Tibet (no water)
+    ref_ids = ['S1A_IW_SLC__1SDV_20170817T120001_20170817T120028_017963_01E230_A23A']
+    sec_ids = ['S1A_IW_SLC__1SSV_20160717T115946_20160717T120014_012188_012E84_F684',
+               'S1A_IW_SLC__1SSV_20160717T120012_20160717T120039_012188_012E84_4198']
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        download_slcs(ref_ids, sec_ids, frame_id=-1, dry_run=True)
 
 
 def test_bad_date_order():
