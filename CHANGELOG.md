@@ -17,7 +17,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Exposes `frame-id` parameter for fixed frame cropping. Discussion, references, and examples in README.
 * Latitude aligned frames and their expected extents are added as geojson in repository as zip file.
 * Pins ISCE2 version to 2.6.1 and numpy / scipy to previous versions (see environment.yml) - to be amended when newest ISCE2 build is sorted out
-* Added support to compute and embed solid earth tide correction layers into GUNW products (see PR #91)
+* Added support to compute and embed solid earth tide correction layers into GUNW products (see PR #91) - reference and secondary have own groups
 * Raises warning if there is at least 80% of water in the IFG area using Natural Earth Land mask.
 
 ## Fixed
