@@ -167,7 +167,7 @@ def download_slcs(reference_ids: list,
                                     secondary_obs,
                                     frame_id=frame_id)
 
-    percent_water_low_res = get_percent_water_from_ne_land(intersection_geo)
+    percent_water_low_res = get_percent_water_from_ne_land(ifg_geo)
     if percent_water_low_res >= 80:
         warn(f'The IFG is {percent_water_low_res:1.2f}% water; '
              'If there are not enough bursts over land - ISCE2 will fail.',
