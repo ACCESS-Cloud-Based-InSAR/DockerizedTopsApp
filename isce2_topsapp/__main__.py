@@ -8,28 +8,30 @@ from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Optional
 
-
 from isce2_topsapp import (BurstParams, aws, download_aux_cal, download_bursts,
                            download_dem_for_isce2, download_orbits,
-                           download_slcs, get_asf_slc_objects, get_region_of_interest,
-                           package_gunw_product, prepare_for_delivery,
-                           topsapp_processing)
+                           download_slcs, get_asf_slc_objects,
+                           get_region_of_interest, package_gunw_product,
+                           prepare_for_delivery, topsapp_processing)
 from isce2_topsapp.json_encoder import MetadataEncoder
+from isce2_topsapp.packaging import update_gunw_internal_version_attribute
+from isce2_topsapp.solid_earth_tides import update_gunw_with_solid_earth_tide
 
 
 def localize_data(reference_scenes: list,
                   secondary_scenes: list,
-                  region_of_interest: list,
+                  frame_id: int = -1,
                   dry_run: bool = False) -> dict:
     """The dry-run prevents gets necessary metadata from SLCs and orbits.
 
     Can be used to run workflow without redownloading data (except DEM).
 
-    region_of_interest is in xmin, ymin, xmax, ymax format (epsg: 4326)
+    Fixed frames are found here: s3://s1-gunw-frames/s1_frames.geojson
+    And discussed in the readme.
     """
     out_slc = download_slcs(reference_scenes,
                             secondary_scenes,
-                            region_of_interest=region_of_interest,
+                            frame_id=frame_id,
                             dry_run=dry_run)
 
     out_orbits = download_orbits(reference_scenes,
@@ -111,10 +113,9 @@ def gunw_slc():
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--reference-scenes', type=str.split, nargs='+', required=True)
     parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
-    parser.add_argument('--region-of-interest', type=float, nargs=4, default=None,
-                        help='xmin ymin xmax ymax in epgs:4326', required=False)
     parser.add_argument('--estimate-ionosphere-delay', type=true_false_string_argument, default=False)
     parser.add_argument('--frame-id', type=int, default=-1)
+    parser.add_argument('--compute-solid-earth-tide', type=true_false_string_argument, default=False)
     parser.add_argument('--esd-coherence-threshold', type=float, default=-1.)
     args = parser.parse_args()
 
@@ -127,12 +128,8 @@ def gunw_slc():
     loc_data = localize_data(args.reference_scenes,
                              args.secondary_scenes,
                              dry_run=args.dry_run,
-                             region_of_interest=args.region_of_interest)
-    # TODO: either remove this or ensure it is passed to CMR metadata
+                             frame_id=args.frame_id)
     loc_data['frame_id'] = args.frame_id
-    if args.frame_id >= 0:
-        if not args.region_of_interest:
-            raise RuntimeError('If you specify frame_id, then must specify region_of_interest')
 
     # Allows for easier re-inspection of processing, packaging, and delivery
     # after job completes
@@ -145,7 +142,7 @@ def gunw_slc():
                        secondary_slc_zips=loc_data['sec_paths'],
                        orbit_directory=loc_data['orbit_directory'],
                        # Region of interest is passed to topsapp via 'extent' key in loc_data
-                       extent=loc_data['extent'],
+                       extent=loc_data['processing_extent'],
                        estimate_ionosphere_delay=args.estimate_ionosphere_delay,
                        do_esd=args.esd_coherence_threshold >= 0.,
                        esd_coherence_threshold=args.esd_coherence_threshold,
@@ -167,8 +164,14 @@ def gunw_slc():
                                    reference_properties=ref_properties,
                                    secondary_properties=sec_properties,
                                    extent=extent,
-                                   additional_2d_layers=additional_2d_layers
+                                   additional_2d_layers=additional_2d_layers,
                                    )
+
+    if args.compute_solid_earth_tide:
+        nc_path = update_gunw_with_solid_earth_tide(nc_path)
+
+    if args.compute_solid_earth_tide or args.estimate_ionosphere_delay:
+        update_gunw_internal_version_attribute(nc_path, new_version='1c')
 
     # Move final product to current working directory
     final_directory = prepare_for_delivery(nc_path, loc_data)
