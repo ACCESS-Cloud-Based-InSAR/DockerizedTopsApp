@@ -16,12 +16,16 @@ import pysolid
 import xarray as xr
 
 
-def compute_solid_earth_tide_from_gunw(gunw_path: str) -> xr.Dataset:
+def compute_solid_earth_tide_from_gunw(gunw_path: str, acq_type: str) -> xr.Dataset:
     """ Read GUNW and compute/export differential SET """
+    if acq_type not in ['reference', 'secondary']:
+        raise ValueError('acq_type must be in "reference" or "secondary"')
 
     gunw_basename = Path(gunw_path).name
     dates = gunw_basename.split('-')[6].split('_')
     ref_time = gunw_basename.split('-')[7]
+
+    acq_date = dates[0] if acq_type == 'reference' else dates[1]
 
     # get GUNW attributes
     (wavelength,
@@ -32,15 +36,9 @@ def compute_solid_earth_tide_from_gunw(gunw_path: str) -> xr.Dataset:
 
     # compute differential SET ENU
     # Use reference time twice (assuming exact same pass time)
-    tide_e_ref, tide_n_ref, tide_u_ref = compute_enu_se_tide(dates[0],
-                                                             ref_time,
-                                                             set_attrs)
-    tide_e_sec, tide_n_sec, tide_u_sec = compute_enu_se_tide(dates[1],
-                                                             ref_time,
-                                                             set_attrs)
-    tide_e = tide_e_sec - tide_e_ref
-    tide_n = tide_n_sec - tide_n_ref
-    tide_u = tide_u_sec - tide_u_ref
+    tide_e, tide_n, tide_u = compute_enu_se_tide(acq_date,
+                                                 ref_time,
+                                                 set_attrs)
 
     # compute SET LOS estimate for each height level
     tide_los = np.zeros(inc_angle.shape)
@@ -155,13 +153,19 @@ def export_se_tides_to_dataset(gunw_path: str,
     return solidtide_corr_ds
 
 
-def update_gunw_with_solid_earth_tide(gunw_path: Path) -> Path:
+def update_gunw_with_solid_earth_tide(gunw_path: Path, acq_type: str) -> Path:
+    if acq_type not in ['reference', 'secondary']:
+        raise ValueError('acq_type must be in "reference" or "secondary"')
     se_tide_group = '/science/grids/corrections/external/tides'
+    se_tide_group_acq = f'{se_tide_group}/{acq_type}'
+    # If GUNW has dummy placeholder - delete it
+    se_tide_group_dummy = f'{se_tide_group}/solidEarthTides'
     with h5py.File(gunw_path, 'a') as file:
-        if se_tide_group in file:
-            del file[se_tide_group]
-    solid_earth_tide_ds = compute_solid_earth_tide_from_gunw(gunw_path)
+        if se_tide_group_dummy in file:
+            del file[se_tide_group_dummy]
+    solid_earth_tide_ds = compute_solid_earth_tide_from_gunw(gunw_path,
+                                                             acq_type)
     solid_earth_tide_ds.to_netcdf(gunw_path,
                                   mode='a',
-                                  group=se_tide_group)
+                                  group=se_tide_group_acq)
     return gunw_path
