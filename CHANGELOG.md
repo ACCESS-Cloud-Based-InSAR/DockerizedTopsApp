@@ -11,7 +11,6 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.2.2]
 
 ### Added
-* Added support to compute and embed solid earth tide correction layers into GUNW products (see PR #91)
 * Provide prototype (internal) for burst analysis thanks to Forrest Williams and Joseph Kennedy (see PR #73)
 * CLI (and API) can switch between burst and SLC ifg generation thanks to entry point magic (see PR #73 for details)
 * Exposes a number of new corrections/ISCE2 processing options including: `ionosphere`, and `ESD threshold` arguments in CLI. Examples in README.
