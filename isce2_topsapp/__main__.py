@@ -8,14 +8,13 @@ from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Optional
 
-import h5py
-
 from isce2_topsapp import (BurstParams, aws, download_aux_cal, download_bursts,
                            download_dem_for_isce2, download_orbits,
-                           download_slcs, get_asf_slc_objects, get_region_of_interest,
-                           package_gunw_product, prepare_for_delivery,
-                           topsapp_processing)
+                           download_slcs, get_asf_slc_objects,
+                           get_region_of_interest, package_gunw_product,
+                           prepare_for_delivery, topsapp_processing)
 from isce2_topsapp.json_encoder import MetadataEncoder
+from isce2_topsapp.packaging import update_gunw_internal_version_attribute
 from isce2_topsapp.solid_earth_tides import update_gunw_with_solid_earth_tide
 
 
@@ -144,7 +143,7 @@ def gunw_slc():
                        secondary_slc_zips=loc_data['sec_paths'],
                        orbit_directory=loc_data['orbit_directory'],
                        # Region of interest is passed to topsapp via 'extent' key in loc_data
-                       extent=loc_data['extent'],
+                       extent=loc_data['processing_extent'],
                        estimate_ionosphere_delay=args.estimate_ionosphere_delay,
                        do_esd=args.esd_coherence_threshold >= 0.,
                        esd_coherence_threshold=args.esd_coherence_threshold,
@@ -171,9 +170,9 @@ def gunw_slc():
 
     if args.compute_solid_earth_tide:
         nc_path = update_gunw_with_solid_earth_tide(nc_path)
-        # Update to 1c
-        with h5py.File(nc_path, mode='a') as file:
-            file.attrs.modify('version', '1c')
+
+    if args.compute_solid_earth_tide or args.estimate_ionosphere_delay:
+        update_gunw_internal_version_attribute(nc_path, new_version='1c')
 
     # Move final product to current working directory
     final_directory = prepare_for_delivery(nc_path, loc_data)

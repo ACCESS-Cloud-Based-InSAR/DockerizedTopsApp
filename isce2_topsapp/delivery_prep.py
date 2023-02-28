@@ -136,7 +136,7 @@ def format_metadata(nc_path: Path,
 
     now = datetime.datetime.now()
     label = nc_path.name[:-3]  # removes suffix .nc
-    geojson = all_metadata['intersection_geo'].__geo_interface__
+    geojson = all_metadata['gunw_geo'].__geo_interface__
 
     ref_props = all_metadata['reference_properties'][0]
     sec_props = all_metadata['secondary_properties'][0]
@@ -152,7 +152,7 @@ def format_metadata(nc_path: Path,
     metadata = {}
     # get 4 corners of bounding box of the geometry; default is 5 returning
     # to start point
-    ogr_bbox = all_metadata['intersection_geo'].envelope.exterior.coords[:4]
+    ogr_bbox = all_metadata['gunw_geo'].envelope.exterior.coords[:4]
     metadata.update({"ogr_bbox": ogr_bbox,
                      "reference_scenes": all_metadata['reference_scenes'],
                      "secondary_scenes": all_metadata['secondary_scenes'],

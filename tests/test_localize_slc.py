@@ -1,10 +1,12 @@
+import warnings
+
 import pytest
 
 from isce2_topsapp.localize_slc import (check_date_order,
                                         check_flight_direction,
                                         check_track_numbers, download_slcs,
                                         get_asf_slc_objects,
-                                        get_intersection_geo)
+                                        get_interferogram_geo)
 
 
 def test_intersection_geometry():
@@ -16,7 +18,7 @@ def test_intersection_geometry():
     sec_ob = get_asf_slc_objects(sec_ids)
 
     with pytest.raises(ValueError):
-        get_intersection_geo(ref_ob, sec_ob)
+        get_interferogram_geo(ref_ob, sec_ob)
 
     # Disconnected Secondary
     ref_ids = ['S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9']
@@ -27,7 +29,7 @@ def test_intersection_geometry():
     sec_ob = get_asf_slc_objects(sec_ids)
 
     with pytest.raises(ValueError):
-        get_intersection_geo(ref_ob, sec_ob)
+        get_interferogram_geo(ref_ob, sec_ob)
 
 
 def test_bad_flight_direction():
@@ -63,6 +65,24 @@ def test_bad_tracks_with_same_flight_direction():
     assert not check_track_numbers(props)
 
 
+def test_warnings_over_water():
+
+    # Intersection over water
+    ref_ids = ['S1B_IW_SLC__1SDV_20211210T153506_20211210T153533_029965_0393C6_D840']
+    sec_ids = ['S1A_IW_SLC__1SDV_20211122T153535_20211122T153602_040686_04D3DB_520A']
+
+    with pytest.warns(RuntimeWarning):
+        download_slcs(ref_ids, sec_ids, frame_id=-1, dry_run=True)
+
+    # Tibet (no water)
+    ref_ids = ['S1A_IW_SLC__1SDV_20170817T120001_20170817T120028_017963_01E230_A23A']
+    sec_ids = ['S1A_IW_SLC__1SSV_20160717T115946_20160717T120014_012188_012E84_F684',
+               'S1A_IW_SLC__1SSV_20160717T120012_20160717T120039_012188_012E84_4198']
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        download_slcs(ref_ids, sec_ids, frame_id=-1, dry_run=True)
+
+
 def test_bad_date_order():
     ref_ids = ['S1A_IW_SLC__1SDV_20220422T141557_20220422T141624_042887_051EA4_CD2E']
     sec_ids = ['S1A_IW_SLC__1SDV_20220504T141557_20220504T141624_043062_05246D_3C67']
@@ -87,7 +107,7 @@ def test_bad_frame_with_intersection():
     sec_ob = get_asf_slc_objects(sec_ids)
 
     with pytest.raises(ValueError):
-        get_intersection_geo(ref_ob, sec_ob, frame_id=frame_id)
+        get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id)
 
 
 reference_list = [
