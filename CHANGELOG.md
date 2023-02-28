@@ -26,6 +26,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Ensures that when Solid Earth Tide or Ionosphere is added to GUNW, that the internal version attribute is updated from '1b' to '1c'
 * Ensures that correct (i.e. enough) DEM extents are obtained for frame job submission
 * Uses dem-stitcher 2.4.0 to resolve #89 - ensures only polygonal intersection of tiles
+* Fix variable name error in localize_slc.py
 
 ## Changed
 * Metadata `intersection_geo` is changed to `gunw_geo`.
