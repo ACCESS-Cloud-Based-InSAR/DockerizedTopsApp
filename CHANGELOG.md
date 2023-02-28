@@ -25,6 +25,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Ensures that correct (i.e. enough) DEM extents are obtained for frame job submission
 * Uses dem-stitcher 2.4.0 to resolve #89 - ensures only polygonal intersection of tiles
 * Fix variable name error in localize_slc.py
+* Removes dummy Solid Earth Tide variable from GUNW
 
 ## Changed
 * Metadata `intersection_geo` is changed to `gunw_geo`.
