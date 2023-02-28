@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import rasterio
 from PIL import Image
+from dateparser import parse
 from matplotlib import cm
 
 from isce2_topsapp.packaging import DATASET_VERSION
@@ -147,7 +148,9 @@ def format_metadata(nc_path: Path,
 
     # We assume that temporal baseline are best captured as integer days
     # This is true for current spaceborne satellite imaging
-    temporal_baseline = (ref_props["startTime"] - sec_props["startTime"]).days
+    ref_start_time_dt = parse(ref_props["startTime"])
+    sec_start_time_dt = parse(sec_props["startTime"])
+    temporal_baseline = (ref_start_time_dt - sec_start_time_dt).days
 
     metadata = {}
     # get 4 corners of bounding box of the geometry; default is 5 returning
