@@ -158,7 +158,7 @@ def update_gunw_with_solid_earth_tide(gunw_path: Path, acq_type: str) -> Path:
         raise ValueError('acq_type must be in "reference" or "secondary"')
     tide_group = '/science/grids/corrections/external/tides'
     # If GUNW has dummy placeholder - delete it
-    se_tide_group_dummy = f'{tide_group}/solidEarthTides'
+    se_tide_group_dummy = f'{tide_group}/solidEarthTide'
 
     se_tide_group_acq = f'{tide_group}/solidEarth/{acq_type}'
     with h5py.File(gunw_path, 'a') as file:
