@@ -104,6 +104,8 @@ tests/out/*.ipynb
 
 # Jsons in Test Directory
 tests/**/*.json
+!tests/sample_loc_metadata.json
+!tests/midnight_crossing_metadata.json
 
 # Use geojson zip file for ARIA s1 frame data
 !isce2_topsapp/data/s1_gunw_frame_footprints.geojson.zip
