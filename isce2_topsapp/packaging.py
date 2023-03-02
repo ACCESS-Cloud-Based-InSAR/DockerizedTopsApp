@@ -94,7 +94,7 @@ def get_gunw_id(reference_properties: list,
     ref_center_datetime = get_center_time(reference_properties)
     sec_center_datetime = get_center_time(secondary_properties)
 
-    # Center Time sring
+    # Center Time string
     ref_center_time_str = ref_center_datetime.strftime('%H%M%S')
 
     reference_date_str = ref_center_datetime.strftime('%Y%m%d')
