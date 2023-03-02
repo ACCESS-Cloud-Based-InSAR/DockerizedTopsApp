@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import json
 import os
@@ -6,7 +7,6 @@ from pathlib import Path
 from typing import Union
 
 import h5py
-import numpy as np
 from dateparser import parse
 
 import isce2_topsapp
@@ -64,18 +64,16 @@ def get_geo_str(extent: list) -> str:
     return f'{lon_str}_{lat_str}'
 
 
-def get_center_time(properties: list) -> str:
+def get_center_time(properties: list) -> datetime.datetime:
 
-    ref_start_times = [parse(props['startTime']) for props in properties]
-    ref_stop_times = [parse(props['stopTime']) for props in properties]
+    start_times = sorted([parse(props['startTime']) for props in properties])
+    stop_times = sorted([parse(props['stopTime']) for props in properties])
 
-    all_times = (ref_start_times + ref_stop_times)
-    N = len(all_times)
-    all_time_deltas = [all_times[k] - all_times[0] for k in range(N)]
+    start_time = start_times[0]
+    stop_time = stop_times[-1]
 
-    center_time = all_times[0] + np.mean(all_time_deltas)
-
-    return center_time.strftime('%H%M%S')
+    center_datetime = start_time + (stop_time - start_time) / 2
+    return center_datetime
 
 
 def get_gunw_id(reference_properties: list,
@@ -92,20 +90,21 @@ def get_gunw_id(reference_properties: list,
     track_num = int(reference_properties[0]['pathNumber'])
     track = f'{track_num:03}'
 
-    # dates; remove dashes
-    reference_date = reference_properties[0]['startTime'].split('T')[0]
-    reference_date = reference_date.replace('-', '')
-    secondary_date = secondary_properties[0]['startTime'].split('T')[0]
-    secondary_date = secondary_date.replace('-', '')
+    # Center Datetimes
+    ref_center_datetime = get_center_time(reference_properties)
+    sec_center_datetime = get_center_time(secondary_properties)
+
+    # Center Time sring
+    ref_center_time_str = ref_center_datetime.strftime('%H%M%S')
+
+    reference_date_str = ref_center_datetime.strftime('%Y%m%d')
+    secondary_date_str = sec_center_datetime.strftime('%Y%m%d')
 
     # date pair
-    date_pair = f'{reference_date}_{secondary_date}'
+    date_pair = f'{reference_date_str}_{secondary_date_str}'
 
     # Geo string
     geo_str = get_geo_str(extent)
-
-    # Center Time (with Respect to Reference)
-    ref_center_time = get_center_time(reference_properties)
 
     # hash_id
     reference_ids = [p['sceneName'] for p in reference_properties]
@@ -125,7 +124,7 @@ def get_gunw_id(reference_properties: list,
            # legacy constant
            'tops',
            date_pair,
-           ref_center_time,
+           ref_center_time_str,
            geo_str,
            # legacy constant
            'PP',
