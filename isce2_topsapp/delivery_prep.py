@@ -141,7 +141,9 @@ def format_metadata(nc_path: Path,
     ref_start_time_formatted = ref_start_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     ref_stop_time_formatted = ref_stop_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
-    temporal_baseline = (ref_start_time - sec_start_time).days
+    # We want the nearest day (dt.days takes a floor) so we use total seconds and then round
+    temporal_baseline_seconds = (ref_start_time - sec_start_time).total_seconds()
+    temporal_baseline_days = round(temporal_baseline_seconds / 60 / 60 / 24)
 
     metadata = {}
     # get 4 corners of bounding box of the geometry; default is 5 returning
@@ -153,7 +155,7 @@ def format_metadata(nc_path: Path,
                      "sensing_start": ref_start_time_formatted,
                      "sensing_stop": ref_stop_time_formatted,
                      "frame_id": all_metadata['frame_id'],
-                     "temporal_baseline_days": temporal_baseline,
+                     "temporal_baseline_days": temporal_baseline_days,
                      "orbit_number": [int(ref_props_first['orbit']),
                                       int(sec_props_first['orbit'])],
                      "platform": [ref_props_first['platform'], sec_props_first['platform']],
