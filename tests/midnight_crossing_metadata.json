@@ -1,0 +1,40 @@
+{
+    "extent": [
+        89.7244830435,
+        39.721350911500004,
+        93.3319816005,
+        41.97551667650001
+    ],
+    "reference_properties": [
+        {
+            "sceneName": "S1A_IW_SLC__1SDV_20230106T235934_20230107T000001_046670_059804_D8E3",
+            "startTime": "2023-01-06T23:59:34.00000Z",
+            "stopTime": "2023-01-07T00:00:00.00000Z",
+            "flightDirection": "DESCENDING",
+            "pathNumber": 48
+        },
+        {
+            "sceneName": "S1A_IW_SLC__1SDV_20230106T235959_20230107T000026_046670_059804_74DB",
+            "startTime": "2023-01-06T23:59:59.00000Z",
+            "stopTime": "2023-01-07T00:00:25.00000Z",
+            "flightDirection": "DESCENDING",
+            "pathNumber": 48
+        }
+    ],
+    "secondary_properties": [
+        {
+            "sceneName": "S1A_IW_SLC__1SDV_20221213T235935_20221214T000002_046320_058C2F_7DFC",
+            "startTime": "2022-12-13T23:59:35.00000Z",
+            "stopTime": "2022-12-14T00:00:00.00000Z",
+            "flightDirection": "DESCENDING",
+            "pathNumber": 48
+        },
+        {
+            "sceneName": "S1A_IW_SLC__1SDV_20221214T000000_20221214T000027_046320_058C2F_9AD4",
+            "startTime": "2022-12-14T00:00:00.00000Z",
+            "stopTime": "2022-12-14T00:00:25.00000Z",
+            "flightDirection": "DESCENDING",
+            "pathNumber": 48
+        }
+    ]
+}

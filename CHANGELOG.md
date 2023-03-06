@@ -18,7 +18,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Latitude aligned frames and their expected extents are added as geojson in repository as zip file.
 * Pins ISCE2 version to 2.6.1 and numpy / scipy to previous versions (see environment.yml) - to be amended when newest ISCE2 build is sorted out
 * Includes `frame_id` and `temporal_baseline_days` in json metadata for CMR handshake. The former is the fixed frame id and the latter is the number of days between images (will be multiple of 6).
-* Added support to compute and embed solid earth tide correction layers into GUNW products (see PR #91)
+* Added support to compute and embed solid earth tide correction layers into GUNW products (see PR #91) - reference and secondary have own groups
 * Raises warning if there is at least 80% of water in the IFG area using Natural Earth Land mask.
 
 ## Fixed
@@ -26,6 +26,8 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Ensures that correct (i.e. enough) DEM extents are obtained for frame job submission
 * Uses dem-stitcher 2.4.0 to resolve #89 - ensures only polygonal intersection of tiles
 * Fix variable name error in localize_slc.py
+* Removes dummy Solid Earth Tide variable from GUNW
+* Ensures dates and time in GUNW name are derived from center of secondary and reference pass.
 
 ## Changed
 * Metadata `intersection_geo` is changed to `gunw_geo`.
