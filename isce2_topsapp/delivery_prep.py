@@ -114,24 +114,6 @@ def gen_browse_imagery(nc_path: Path,
     return out_path
 
 
-def format_time_string(time_str: str) -> str:
-    """Generates formatted string for ingest schema using built in python manipulations.
-    New ASF API provides time string as 2022-05-20T07:11:01.000Z and we need 6 decimal places
-    at end of string, specifically, 2022-05-20T07:11:01.000000Z
-    """
-    assert time_str[-1] == 'Z'
-
-    # removes Z at end and focuses in on decimal
-    temp = time_str[:-1].split('.')
-
-    # update the split string with required decimals
-    temp[-1] = f'{int(temp[-1]):06d}'
-
-    # rejoin and return
-    formatted_time_str = '.'.join(temp)
-    return f'{formatted_time_str}Z'
-
-
 def format_metadata(nc_path: Path,
                     all_metadata: dict) -> dict:
 
@@ -139,18 +121,27 @@ def format_metadata(nc_path: Path,
     label = nc_path.name[:-3]  # removes suffix .nc
     geojson = all_metadata['gunw_geo'].__geo_interface__
 
-    ref_props = all_metadata['reference_properties'][0]
-    sec_props = all_metadata['secondary_properties'][0]
+    ref_props_all = sorted(all_metadata['reference_properties'],
+                           key=lambda prop: prop['startTime'])
+    ref_props_first = ref_props_all[0]
+    sec_props_all = sorted(all_metadata['secondary_properties'],
+                           key=lambda prop: prop['startTime'])
+    sec_props_first = sec_props_all[0]
     b_perp = read_baseline_perp(nc_path).mean()
 
-    ref_start_time_formatted = format_time_string(ref_props["startTime"])
-    ref_stop_time_formatted = format_time_string(ref_props["startTime"])
+    ref_start_times = [parse(props['startTime']) for props in ref_props_all]
+    ref_stop_times = [parse(props['stopTime']) for props in ref_props_all]
+    sec_start_times = [parse(props['startTime']) for props in sec_props_all]
 
-    # We assume that temporal baseline are best captured as integer days
-    # This is true for current spaceborne satellite imaging
-    ref_start_time_dt = parse(ref_props["startTime"])
-    sec_start_time_dt = parse(sec_props["startTime"])
-    temporal_baseline = (ref_start_time_dt - sec_start_time_dt).days
+    ref_start_time = ref_start_times[0]
+    ref_stop_time = ref_stop_times[-1]
+    sec_start_time = sec_start_times[0]
+
+    # The %f is miliseconds zero-padded with 6 decimals - just as we need!
+    ref_start_time_formatted = ref_start_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    ref_stop_time_formatted = ref_stop_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+
+    temporal_baseline = (ref_start_time - sec_start_time).days
 
     metadata = {}
     # get 4 corners of bounding box of the geometry; default is 5 returning
@@ -163,16 +154,16 @@ def format_metadata(nc_path: Path,
                      "sensing_stop": ref_stop_time_formatted,
                      "frame_id": all_metadata['frame_id'],
                      "temporal_baseline_days": temporal_baseline,
-                     "orbit_number": [int(ref_props['orbit']),
-                                      int(sec_props['orbit'])],
-                     "platform": [ref_props['platform'], sec_props['platform']],
-                     "beam_mode": ref_props['beamModeType'],
-                     "orbit_direction": ref_props['flightDirection'].lower(),
+                     "orbit_number": [int(ref_props_first['orbit']),
+                                      int(sec_props_first['orbit'])],
+                     "platform": [ref_props_first['platform'], sec_props_first['platform']],
+                     "beam_mode": ref_props_first['beamModeType'],
+                     "orbit_direction": ref_props_first['flightDirection'].lower(),
                      "dataset_type": 'slc',
                      "product_type": 'interferogram',
                      "polarization": "VV",
                      "look_direction": 'right',
-                     "track_number": int(ref_props['pathNumber']),
+                     "track_number": int(ref_props_first['pathNumber']),
                      "perpendicular_baseline":  round(float(b_perp), 4)
                      })
 
