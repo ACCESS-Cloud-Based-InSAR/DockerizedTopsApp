@@ -84,6 +84,7 @@ conf/settings.conf
 *.wgs84
 *.TGZ
 **/PICKLE/
+**/aux_cal/
 
 # Log files
 *.log
@@ -99,6 +100,13 @@ tests/out/*.ipynb
 !tests/localize-data.ipynb
 /isce2_topsapp.egg-info/
 !tests/prepare-for-delivery.ipynb
+!tests/solid_earth_tides.ipynb
 
 # Jsons in Test Directory
 tests/**/*.json
+!tests/sample_loc_metadata.json
+!tests/midnight_crossing_metadata.json
+
+# Use geojson zip file for ARIA s1 frame data
+!isce2_topsapp/data/s1_gunw_frame_footprints.geojson.zip
+!isce2_topsapp/data/s1_frames_latitude_aligned.geojson.zip

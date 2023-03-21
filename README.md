@@ -49,6 +49,53 @@ This is reflected in the [`sample_run.sh`](sample_run.sh).
 
 To be even more explicity, you can use [`tee`](https://en.wikipedia.org/wiki/Tee_(command)) to record output to both including `> >(tee -a topsapp_img.out) 2> >(tee -a topsapp_img.err >&2)`.
 
+## Customizations
+
+### Estimating Ionospheric Phase Delay and ESD
+
+This example shows how to obtain a layer with ionsopheric phase delay. The SLCs are over the Arabian peninusula where the ionosphere can be seen:
+
+```
+isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20171117T145926_20171117T145953_008323_00EBAB_AFB8 \
+              --secondary-scenes S1A_IW_SLC__1SDV_20171111T150004_20171111T150032_019219_0208AF_EE89 \
+              --estimate-ionosphere-delay True \
+              --esd-coherence-threshold .5 \
+              > topsapp_img.out 2> topsapp_img.err
+```
+Not including `--esd-coherence-threshold` means no ESD correction will be applied. The ESD threshold refers to a coherence value and therefore must be in $[0, 1]$.
+
+### Apply Solid Earth Tide Correction
+
+```
+isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9 \
+              --secondary-scenes S1B_IW_SLC__1SDV_20210711T014922_20210711T014949_027740_034F80_859D \
+                                 S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404 \
+                                 S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C \
+              --compute-solid-earth-tide True \
+              > topsapp_img_set.out 2> topsapp_img_set.err
+```
+
+### Using "fixed frames" (experimental)
+
+Sentinel-1 Frames are not constant over passes. We generate fixed frames [here](https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-generation) and enumerate interferograms using this [repo](https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator). This is highly experimental. We then ensure ISCE processes only over the frame. The key is overlap. We provide some examples of the additional options (you will need to run this in *two* separate directories because ISCE2 outputs are organized with respect to the working directory of the processing). For one frame over CA:
+```
+isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20230125T135954_20230125T140021_046941_05A132_D35C \
+                                 S1A_IW_SLC__1SDV_20230125T140019_20230125T140046_046941_05A132_82DF \
+              --secondary-scenes S1A_IW_SLC__1SDV_20221220T135956_20221220T140023_046416_058F77_B248 \
+                                 S1A_IW_SLC__1SDV_20221220T140020_20221220T140047_046416_058F77_5213 \
+              --frame-id 22438 \
+              > topsapp_img_f22438.out 2> topsapp_img_f22438.err
+```
+and an overlapping frame:
+```
+isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20230125T140019_20230125T140046_046941_05A132_82DF \
+                                 S1A_IW_SLC__1SDV_20230125T140044_20230125T140111_046941_05A132_59E7 \
+              --secondary-scenes S1A_IW_SLC__1SDV_20221220T140020_20221220T140047_046416_058F77_5213 \
+                                 S1A_IW_SLC__1SDV_20221220T140045_20221220T140112_046416_058F77_7692 \
+              --frame-id 22439 \
+              > topsapp_img_f22439.out 2> topsapp_img_f22439.err
+```
+
 # Running with Docker (locally or on a server)
 
 1. When running locally with root privileges (i.e. at your local workstation), build the docker image using:

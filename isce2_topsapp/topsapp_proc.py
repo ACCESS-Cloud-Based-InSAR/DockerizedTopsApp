@@ -25,6 +25,15 @@ TOPSAPP_STEPS = ['startup',
 
 TEMPLATE_DIR = Path(__file__).parent/'templates'
 
+GEOCODE_LIST_BASE = ['merged/phsig.cor',
+                     'merged/filt_topophase.unw',
+                     'merged/los.rdr',
+                     'merged/topophase.flat',
+                     'merged/filt_topophase.flat',
+                     'merged/filt_topophase_2stage.unw',
+                     'merged/topophase.cor',
+                     'merged/filt_topophase.unw.conncomp']
+
 
 def topsapp_processing(*,
                        reference_slc_zips: list,
@@ -33,10 +42,13 @@ def topsapp_processing(*,
                        extent: list,
                        dem_for_proc: str,
                        dem_for_geoc: str,
+                       estimate_ionosphere_delay: bool,
                        azimuth_looks: int = 7,
                        range_looks: int = 19,
                        swaths: list = None,
-                       dry_run: bool = False):
+                       dry_run: bool = False,
+                       do_esd: bool = False,
+                       esd_coherence_threshold: float = .7):
     swaths = swaths or [1, 2, 3]
     # for [ymin, ymax, xmin, xmax]
     extent_isce = [extent[k] for k in [1, 3, 0, 2]]
@@ -49,6 +61,10 @@ def topsapp_processing(*,
     with open(TEMPLATE_DIR/'topsapp_template.xml', 'r') as file:
         template = Template(file.read())
 
+    geocode_list = GEOCODE_LIST_BASE.copy()
+    if estimate_ionosphere_delay:
+        geocode_list.append('merged/topophase.ion')
+
     topsApp_xml = template.render(orbit_directory=orbit_directory,
                                   output_reference_directory='reference',
                                   output_secondary_directory='secondary',
@@ -57,14 +73,16 @@ def topsapp_processing(*,
                                   region_of_interest=extent_isce,
                                   demFilename=dem_for_proc,
                                   geocodeDemFilename=dem_for_geoc,
-                                  do_esd=False,
                                   filter_strength=.5,
                                   do_unwrap=True,
                                   use_virtual_files=True,
-                                  esd_coherence_threshold=-1,
+                                  do_esd=do_esd,
+                                  esd_coherence_threshold=esd_coherence_threshold,
+                                  estimate_ionosphere_delay=estimate_ionosphere_delay,
                                   azimuth_looks=azimuth_looks,
                                   range_looks=range_looks,
-                                  swaths=swaths
+                                  swaths=swaths,
+                                  geocode_list=geocode_list
                                   )
     with open('topsApp.xml', "w") as file:
         file.write(topsApp_xml)
