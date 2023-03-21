@@ -1,10 +1,8 @@
 name: topsapp_env
 channels:
  - conda-forge
- - anaconda
- - defaults
 dependencies:
- - python==3.9
+ - python=>3.9,<3.10
  - pip
  - affine
  - asf_search>=5.0.0
@@ -27,7 +25,7 @@ dependencies:
  - matplotlib
  - netcdf4
  - notebook
- - numpy<1.24
+ - numpy
  - pandas
  - pysolid
  - papermill
@@ -35,12 +33,11 @@ dependencies:
  - pytest-cov
  - pytest-mock
  - rasterio
- - rioxarray<=0.14.0
+ - rioxarray
  - xarray
- - scipy<1.10
+ - scipy
  - setuptools
  - setuptools_scm
- - scipy<1.10
  - shapely
  - tqdm
  - dem_stitcher>=2.4.0
