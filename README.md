@@ -144,6 +144,16 @@ docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img \
 ```
 where the `username`/`password` are the Earthdata credentials for accessing NASA data. We note the command line magic of the above is taken care of the `isce2_topsapp/etc/entrypoint.sh` (written by Joe Kennedy) which automatically runs certain bash commands on startup of the container, i.e. the run commands also calls the `isce2_topsapp` command line function as can be seen [here](isce2_topsapp/etc/entrypoint.sh).
 
+# Build Issues
+
+ISCE2, gdal, and xarray are hard to balance. Ideally, we would have a dependabot to increment packages and integration tests to make sure datasets are generated correctly with each update. Unfortunately, this is not currently the case. So, we are including some snippets (credit to Joseph Kennedy) for determining where packages might fail. We have some caps in our environment.yml file. This is how we find them. Sometimes even with our rather minimal integration tests and builds, in 24 hours, a new package can entirely throw something awry with respect to builds.
+
+The easiest way to see what was the *last* working build, check out the docker [images](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/pkgs/container/dockerizedtopsapp) for the last build. `latest` refers to the latest production build on `main`. `test` refers to the last build on `dev`. But each merge to `dev` gets an image that is recorded.
+
+1. Click one of the images and it will tell you how to download an image into docker e.g. `docker pull ghcr.io/access-cloud-based-insar/dockerizedtopsapp:0.2.2.dev148_gab75888`.
+2. Load the image and get into interactive mode e.g. `docker run --entrypoint /usr/bin/bash  -it --rm ghcr.io/access-cloud-based-insar/dockerizedtopsapp:0.2.2.dev136_ga2d5389 -l`
+3. Check the packages `conda list | grep xarray`
+
 ## FAQ
 
 1. The docker build is taking a long time.

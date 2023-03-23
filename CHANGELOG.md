@@ -10,9 +10,16 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.2.4]
 
-## Changed
+### Changed
 * Updated python support to 3.10 (removed 3.8 and 3.9)
 
+## [0.2.3]
+
+### Updated
+* Explode footprints polygons
+
+### Removed
+* Python 3.8 Support
 
 ## [0.2.2]
 
