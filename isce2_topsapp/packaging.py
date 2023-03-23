@@ -14,7 +14,7 @@ from isce2_topsapp.packaging_utils.additional_layers import add_2d_layer
 from isce2_topsapp.packaging_utils.ionosphere import format_ionosphere_for_gunw
 from isce2_topsapp.templates import read_netcdf_packaging_template
 
-DATASET_VERSION = '2.0.6'
+DATASET_VERSION = '3.0.0'
 
 
 PERMISSIBLE_2D_LAYERS = ['ionosphere']
