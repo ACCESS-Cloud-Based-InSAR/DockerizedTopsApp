@@ -154,7 +154,58 @@ The easiest way to see what was the *last* working build, check out the docker [
 2. Load the image and get into interactive mode e.g. `docker run --entrypoint /usr/bin/bash  -it --rm ghcr.io/access-cloud-based-insar/dockerizedtopsapp:0.2.2.dev136_ga2d5389 -l`
 3. Check the packages `conda list | grep xarray`
 
-## FAQ
+# Contribution Instructions
+
+This is an open-source plugin and we welcome contributions. Because we use this plugin for producing publicly available datasets, there is some additional tests and requirements for any new features to be integrated.
+
+## Installation for Development
+
+
+1. Clone or fork this repo. If you are a member of ACCESS or working on new features of this plugin, ask to become a member of this Github organization. The integration tests will be easier to run if you are pushing to branches of this repository as opposed to a fork (require organization secrets). This will ensure new features are more quickly integrated particularly into hyp3.
+2. Navigate with your terminal to the repo.
+3. Create a new environment and install requirements using `conda env update --file environment.yml`
+4. Activate the environment: `conda activate topsapp_env`
+5. Install the package from cloned repo using `python -m pip install -e .`
+6. Create a new branch with your feature.
+
+## Tests
+
+There are some integration tests. They are to make sure the wrapping part of the plugin, e.g. downloading metadata, a simulated CMR handshake, and packaging, occur as expected. However, the plugin takes about 1.5 to 3 hours (depending on the number of corrections requested) to generate a final GUNW. Therefore, these integration are *not* sufficient to permit merging into main. Until we have a complete end-to-end test of the workflow, any new feature cannot be integrated. As a first step, it is imperative to share the output of a new feature (i.e. the GUNW netcdf file). This is important because the integration tests do not check that ISCE2 successfully ran nor did the complex processing scripts. There are a lot of large libraries that need to be built and run successfully before this can be integrated. The CI/CD below ensures correct building of the python enviroment and Docker image. However, there can be subsequent errors in say ISCE2 even if the environment was built correctly.
+
+## Hyp3 and Cloud Submission
+
+There are two branches: `dev` and `main`. The former is the "test" branch and the later is the "production" branch. When submitting jobs to Hyp3 there are two job types related to `INSAR_ISCE_TEST` and `INSAR_ISCE`. The former corresponds to the `dev` branch and the latter to `main`. This allows us to test the plugin *in the cloud* incrementally before transitioning new features to production. This is a design feature of Hyp3 (thanks, Joseph Kennedy!). Since end-to-end tests are required as noted above, this ensures that our production branch is always well tested.
+
+## Versions
+
+There are several versions to keep track of:
+
+1. *Dataset Version*: this is the GUNW version and incremented manually only when the GUNW has changed with relation to the end-user. This is in the GUNW name, i.e. `S1-GUNW-D-R-042-tops-20220429_20210528-140902-00123W_00034N-PP-e677-v2_0_5` has version 2.0.5. It is manually set [here](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/blob/0b219faac0c4e8c11ef610d3b35e7a8cb9a30511/isce2_topsapp/packaging.py#L17)
+2. *Software Version*: Automatically tracked and incremented in CI/CD on merges to the production branch (`main`)
+3. *Container Version*: Automatically tracked and incremented in CI/D on merges to `dev` (with `test` tag) and to `main` (with `latest` tag). The various images can be downloaded fromt he Packages sidebar ([link](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/pkgs/container/dockerizedtopsapp)).
+
+
+## CI/CD
+
+The CI/CD allows us to be more efficient both in terms of tracking the releases and pushing container images to the cloud for actual processing. Each merge to `main` or `dev` creates a new docker image that is published through the github registry. The `test` tag is the latest image built to `dev`. The `latest` tag is the most up-to-date `main` release for production.
+
+The plugin's *software* version is governed by `main`. Any merge into `dev` is seen as a test release so until `dev` is merged into `main`, the release number will not increment. ASF CI/CD requires any merge into `dev` and `main` to update the changelog. The changelog version is described via (Semantic Versioning)[https://semver.org/] (i.e. Major.Minor.Patch). Our CI/CD uses labels to automatically detect whether changelog needs to be updated. If you use `bumpless` and only CI/CD workflows or documentation has been changed, the software version remains the same. Otherwise, use `major`, `minor`, or `patch`
+
+## PR Requirements
+
+1. If the software changes, you must use: `major`, `minor`, or `patch` labels on a PR. For PRs to `dev` this is not strictly necessary. However, for PRs to `main`, this is **required** and determines how the software is incremented. For example, if the current release is `0.1.0`, a tag of `patch` will increment the next release to `0.1.1` and a tag of `major` will increment the release to `1.0.0`. The fact that the changelog is updated is checked, but has to be manually checked upon PRs to main to ensure proper versioning.
+
+2. Any PR to `main` requires the consistent `vXX.XX.XX` in the PR title. Using regular expressions in the github actions, the release number in the title is extracted and tagged to the relevant branch for the software release.
+
+In summary, for PRs to main, the PR label (`major`/`minor`/`patch`), the changelog, and the PR title should all reflect the upcoming release version correctly. If not, there are some manual fixes.
+
+### Possible Fixes
+
+1. Forget to correct the changelog? Go through the PR process to update it correctly
+2. Forget to title a PR to main with the release version? See this [comment](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/pull/114#issuecomment-1478362852). The comment is in a PR to `main` without the release title.
+
+
+# FAQ
 
 1. The docker build is taking a long time.
 
