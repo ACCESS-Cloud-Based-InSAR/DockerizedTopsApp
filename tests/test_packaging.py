@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from isce2_topsapp.packaging import get_gunw_id, DATASET_VERSION
+from isce2_topsapp.packaging import DATASET_VERSION, get_gunw_id
 
 test_dir = Path(__file__).parent
 
