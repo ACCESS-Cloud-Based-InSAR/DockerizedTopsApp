@@ -8,6 +8,14 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+## [0.2.3]
+
+### Updated
+* Explode footprints polygons
+
+### Removed
+* Python 3.8 Support
+
 ## [0.2.2]
 
 ### Added
