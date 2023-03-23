@@ -8,7 +8,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-## [0.2.3]
+## [0.2.4]
 
 ## Changed
 * Updated python support to 3.10 (removed 3.8 and 3.9)
