@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from isce2_topsapp.packaging import get_gunw_id
+from isce2_topsapp.packaging import get_gunw_id, DATASET_VERSION
 
 test_dir = Path(__file__).parent
 
@@ -12,4 +12,5 @@ def test_gunw_id_generation_crossing_dateline():
     gunw_id = get_gunw_id(metadata['reference_properties'],
                           metadata['secondary_properties'],
                           metadata['extent'])
-    assert gunw_id == 'S1-GUNW-D-R-048-tops-20230106_20221214-235959-00090E_00040N-PP-c254-v2_0_6'
+    version_str = DATASET_VERSION.replace(".", "_")
+    assert gunw_id == f'S1-GUNW-D-R-048-tops-20230106_20221214-235959-00090E_00040N-PP-c254-v{version_str}'
