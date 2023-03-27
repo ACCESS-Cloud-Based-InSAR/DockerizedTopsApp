@@ -10,13 +10,13 @@ from typing import Optional
 
 from isce2_topsapp import (BurstParams, aws, download_aux_cal, download_bursts,
                            download_dem_for_isce2, download_orbits,
-                           download_slcs, get_asf_slc_objects,
+                           download_slcs, get_asf_slc_objects, download_water_mask,
                            get_region_of_interest, package_gunw_product,
                            prepare_for_delivery, topsapp_processing)
 from isce2_topsapp.json_encoder import MetadataEncoder
 from isce2_topsapp.packaging import update_gunw_internal_version_attribute
 from isce2_topsapp.solid_earth_tides import update_gunw_with_solid_earth_tide
-
+from isce2_topsapp.iono_proc import iono_processing
 
 def localize_data(reference_scenes: list,
                   secondary_scenes: list,
@@ -42,12 +42,14 @@ def localize_data(reference_scenes: list,
     out_aux_cal = {}
     if not dry_run:
         out_dem = download_dem_for_isce2(out_slc['extent'])
+        out_water_mask = download_water_mask(out_slc['extent'])
         out_aux_cal = download_aux_cal()
 
     out = {'reference_scenes': reference_scenes,
            'secondary_scenes': secondary_scenes,
            **out_slc,
            **out_dem,
+           **out_water_mask,
            **out_aux_cal,
            **out_orbits}
     return out
@@ -143,13 +145,25 @@ def gunw_slc():
                        orbit_directory=loc_data['orbit_directory'],
                        # Region of interest is passed to topsapp via 'extent' key in loc_data
                        extent=loc_data['processing_extent'],
-                       estimate_ionosphere_delay=args.estimate_ionosphere_delay,
+                       estimate_ionosphere_delay=False,
                        do_esd=args.esd_coherence_threshold >= 0.,
                        esd_coherence_threshold=args.esd_coherence_threshold,
                        dem_for_proc=loc_data['full_res_dem_path'],
                        dem_for_geoc=loc_data['low_res_dem_path'],
                        dry_run=args.dry_run,
                        )
+    
+    #Run ionospheric correction
+    if args.estimate_ionosphere_delay:
+        iono_processing(
+            reference_slc_zips=loc_data['ref_paths'],
+            secondary_slc_zips=loc_data['sec_paths'],
+            orbit_directory=loc_data['orbit_directory'],
+            extent=loc_data['processing_extent'],
+            dem_for_proc=loc_data['full_res_dem_path'],
+            dem_for_geoc=loc_data['low_res_dem_path'],
+            mask_filename=loc_data['water_mask'],
+        )
 
     ref_properties = loc_data['reference_properties']
     sec_properties = loc_data['secondary_properties']
@@ -234,12 +248,27 @@ def gunw_burst():
         extent=roi,
         dem_for_proc=dem['full_res_dem_path'],
         dem_for_geoc=dem['low_res_dem_path'],
-        estimate_ionosphere_delay=args.estimate_ionosphere_delay,
+        estimate_ionosphere_delay=False,
         azimuth_looks=args.azimuth_looks,
         range_looks=args.range_looks,
         swaths=[ref_burst.swath],
         dry_run=args.dry_run,
     )
+
+    #Run ionospheric correction
+    if args.estimate_ionosphere_delay:
+        iono_processing(
+            reference_slc_zips=ref_burst.safe_name,
+            secondary_slc_zips=sec_burst.safe_name,
+            orbit_directory=orbits['orbit_directory'],
+            extent=roi,
+            dem_for_proc=dem['full_res_dem_path'],
+            dem_for_geoc=dem['low_res_dem_path'],
+            azimuth_looks=args.azimuth_looks,
+            range_looks=args.range_looks,
+            swaths=[ref_burst.swath],
+            mask_filename=None,
+        )
 
     if args.bucket:
         for file in Path('merged').glob('*geo*'):
