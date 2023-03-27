@@ -106,6 +106,7 @@ def download_dem_for_isce2(extent: list,
                                                                               num_threads=5,
                                                                               resampling='bilinear')
         dem_geocode_arr = dem_geocode_arr[0, ...]
+        dem_geocode_profile = dem_profile.copy()
 
     else:
         dem_geocode_arr = dem_array
