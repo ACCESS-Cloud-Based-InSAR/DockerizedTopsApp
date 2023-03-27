@@ -124,7 +124,7 @@ def gunw_slc():
     parser.add_argument('--dense-offsets', type=true_false_string_argument, default=False)
     args = parser.parse_args()
 
-    if args.output_resoltuion not in [30, 90]:
+    if args.output_resolution not in [30, 90]:
         raise ValueError('The output resolution can be "30" or "90" meters only.')
 
     ensure_earthdata_credentials(args.username, args.password)
