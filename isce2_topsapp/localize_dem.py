@@ -106,10 +106,11 @@ def download_dem_for_isce2(extent: list,
                                                                               num_threads=5,
                                                                               resampling='bilinear')
         dem_geocode_arr = dem_geocode_arr[0, ...]
-        dem_geocode_profile = dem_profile.copy()
 
     else:
+        # if 30 meters the array and geometadata should be the same
         dem_geocode_arr = dem_array
+        dem_geocode_profile = dem_profile.copy()
 
     low_res_dem_path = low_res_dem_dir / 'low_res.dem.wgs84'
 
