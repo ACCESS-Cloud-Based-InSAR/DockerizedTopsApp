@@ -26,6 +26,9 @@
     <property name="apply ionosphere correction">False</property>
     <property name="do ESD">{{ do_esd }}</property>
     <property name="ESD coherence threshold">{{ esd_coherence_threshold }}</property>
+    <property name="do dense offsets">{{ do_dense_offsets }}</property>
+    <property name="Ampcor window width">{{ ampcor_width }}</property>
+    <property name="Ampcor window height">{{ ampcor_height }}</property>
     <property name="use virtual files">{{ use_virtual_files }}</property>
     <property name="geocode list">{{ geocode_list }}</property>
   </component>

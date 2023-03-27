@@ -43,15 +43,25 @@ def topsapp_processing(*,
                        dem_for_proc: str,
                        dem_for_geoc: str,
                        estimate_ionosphere_delay: bool,
-                       azimuth_looks: int = 7,
-                       range_looks: int = 19,
                        swaths: list = None,
                        dry_run: bool = False,
                        do_esd: bool = False,
-                       esd_coherence_threshold: float = .7):
+                       esd_coherence_threshold: float = .7,
+                       output_resolution: int = 90,
+                       do_dense_offsets: bool = False,
+                       ampcor_window_size=16):
     swaths = swaths or [1, 2, 3]
     # for [ymin, ymax, xmin, xmax]
     extent_isce = [extent[k] for k in [1, 3, 0, 2]]
+
+    if output_resolution == 90:
+        azimuth_looks = 7
+        range_looks = 19
+    elif output_resolution == 30:
+        azimuth_looks = 3
+        range_looks = 7
+    else:
+        raise ValueError('Output resolution must be "30" or "90"')
 
     # Update PATH with ISCE2 applications
     isce_application_path = Path(f'{site.getsitepackages()[0]}'
@@ -82,7 +92,10 @@ def topsapp_processing(*,
                                   azimuth_looks=azimuth_looks,
                                   range_looks=range_looks,
                                   swaths=swaths,
-                                  geocode_list=geocode_list
+                                  geocode_list=geocode_list,
+                                  do_dense_offsets=do_dense_offsets,
+                                  ampcor_height=ampcor_window_size,
+                                  ampcor_width=ampcor_window_size
                                   )
     with open('topsApp.xml', "w") as file:
         file.write(topsApp_xml)

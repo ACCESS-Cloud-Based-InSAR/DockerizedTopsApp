@@ -21,6 +21,7 @@ from isce2_topsapp.solid_earth_tides import update_gunw_with_solid_earth_tide
 def localize_data(reference_scenes: list,
                   secondary_scenes: list,
                   frame_id: int = -1,
+                  output_resolution: int = 90,
                   dry_run: bool = False) -> dict:
     """The dry-run prevents gets necessary metadata from SLCs and orbits.
 
@@ -41,7 +42,8 @@ def localize_data(reference_scenes: list,
     out_dem = {}
     out_aux_cal = {}
     if not dry_run:
-        out_dem = download_dem_for_isce2(out_slc['extent'])
+        out_dem = download_dem_for_isce2(out_slc['extent'],
+                                         geocode_resolution=output_resolution)
         out_aux_cal = download_aux_cal()
 
     out = {'reference_scenes': reference_scenes,
@@ -117,7 +119,13 @@ def gunw_slc():
     parser.add_argument('--frame-id', type=int, default=-1)
     parser.add_argument('--compute-solid-earth-tide', type=true_false_string_argument, default=False)
     parser.add_argument('--esd-coherence-threshold', type=float, default=-1.)
+    parser.add_argument('--output_resolution', type=int, default=30, required=False)
+    parser.add_argument('--unfiltered-coherence', type=true_false_string_argument, default=False)
+    parser.add_argument('--dense-offsets', type=true_false_string_argument, default=False)
     args = parser.parse_args()
+
+    if args.output_resoltuion not in [30, 90]:
+        raise ValueError('The output resolution can be "30" or "90" meters only.')
 
     ensure_earthdata_credentials(args.username, args.password)
 
@@ -128,7 +136,8 @@ def gunw_slc():
     loc_data = localize_data(args.reference_scenes,
                              args.secondary_scenes,
                              dry_run=args.dry_run,
-                             frame_id=args.frame_id)
+                             frame_id=args.frame_id,
+                             output_resolution=args.output_resolution)
     loc_data['frame_id'] = args.frame_id
 
     # Allows for easier re-inspection of processing, packaging, and delivery
@@ -149,6 +158,8 @@ def gunw_slc():
                        dem_for_proc=loc_data['full_res_dem_path'],
                        dem_for_geoc=loc_data['low_res_dem_path'],
                        dry_run=args.dry_run,
+                       do_dense_offsets=args.dense_offsets,
+                       output_resolution=args.output_resolution
                        )
 
     ref_properties = loc_data['reference_properties']
@@ -160,11 +171,17 @@ def gunw_slc():
         additional_2d_layers.append('ionosphere')
 
     additional_2d_layers = additional_2d_layers or None
+
+    custom_event_product = False
+    if (args.do_dense_offsets) or (args.output_resolution == 30) or (args.unfiltered_coherence):
+        custom_event_product = True
+
     nc_path = package_gunw_product(isce_data_directory=Path.cwd(),
                                    reference_properties=ref_properties,
                                    secondary_properties=sec_properties,
                                    extent=extent,
                                    additional_2d_layers=additional_2d_layers,
+                                   custom_event_product=custom_event_product
                                    )
 
     if args.compute_solid_earth_tide:

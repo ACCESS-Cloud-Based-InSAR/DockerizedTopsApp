@@ -79,6 +79,7 @@ def get_center_time(properties: list) -> datetime.datetime:
 def get_gunw_id(reference_properties: list,
                 secondary_properties: list,
                 extent: list,
+                custom_event_product: bool = False,
                 ) -> str:
 
     # asc_or_desc: will be "A" or "D"
@@ -116,7 +117,8 @@ def get_gunw_id(reference_properties: list,
     version = DATASET_VERSION.replace('.', '_')
     version = f'v{version}'
 
-    ids = ['S1-GUNW',
+    gunw_prefix = 'S1-GUNW' if not custom_event_product else 'S1-GUNW-CUSTOM'
+    ids = [gunw_prefix,
            asc_or_desc,
            # right looking
            'R',
@@ -254,7 +256,8 @@ def package_gunw_product(*,
                          reference_properties: list,
                          secondary_properties: list,
                          extent: list,
-                         additional_2d_layers: list = None) -> Path:
+                         additional_2d_layers: list = None,
+                         custom_event_product: bool = False) -> Path:
     """Creates a GUNW standard product netcdf from the ISCE outputs and some
     initial metadata.
 
@@ -280,7 +283,8 @@ def package_gunw_product(*,
 
     gunw_id = get_gunw_id(reference_properties=reference_properties,
                           secondary_properties=secondary_properties,
-                          extent=extent)
+                          extent=extent,
+                          custom_event_product=custom_event_product)
 
     out_nc_file = perform_netcdf_packaging(isce_data_dir=isce_data_directory,
                                            gunw_id=gunw_id)
