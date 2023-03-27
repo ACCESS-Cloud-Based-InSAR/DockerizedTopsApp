@@ -1,11 +1,12 @@
 {"ionosphere": {"dst_group": "/science/grids/corrections/derived/ionosphere",
                 "dst_variable": "ionosphere",
-                             "input_relative_path": "merged/ionosphere_for_gunw.geo",
-                             "attrs": {
-                                       "standard_name": "ionospherePhaseCorrection",
-                                       "long_name": "ionospherePhaseCorrection",
-                                       "description": "Estimated ionosphere phase correction"
-                                       }
-                             }
+                "input_relative_path": "merged/ionosphere_for_gunw.geo",
+                "band_number": 1,
+                "attrs": {
+                        "standard_name": "ionospherePhaseCorrection",
+                        "long_name": "ionospherePhaseCorrection",
+                        "description": "Estimated ionosphere phase correction"
+                        }
+                }
 
 }
