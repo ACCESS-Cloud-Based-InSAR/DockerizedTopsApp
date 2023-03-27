@@ -119,7 +119,7 @@ def gunw_slc():
     parser.add_argument('--frame-id', type=int, default=-1)
     parser.add_argument('--compute-solid-earth-tide', type=true_false_string_argument, default=False)
     parser.add_argument('--esd-coherence-threshold', type=float, default=-1.)
-    parser.add_argument('--output_resolution', type=int, default=30, required=False)
+    parser.add_argument('--output-resolution', type=int, default=30, required=False)
     parser.add_argument('--unfiltered-coherence', type=true_false_string_argument, default=False)
     parser.add_argument('--dense-offsets', type=true_false_string_argument, default=False)
     args = parser.parse_args()
