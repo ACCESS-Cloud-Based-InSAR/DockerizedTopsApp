@@ -146,13 +146,13 @@ def iono_processing(*,
 
         if mask_filename:
             # Project mask to burst image coordinate space
-            dir = Path('.').absolute()
+            workdir = Path('.').absolute()
 
             get_swath = lambda x: x.split('/')[-2]
             get_burst = lambda x: x.split('/')[-1].split('_')[-1].split('.')[0]
 
             # Get all geometry files
-            geom_files = list(dir.glob('geom_reference/IW*/lat*.rdr'))
+            geom_files = list(workdir.glob('geom_reference/IW*/lat*.rdr'))
 
             # NOTE: THis can be easily parallized, skipped for now
             with tqdm(total=len(geom_files)) as pbar:
@@ -165,7 +165,7 @@ def iono_processing(*,
                     swath = get_swath(str(lat))
                     burst = get_burst(str(lat))
                     # Get output dir and file
-                    output_dir = dir / f'mask/{swath}'
+                    output_dir = workdir / f'mask/{swath}'
                     output_dir.mkdir(parents=True, exist_ok=True)
                     output_filename = output_dir / f'msk_{burst}.rdr'
                     # Projct mask to radar coordinate space
@@ -176,8 +176,8 @@ def iono_processing(*,
                     pbar.update()
 
             # Get lower and upper band full-resolution interferograms 
-            lower_band_ifgs = dir.glob('ion/lower/fine_interferogram/IW*/burst*.int')
-            upper_band_ifgs = dir.glob('ion/upper/fine_interferogram/IW*/burst*.int')
+            lower_band_ifgs = workdir.glob('ion/lower/fine_interferogram/IW*/burst*.int')
+            upper_band_ifgs = workdir.glob('ion/upper/fine_interferogram/IW*/burst*.int')
 
             # Lower band interferograms
             with tqdm(total=len(lower_band_ifgs + upper_band_ifgs)) as pbar:
@@ -189,7 +189,7 @@ def iono_processing(*,
                     swath = get_swath(str(ifg))
                     burst = get_burst(str(ifg))
                     # Get mask
-                    mask_file = dir / f'mask/{swath}/msk_{burst}.rdr.vrt'
+                    mask_file = workdir / f'mask/{swath}/msk_{burst}.rdr.vrt'
                     mask_ds = gdal.Open(str(mask_file), gdal.GA_ReadOnly)
                     # Mask
                     mask_interferogram(str(ifg), mask_ds.ReadAsArray())
