@@ -210,12 +210,65 @@ def iono_processing(*,
         if result.returncode != 0:
             raise ValueError(f'TopsApp failed at step: ion-rawion2esd')
         
-        # Step-4 Geocode ionospheric correction outputs
+        # Step-4 mergeBursts 
+        # Create merged/topophase.ion file
+        merge_bursts(range_looks=range_looks, azimuth_looks=azimuth_looks)
+        
+        # Step-5 Geocode ionospheric correction outputs
         step_cmd = f'{tops_app_cmd} ionoApp.xml --dostep=geocode'
         result = subprocess.run(step_cmd,
                                 shell=True)
         if result.returncode != 0:
             raise ValueError(f'TopsApp failed at step: geocode (ion)')
+        
+
+def merge_bursts(range_looks: int = 19,
+                 azimuth_looks: int = 7,
+                 ion_rangeLooks: int = 200,
+                 ion_azimuthLooks: int = 50,
+                 considerBursts: bool = False,
+                 mergedir : Union[str, Path] = './merged') -> None:
+    import isce
+    from isceobj.TopsProc.runMergeBursts import interpolateDifferentNumberOfLooks
+
+    mergedIfgname='topophase.flat'
+    mergedIonname = 'topophase.ion'
+    #########################################
+
+    if considerBursts:
+        print('TODO, Skip as it is not a DEFAULT')
+        '''
+        ionDirname = 'ion/ion_burst'
+        topsProc : runMergeBursts.py 776
+        mergeBursts2(frames, os.path.join(ionDirname, 'IW%d',  'burst_%02d.ion'), burstIndex, box, os.path.join(mergedir, mergedIonname+suffix), virtual=virtual, validOnly=True)
+        multilook(os.path.join(mergedir, mergedIonname+suffix),
+                      outname = os.path.join(mergedir, mergedIonname),
+                      alks = self.numberAzimuthLooks, rlks=self.numberRangeLooks)
+        
+        '''
+    else:
+        ionFilt = 'ion/ion_cal/filt.ion'
+        img = isceobj.createImage()
+        img.load(ionFilt+'.xml')
+        ionFiltImage = (np.fromfile(ionFilt, dtype=np.float32).reshape(img.length*2, img.width))[1:img.length*2:2, :]
+        img = isceobj.createImage()
+        img.load(os.path.join(mergedir, mergedIfgname+'.xml'))
+
+        #interpolate original
+        ionFiltImageOut = interpolateDifferentNumberOfLooks(ionFiltImage, img.length, img.width, range_looks, azimuth_looks, ion_rangeLooks, ion_azimuthLooks)
+        ionFiltOut = os.path.join(mergedir, mergedIonname)
+        ionFiltImageOut.astype(np.float32).tofile(ionFiltOut)
+
+        image = isceobj.createImage()
+        image.setDataType('FLOAT')
+        image.setFilename(ionFiltOut)
+        image.extraFilename = ionFiltOut + '.vrt'
+        image.setWidth(img.width)
+        image.setLength(img.length)
+        #image.setAccessMode('read')
+        #image.createImage()
+        image.renderHdr()
+        #image.finalizeImage()
 
 
 ####################### UTILITIES FOR MASKING ###############################
