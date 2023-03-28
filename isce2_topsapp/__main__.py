@@ -173,7 +173,7 @@ def gunw_slc():
     additional_2d_layers = additional_2d_layers or None
 
     custom_event_product = False
-    if (args.do_dense_offsets) or (args.output_resolution == 30) or (args.unfiltered_coherence):
+    if (args.dense_offsets) or (args.output_resolution == 30) or (args.unfiltered_coherence):
         custom_event_product = True
 
     nc_path = package_gunw_product(isce_data_directory=Path.cwd(),
