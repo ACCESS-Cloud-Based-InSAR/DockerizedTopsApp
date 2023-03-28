@@ -7,8 +7,7 @@ from typing import Union
 
 from numpy.typing import NDArray
 
-import isce
-import isceobj
+from isce.components import isceobj
 import numpy as np
 
 from jinja2 import Template
@@ -16,8 +15,8 @@ from tqdm import tqdm
 
 try:
     from osgeo import gdal
-except:
-    raise ModuleNotFoundError('Python module gdal missing!')
+except ModuleNotFoundError as exc:
+    raise ModuleNotFoundError('Python module gdal missing!') from exc
 
 '''
 List of parameters for ionospheric correction:
@@ -86,143 +85,142 @@ def iono_processing(*,
                     do_esd: bool = False,
                     esd_coherence_threshold: float = .7,
                     mask_filename: str = None):
-        
-        swaths = swaths or [1, 2, 3]
-        # for [ymin, ymax, xmin, xmax]
-        extent_isce = [extent[k] for k in [1, 3, 0, 2]]
+    swaths = swaths or [1, 2, 3]
+    # for [ymin, ymax, xmin, xmax]
+    extent_isce = [extent[k] for k in [1, 3, 0, 2]]
 
-        # Update PATH with ISCE2 applications
-        isce_application_path = Path(f'{site.getsitepackages()[0]}'
-                                     '/isce/applications/')
-        os.environ['PATH'] += (':' + str(isce_application_path))
+    # Update PATH with ISCE2 applications
+    isce_application_path = Path(f'{site.getsitepackages()[0]}'
+                                    '/isce/applications/')
+    os.environ['PATH'] += (':' + str(isce_application_path))
 
-        # Define topsApp input xml parameters
-        iono_kwargs = {'orbit_directory':orbit_directory,
-               'output_reference_directory':'reference',
-               'output_secondary_directory':'secondary',
-               'ref_zip_file':reference_slc_zips,
-               'sec_zip_file':secondary_slc_zips,
-               'region_of_interest':extent_isce,
-               'demFilename':dem_for_proc,
-               'geocodeDemFilename':dem_for_geoc,
-               'filter_strength':.5,
-               'do_unwrap':True,
-               'use_virtual_files':True,
-               'do_esd':do_esd,
-               'esd_coherence_threshold':esd_coherence_threshold,
-               # IONO PARAMETERS
-               'estimate_ionosphere_delay':True,
-               'iono_burstProperties':False,
-               'iono_polyFit':True,
-               'iono_correctAzimuthshift':1,
-               'azimuth_looks':azimuth_looks,
-               'range_looks':range_looks,
-               'swaths':swaths,
-               'geocode_list':GEOCODE_LIST_BASE
-        }
+    # Define topsApp input xml parameters
+    iono_kwargs = {'orbit_directory':orbit_directory,
+            'output_reference_directory':'reference',
+            'output_secondary_directory':'secondary',
+            'ref_zip_file':reference_slc_zips,
+            'sec_zip_file':secondary_slc_zips,
+            'region_of_interest':extent_isce,
+            'demFilename':dem_for_proc,
+            'geocodeDemFilename':dem_for_geoc,
+            'filter_strength':.5,
+            'do_unwrap':True,
+            'use_virtual_files':True,
+            'do_esd':do_esd,
+            'esd_coherence_threshold':esd_coherence_threshold,
+            # IONO PARAMETERS
+            'estimate_ionosphere_delay':True,
+            'iono_burstProperties':False,
+            'iono_polyFit':True,
+            'iono_correctAzimuthshift':1,
+            'azimuth_looks':azimuth_looks,
+            'range_looks':range_looks,
+            'swaths':swaths,
+            'geocode_list':GEOCODE_LIST_BASE
+    }
 
-        with open(TEMPLATE_DIR/'topsapp_iono_template.xml', 'r') as file:
-            template = Template(file.read())
+    with open(TEMPLATE_DIR/'topsapp_iono_template.xml', 'r') as file:
+        template = Template(file.read())
 
-        # Step-1 Run ionospheric correction step subband
-        ionoApp_xml = template.render(**iono_kwargs,
-                                      iono_startStep=IONO_STEPS[0],
-                                      iono_stopStep=IONO_STEPS[0])
-        
-        with open('ionoApp.xml', "w") as file:
-            file.write(ionoApp_xml)
-        
-        tops_app_cmd = f'{isce_application_path}/topsApp.py'
+    # Step-1 Run ionospheric correction step subband
+    iono_xml = template.render(**iono_kwargs,
+                               iono_startStep=IONO_STEPS[0],
+                               iono_stopStep=IONO_STEPS[0])
 
-        step_cmd = f'{tops_app_cmd} ionoApp.xml --dostep=ion'
-        result = subprocess.run(step_cmd,
-                                shell=True)
-        if result.returncode != 0:
-            raise ValueError(f'TopsApp failed at step: ion-subband')
-        
-        # Step-2 Mask upper and lower band burst wrapped interferograms
-        # path to burst ifgs: ion/lower|upper/fine_interferogram/IW{1,2,3}/burst_{##}.int
-        # path to burst geometry: geom_reference/IW{1,2,3}/lat|lon_{##}.rdr
+    with open('ionoApp.xml', "w") as file:
+        file.write(iono_xml)
 
-        if mask_filename:
-            # Project mask to burst image coordinate space
-            workdir = Path('.').absolute()
+    tops_app_cmd = f'{isce_application_path}/topsApp.py'
 
-            get_swath = lambda x: x.split('/')[-2]
-            get_burst = lambda x: x.split('/')[-1].split('_')[-1].split('.')[0]
+    step_cmd = f'{tops_app_cmd} ionoApp.xml --dostep=ion'
+    result = subprocess.run(step_cmd,
+                            shell=True)
+    if result.returncode != 0:
+        raise ValueError('TopsApp failed at step: ion-subband')
 
-            # Get all geometry files
-            geom_files = list(workdir.glob('geom_reference/IW*/lat*.rdr'))
+    # Step-2 Mask upper and lower band burst wrapped interferograms
+    # path to burst ifgs: ion/lower|upper/fine_interferogram/IW{1,2,3}/burst_{##}.int
+    # path to burst geometry: geom_reference/IW{1,2,3}/lat|lon_{##}.rdr
 
-            # NOTE: THis can be easily parallized, skipped for now
-            with tqdm(total=len(geom_files)) as pbar:
-                for lat in geom_files:
-                    pbar.set_description(f'Geo2radar mask {get_swath(str(lat))}\
-                                         /{get_burst(str(lat))}')
+    if mask_filename:
+        # Project mask to burst image coordinate space
+        workdir = Path('.').absolute()
 
-                    lon = str(lat).replace('lat', 'lon')
-                    # Get the swath and burst number 
-                    swath = get_swath(str(lat))
-                    burst = get_burst(str(lat))
-                    # Get output dir and file
-                    output_dir = workdir / f'mask/{swath}'
-                    output_dir.mkdir(parents=True, exist_ok=True)
-                    output_filename = output_dir / f'msk_{burst}.rdr'
-                    # Projct mask to radar coordinate space
-                    mask = mask_geo2radar(mask_filename, 
-                                          str(lat), lon,  
-                                          str(output_filename), saveFlag=True)
-                    mask = None # del mask array
-                    pbar.update()
+        get_swath = lambda x: x.split('/')[-2]
+        get_burst = lambda x: x.split('/')[-1].split('_')[-1].split('.')[0]
 
-            # Get lower and upper band full-resolution interferograms 
-            lower_band_ifgs = workdir.glob('ion/lower/fine_interferogram/IW*/burst*.int')
-            upper_band_ifgs = workdir.glob('ion/upper/fine_interferogram/IW*/burst*.int')
+        # Get all geometry files
+        geom_files = list(workdir.glob('geom_reference/IW*/lat*.rdr'))
 
-            # Lower band interferograms
-            with tqdm(total=len(lower_band_ifgs + upper_band_ifgs)) as pbar:
-                for ifg in lower_band_ifgs + upper_band_ifgs:
-                    band = str(ifg).split('/')[-4]
-                    pbar.set_description(f'Masking {band}-iono interferograms {get_swath(str(ifg))}/\
-                                        {get_burst(str(ifg))}')
-                    # Get the swath and burst number 
-                    swath = get_swath(str(ifg))
-                    burst = get_burst(str(ifg))
-                    # Get mask
-                    mask_file = workdir / f'mask/{swath}/msk_{burst}.rdr.vrt'
-                    mask_ds = gdal.Open(str(mask_file), gdal.GA_ReadOnly)
-                    # Mask
-                    mask_interferogram(str(ifg), mask_ds.ReadAsArray())
-                    mask_ds = None #close
-                    pbar.update()
+        # NOTE: THis can be easily parallized, skipped for now
+        with tqdm(total=len(geom_files)) as pbar:
+            for lat in geom_files:
+                pbar.set_description(f'Geo2radar mask {get_swath(str(lat))}\
+                                        /{get_burst(str(lat))}')
 
-        # Step-3 Compute ionospheric correction
-        ionoApp_xml = template.render(**iono_kwargs,
-                                      iono_startStep=IONO_STEPS[1],
-                                      iono_stopStep=IONO_STEPS[-1])
-        
-        with open('ionoApp.xml', "w") as file:
-            file.write(ionoApp_xml)
-        
-        tops_app_cmd = f'{isce_application_path}/topsApp.py'
+                lon = str(lat).replace('lat', 'lon')
+                # Get the swath and burst number
+                swath = get_swath(str(lat))
+                burst = get_burst(str(lat))
+                # Get output dir and file
+                output_dir = workdir / f'mask/{swath}'
+                output_dir.mkdir(parents=True, exist_ok=True)
+                output_filename = output_dir / f'msk_{burst}.rdr'
+                # Projct mask to radar coordinate space
+                mask = mask_geo2radar(mask_filename,
+                                      str(lat), lon,
+                                      str(output_filename), saveFlag=True)
+                mask = None # del mask array
+                pbar.update()
 
-        step_cmd = f'{tops_app_cmd} ionoApp.xml --dostep=ion'
-        result = subprocess.run(step_cmd,
-                                shell=True)
-        if result.returncode != 0:
-            raise ValueError(f'TopsApp failed at step: ion-rawion2esd')
-        
-        # Step-4 mergeBursts 
-        # Create merged/topophase.ion file
-        merge_bursts(range_looks=range_looks, azimuth_looks=azimuth_looks)
-        
-        # Step-5 Geocode ionospheric correction outputs
-        step_cmd = f'{tops_app_cmd} ionoApp.xml --dostep=geocode'
-        result = subprocess.run(step_cmd,
-                                shell=True)
-        if result.returncode != 0:
-            raise ValueError(f'TopsApp failed at step: geocode (ion)')
-        
+        # Get lower and upper band full-resolution interferograms
+        lower_band_ifgs = workdir.glob('ion/lower/fine_interferogram/IW*/burst*.int')
+        upper_band_ifgs = workdir.glob('ion/upper/fine_interferogram/IW*/burst*.int')
+
+        # Lower band interferograms
+        with tqdm(total=len(lower_band_ifgs + upper_band_ifgs)) as pbar:
+            for ifg in lower_band_ifgs + upper_band_ifgs:
+                band = str(ifg).split('/')[-4]
+                pbar.set_description(f'Masking {band}-iono interferograms {get_swath(str(ifg))}/\
+                                    {get_burst(str(ifg))}')
+                # Get the swath and burst number
+                swath = get_swath(str(ifg))
+                burst = get_burst(str(ifg))
+                # Get mask
+                mask_file = workdir / f'mask/{swath}/msk_{burst}.rdr.vrt'
+                mask_ds = gdal.Open(str(mask_file), gdal.GA_ReadOnly)
+                # Mask
+                mask_interferogram(str(ifg), mask_ds.ReadAsArray())
+                mask_ds = None #close
+                pbar.update()
+
+    # Step-3 Compute ionospheric correction
+    iono_xml = template.render(**iono_kwargs,
+                               iono_startStep=IONO_STEPS[1],
+                               iono_stopStep=IONO_STEPS[-1])
+
+    with open('ionoApp.xml', "w") as file:
+        file.write(iono_xml)
+
+    tops_app_cmd = f'{isce_application_path}/topsApp.py'
+
+    step_cmd = f'{tops_app_cmd} ionoApp.xml --dostep=ion'
+    result = subprocess.run(step_cmd,
+                            shell=True)
+    if result.returncode != 0:
+        raise ValueError('TopsApp failed at step: ion-rawion2esd')
+
+    # Step-4 mergeBursts
+    # Create merged/topophase.ion file
+    merge_bursts(range_looks=range_looks, azimuth_looks=azimuth_looks)
+
+    # Step-5 Geocode ionospheric correction outputs
+    step_cmd = f'{tops_app_cmd} ionoApp.xml --dostep=geocode'
+    result = subprocess.run(step_cmd,
+                            shell=True)
+    if result.returncode != 0:
+        raise ValueError('TopsApp failed at step: geocode (ion)')
+
 
 def merge_bursts(range_looks: int = 19,
                  azimuth_looks: int = 7,
@@ -230,8 +228,7 @@ def merge_bursts(range_looks: int = 19,
                  ion_azimuthLooks: int = 50,
                  considerBursts: bool = False,
                  mergedir : Union[str, Path] = './merged') -> None:
-    import isce
-    from isceobj.TopsProc.runMergeBursts import interpolateDifferentNumberOfLooks
+    from isce.components.isceobj.TopsProc.runMergeBursts import interpolateDifferentNumberOfLooks
 
     mergedIfgname='topophase.flat'
     mergedIonname = 'topophase.ion'
@@ -242,7 +239,8 @@ def merge_bursts(range_looks: int = 19,
         '''
         ionDirname = 'ion/ion_burst'
         topsProc : runMergeBursts.py 776
-        mergeBursts2(frames, os.path.join(ionDirname, 'IW%d',  'burst_%02d.ion'), burstIndex, box, os.path.join(mergedir, mergedIonname+suffix), virtual=virtual, validOnly=True)
+        mergeBursts2(frames, os.path.join(ionDirname, 'IW%d',  'burst_%02d.ion'),\
+              burstIndex, box, os.path.join(mergedir, mergedIonname+suffix), virtual=virtual, validOnly=True)
         multilook(os.path.join(mergedir, mergedIonname+suffix),
                       outname = os.path.join(mergedir, mergedIonname),
                       alks = self.numberAzimuthLooks, rlks=self.numberRangeLooks)
@@ -256,10 +254,10 @@ def merge_bursts(range_looks: int = 19,
         img = isceobj.createImage()
         img.load(os.path.join(mergedir, mergedIfgname+'.xml'))
 
-        #interpolate original
-        ionFiltImageOut = interpolateDifferentNumberOfLooks(ionFiltImage, 
-                                                            img.length, img.width, 
-                                                            range_looks, azimuth_looks, 
+        # interpolate original
+        ionFiltImageOut = interpolateDifferentNumberOfLooks(ionFiltImage,
+                                                            img.length, img.width,
+                                                            range_looks, azimuth_looks,
                                                             ion_rangeLooks, ion_azimuthLooks)
         ionFiltOut = os.path.join(mergedir, mergedIonname)
         ionFiltImageOut.astype(np.float32).tofile(ionFiltOut)
@@ -278,10 +276,10 @@ def merge_bursts(range_looks: int = 19,
 
 ####################### UTILITIES FOR MASKING ###############################
 
-def mask_geo2radar(maskFilename : Union[str, Path], 
-                   latFilename : Union[str, Path], 
-                   lonFilename : Union[str, Path], 
-                   outputFilename : Union[str, Path], 
+def mask_geo2radar(maskFilename : Union[str, Path],
+                   latFilename : Union[str, Path],
+                   lonFilename : Union[str, Path],
+                   outputFilename : Union[str, Path],
                    saveFlag: bool=False)-> NDArray:
     '''
     This routine translates mask raster from geographical to radar(image) coordinate space
@@ -304,7 +302,7 @@ def mask_geo2radar(maskFilename : Union[str, Path],
     mask_ds = gdal.Open(maskFilename + '.vrt')
     # Open lon and lat file
     lon_ds = gdal.Open(lonFilename + '.vrt')
-    lat_ds = gdal.Open(latFilename + '.vrt')  
+    lat_ds = gdal.Open(latFilename + '.vrt')
 
     # Get lon and lat arrays
     lons = lon_ds.ReadAsArray()
@@ -317,9 +315,9 @@ def mask_geo2radar(maskFilename : Union[str, Path],
                 np.logical_and(lineIndex>=0, lineIndex<=mask_ds.RasterYSize-1),
                 np.logical_and(sampleIndex>=0, sampleIndex<=mask_ds.RasterXSize-1)
                 )
-    # Convert 
+    # Convert
     mask_radarcoord = np.empty(lats.shape)
-    mask_radarcoord[inboundIndex] = mask_ds.ReadAsArray()[lineIndex[inboundIndex], 
+    mask_radarcoord[inboundIndex] = mask_ds.ReadAsArray()[lineIndex[inboundIndex],
                                                             sampleIndex[inboundIndex]]
 
     # close gdal instances
@@ -340,8 +338,8 @@ def mask_geo2radar(maskFilename : Union[str, Path],
 
     return mask_radarcoord
 
-def mask_interferogram(ifgFilename : Union[str, Path], 
-                       maskArray : NDArray, 
+def mask_interferogram(ifgFilename : Union[str, Path],
+                       maskArray : NDArray,
                        outFilename: Union[str, Path]=None)-> None:
     '''
     This routine uses mask np.array to mask wrapped interferogram
