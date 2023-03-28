@@ -2,13 +2,14 @@ import os
 import site
 import subprocess
 
-import isce
-import isceobj 
-import numpy as np
-
 from pathlib import Path
 from typing import Union
+
 from numpy.typing import NDArray
+
+import isce
+import isceobj
+import numpy as np
 
 from jinja2 import Template
 from tqdm import tqdm
@@ -62,7 +63,7 @@ IONO_STEPS = ['subband',
               'rawion',
               'grd2ion',
               'filt_gaussian',
-              #only do the following steps when considering burst properties
+               # only do the following steps when considering burst properties
               'ionosphere_shift', 
               'ion2grd',
               'esd']
@@ -70,6 +71,7 @@ IONO_STEPS = ['subband',
 TEMPLATE_DIR = Path(__file__).parent/'templates'
 
 GEOCODE_LIST_BASE = ['merged/topophase.ion']
+
 
 def iono_processing(*,
                     reference_slc_zips: list,
@@ -83,7 +85,7 @@ def iono_processing(*,
                     swaths: list = None,
                     do_esd: bool = False,
                     esd_coherence_threshold: float = .7,
-                    mask_filename : str = None):
+                    mask_filename: str = None):
         
         swaths = swaths or [1, 2, 3]
         # for [ymin, ymax, xmin, xmax]

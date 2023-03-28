@@ -24,8 +24,8 @@ def download_water_mask(extent: list,
                                      extent_buffered[2])
         
     elif water_name == 'GSHHS':
-        from water_mask import get_water_mask_raster
-
+        #from water_mask import get_water_mask_raster
         # TO BE ADDED
+        print('TODO as another option')
 
     return {'water_mask': str(output_dir / mask_filename)}
