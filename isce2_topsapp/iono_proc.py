@@ -257,7 +257,10 @@ def merge_bursts(range_looks: int = 19,
         img.load(os.path.join(mergedir, mergedIfgname+'.xml'))
 
         #interpolate original
-        ionFiltImageOut = interpolateDifferentNumberOfLooks(ionFiltImage, img.length, img.width, range_looks, azimuth_looks, ion_rangeLooks, ion_azimuthLooks)
+        ionFiltImageOut = interpolateDifferentNumberOfLooks(ionFiltImage, 
+                                                            img.length, img.width, 
+                                                            range_looks, azimuth_looks, 
+                                                            ion_rangeLooks, ion_azimuthLooks)
         ionFiltOut = os.path.join(mergedir, mergedIonname)
         ionFiltImageOut.astype(np.float32).tofile(ionFiltOut)
 
