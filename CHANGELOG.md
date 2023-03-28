@@ -8,13 +8,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-## [0.2.3]
-
-### Updated
-* Explode footprints polygons
-
-### Removed
-* Python 3.8 Support
+## [0.2.4]
 
 ### Added
 * Provides CLI options for:
@@ -23,6 +17,14 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - unfiltered coherence layer
 
    If the output resolution is changed to 30 meters or any of the latter two layers are requested, then the initial token on product name is change from `S1-GUNW` to `S1-GUNW-CUSTOM`.
+
+## [0.2.3]
+
+### Updated
+* Explode footprints polygons
+
+### Removed
+* Python 3.8 Support
 
 ## [0.2.2]
 
@@ -52,7 +54,6 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 * Fixes write of start/stop sensing times due to changes in ASF Search v5.0.0 (see #79)
 
-
 ## [0.2.0]
 
 ### Added
@@ -66,6 +67,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 * Uses dem-stitcher>=v2.3.0, which by default, fills in `glo-30` tiles that are missing over Armenia and Azerbaijan with the available `glo-90` tiles (upsampled).
 * Uses dem-stitcher>=v2.3.1 to fix URLs for `glo-30` and `srtm_v3`
+
 ## [0.1.2]
 
 ### Fixed
