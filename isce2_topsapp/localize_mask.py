@@ -1,6 +1,8 @@
 from pathlib import Path
+
 import numpy as np
 from shapely.geometry import box
+
 
 def download_water_mask(extent: list,
                         water_name: str = 'SWDB',
@@ -16,9 +18,8 @@ def download_water_mask(extent: list,
     if water_name == 'SWDB':
         import isce
         from isceobj.Alos2Proc.runDownloadDem import download_wbd
-
         #Download SRTM-SWDB water mask
-        mask_filename = download_wbd(extent_buffered[1], 
+        mask_filename = download_wbd(extent_buffered[1],
                                      extent_buffered[3], 
                                      extent_buffered[0], 
                                      extent_buffered[2])

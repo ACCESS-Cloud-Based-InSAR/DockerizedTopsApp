@@ -1,17 +1,16 @@
 import os
 import site
-import subprocess
 
+import subprocess
 from pathlib import Path
 from typing import Union
 
-from numpy.typing import NDArray
-
-from isce.components import isceobj
 import numpy as np
-
 from jinja2 import Template
 from tqdm import tqdm
+
+from isce.components import isceobj
+from numpy.typing import NDArray
 
 try:
     from osgeo import gdal
@@ -62,8 +61,9 @@ IONO_STEPS = ['subband',
               'rawion',
               'grd2ion',
               'filt_gaussian',
-               # only do the following steps when considering burst properties
-              'ionosphere_shift', 
+               # only do the following steps 
+               # when considering burst properties
+              'ionosphere_shift',
               'ion2grd',
               'esd']
 
@@ -95,29 +95,29 @@ def iono_processing(*,
     os.environ['PATH'] += (':' + str(isce_application_path))
 
     # Define topsApp input xml parameters
-    iono_kwargs = {'orbit_directory':orbit_directory,
-            'output_reference_directory':'reference',
-            'output_secondary_directory':'secondary',
-            'ref_zip_file':reference_slc_zips,
-            'sec_zip_file':secondary_slc_zips,
-            'region_of_interest':extent_isce,
-            'demFilename':dem_for_proc,
-            'geocodeDemFilename':dem_for_geoc,
-            'filter_strength':.5,
-            'do_unwrap':True,
-            'use_virtual_files':True,
-            'do_esd':do_esd,
-            'esd_coherence_threshold':esd_coherence_threshold,
-            # IONO PARAMETERS
-            'estimate_ionosphere_delay':True,
-            'iono_burstProperties':False,
-            'iono_polyFit':True,
-            'iono_correctAzimuthshift':1,
-            'azimuth_looks':azimuth_looks,
-            'range_looks':range_looks,
-            'swaths':swaths,
-            'geocode_list':GEOCODE_LIST_BASE
-    }
+    iono_kwargs = {'orbit_directory': orbit_directory,
+                   'output_reference_directory': 'reference',
+                   'output_secondary_directory': 'secondary',
+                   'ref_zip_file': reference_slc_zips,
+                   'sec_zip_file': secondary_slc_zips,
+                   'region_of_interest': extent_isce,
+                   'demFilename': dem_for_proc,
+                   'geocodeDemFilename': dem_for_geoc,
+                   'filter_strength': .5,
+                    'do_unwrap': True,
+                    'use_virtual_files': True,
+                    'do_esd': do_esd,
+                    'esd_coherence_threshold': esd_coherence_threshold,
+                    # IONO PARAMETERS
+                    'estimate_ionosphere_delay': True,
+                    'iono_burstProperties': False,
+                    'iono_polyFit': True,
+                    'iono_correctAzimuthshift': 1,
+                    'azimuth_looks': azimuth_looks,
+                    'range_looks': range_looks,
+                    'swaths': swaths,
+                    'geocode_list': GEOCODE_LIST_BASE
+                     }
 
     with open(TEMPLATE_DIR/'topsapp_iono_template.xml', 'r') as file:
         template = Template(file.read())
@@ -170,7 +170,7 @@ def iono_processing(*,
                 mask = mask_geo2radar(mask_filename,
                                       str(lat), lon,
                                       str(output_filename), saveFlag=True)
-                mask = None # del mask array
+                mask = None  # del mask array
                 pbar.update()
 
         # Get lower and upper band full-resolution interferograms
@@ -191,7 +191,7 @@ def iono_processing(*,
                 mask_ds = gdal.Open(str(mask_file), gdal.GA_ReadOnly)
                 # Mask
                 mask_interferogram(str(ifg), mask_ds.ReadAsArray())
-                mask_ds = None #close
+                mask_ds = None  #close
                 pbar.update()
 
     # Step-3 Compute ionospheric correction
@@ -227,10 +227,10 @@ def merge_bursts(range_looks: int = 19,
                  ion_rangeLooks: int = 200,
                  ion_azimuthLooks: int = 50,
                  considerBursts: bool = False,
-                 mergedir : Union[str, Path] = './merged') -> None:
+                 mergedir: Union[str, Path] = './merged') -> None:
     from isce.components.isceobj.TopsProc.runMergeBursts import interpolateDifferentNumberOfLooks
 
-    mergedIfgname='topophase.flat'
+    mergedIfgname = 'topophase.flat'
     mergedIonname = 'topophase.ion'
     #########################################
 
@@ -244,7 +244,6 @@ def merge_bursts(range_looks: int = 19,
         multilook(os.path.join(mergedir, mergedIonname+suffix),
                       outname = os.path.join(mergedir, mergedIonname),
                       alks = self.numberAzimuthLooks, rlks=self.numberRangeLooks)
-        
         '''
     else:
         ionFilt = 'ion/ion_cal/filt.ion'
@@ -268,19 +267,19 @@ def merge_bursts(range_looks: int = 19,
         image.extraFilename = ionFiltOut + '.vrt'
         image.setWidth(img.width)
         image.setLength(img.length)
-        #image.setAccessMode('read')
-        #image.createImage()
+        # image.setAccessMode('read')
+        # image.createImage()
         image.renderHdr()
-        #image.finalizeImage()
+        # image.finalizeImage()
 
 
 ####################### UTILITIES FOR MASKING ###############################
 
-def mask_geo2radar(maskFilename : Union[str, Path],
-                   latFilename : Union[str, Path],
-                   lonFilename : Union[str, Path],
-                   outputFilename : Union[str, Path],
-                   saveFlag: bool=False)-> NDArray:
+def mask_geo2radar(maskFilename: Union[str, Path],
+                   latFilename: Union[str, Path],
+                   lonFilename: Union[str, Path],
+                   outputFilename: Union[str, Path],
+                   saveFlag: bool = False) -> NDArray:
     '''
     This routine translates mask raster from geographical to radar(image) coordinate space
 
@@ -309,17 +308,16 @@ def mask_geo2radar(maskFilename : Union[str, Path],
     lats = lat_ds.ReadAsArray()
 
     # Translate mask geo corrdinate to radar
-    lineIndex = np.int32((lats  - mask_ds.GetGeoTransform()[3]) /  mask_ds.GetGeoTransform()[5] + 0.5)
-    sampleIndex = np.int32((lons  - mask_ds.GetGeoTransform()[0]) /  mask_ds.GetGeoTransform()[1] + 0.5)
+    lineIndex = np.int32((lats - mask_ds.GetGeoTransform()[3]) / mask_ds.GetGeoTransform()[5] + 0.5)
+    sampleIndex = np.int32((lons - mask_ds.GetGeoTransform()[0]) / mask_ds.GetGeoTransform()[1] + 0.5)
     inboundIndex = np.logical_and(
-                np.logical_and(lineIndex>=0, lineIndex<=mask_ds.RasterYSize-1),
-                np.logical_and(sampleIndex>=0, sampleIndex<=mask_ds.RasterXSize-1)
+                np.logical_and(lineIndex >= 0, lineIndex <= mask_ds.RasterYSize-1),
+                np.logical_and(sampleIndex >= 0, sampleIndex <= mask_ds.RasterXSize-1)
                 )
     # Convert
     mask_radarcoord = np.empty(lats.shape)
     mask_radarcoord[inboundIndex] = mask_ds.ReadAsArray()[lineIndex[inboundIndex],
                                                             sampleIndex[inboundIndex]]
-
     # close gdal instances
     mask_ds = None
     lon_ds = None
@@ -338,9 +336,11 @@ def mask_geo2radar(maskFilename : Union[str, Path],
 
     return mask_radarcoord
 
-def mask_interferogram(ifgFilename : Union[str, Path],
-                       maskArray : NDArray,
-                       outFilename: Union[str, Path]=None)-> None:
+
+def mask_interferogram(ifgFilename: Union[str, Path],
+                       maskArray: NDArray,
+                       outFilename: Union[str, Path] = None) -> None:
+    
     '''
     This routine uses mask np.array to mask wrapped interferogram
     ifgFilename : str
@@ -361,10 +361,10 @@ def mask_interferogram(ifgFilename : Union[str, Path],
 
     # Write masked interferogram
     if outFilename:
-        driver= gdal.GetDriverByName('ISCE')
+        driver = gdal.GetDriverByName('ISCE')
         outdata = driver.CreateCopy(ifgFilename + '_msk', int_ds)
         outdata.GetRasterBand(1).WriteArray(int_array)
-        outdata.FlushCache() ##saves to disk!!
+        outdata.FlushCache()  # saves to disk!!
         outdata = None
 
         # create isce aux files
@@ -376,7 +376,7 @@ def mask_interferogram(ifgFilename : Union[str, Path],
         image.setLength(int_ds.RasterYSize)
         image.setAccessMode('READ')
         image.renderHdr()
-        int_ds=None
+        int_ds = None
     else:
         # Overwrite existing interferogram
         int_ds = None
