@@ -154,7 +154,6 @@ def format_metadata(nc_path: Path,
                      "secondary_scenes": all_metadata['secondary_scenes'],
                      "sensing_start": ref_start_time_formatted,
                      "sensing_stop": ref_stop_time_formatted,
-                     "frame_number": all_metadata['frame_id'],
                      "version": DATASET_VERSION,
                      "temporal_baseline_days": temporal_baseline_days,
                      "orbit_number": [int(ref_props_first['orbit']),
@@ -175,6 +174,9 @@ def format_metadata(nc_path: Path,
             "creation_timestamp": f'{now.isoformat()}Z',
             "version": DATASET_VERSION,
             "metadata": metadata}
+
+    if all_metadata['frame_id'] != -1:
+        metadata['frame_number'] = all_metadata['frame_id']
 
     return data
 
