@@ -10,6 +10,9 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.2.3]
 
+## Fixed
+* For Solid Earth Tide computation, derive coordinates and spacing from geotrans as opposed to latitude/longitude metadata arrays
+
 ### Updated
 * Explode footprints polygons
 
