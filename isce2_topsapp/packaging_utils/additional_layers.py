@@ -39,6 +39,10 @@ def add_2d_layer(layer_name: str,
     ds = xr.open_dataset(layer_data['input_relative_path'],
                          engine='rasterio')
 
+    # Ensures of grid_mapping_name as 'crs'
+    ds = ds.drop_vars('spatial_ref')
+    ds.rio.write_crs(4326, inplace=True, grid_mapping_name='crs')
+
     # Renaming ensures correct geo-referencing with spatial_ref grid mapping
     ds = ds.rename({
                     # x, y are the coordinate names
@@ -55,6 +59,7 @@ def add_2d_layer(layer_name: str,
                                   'standard_name': 'longitude'})
 
     ds[layer_name].attrs.update(layer_data['attrs'])
+    print(ds)
 
     ds.to_netcdf(gunw_netcdf_path,
                  group=layer_data['dst_group'],

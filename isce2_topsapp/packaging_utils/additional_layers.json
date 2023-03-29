@@ -7,6 +7,15 @@
                         "long_name": "ionospherePhaseCorrection",
                         "description": "Estimated ionosphere phase correction"
                         }
+                },
+ "unfilteredCoherence": {"dst_group": "/science/grids/data",
+                         "dst_variable": "unfilteredCoherence",
+                         "input_relative_path": "merged/topophase.cor.geo",
+                         "band_number": 1,
+                         "attrs": {"standard_name": "unfilteredCoherence",
+                                   "long_name": "unfilteredCoherence",
+                                   "description": "Coherence without filters applied"
+                         }
                 }
 
 }
