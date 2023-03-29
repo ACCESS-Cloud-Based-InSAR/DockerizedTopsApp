@@ -40,10 +40,11 @@ def add_2d_layer(layer_name: str,
                          engine='rasterio')
 
     # Ensures of grid_mapping_name as 'crs'
+    # This allows us to append to /science/grids/data to have consistent CRS
     ds = ds.drop_vars('spatial_ref')
     ds.rio.write_crs(4326, inplace=True, grid_mapping_name='crs')
 
-    # Renaming ensures correct geo-referencing with spatial_ref grid mapping
+    # Renaming ensures correct geo-referencing with grid mapping
     ds = ds.rename({
                     # x, y are the coordinate names
                     'x': 'longitude',
