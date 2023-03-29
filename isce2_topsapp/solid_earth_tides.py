@@ -66,9 +66,7 @@ def get_gunw_attrs(gunw_path: str) -> Tuple[float, np.array, np.array,
     group = 'science/grids/imagingGeometry'
     with xr.open_dataset(gunw_path, group=group, engine='rasterio') as ds:
         z_meta = ds.heightsMeta.data
-        lat_meta = ds.y.data
-        lon_meta = ds.x.data
-        gt  = ds.rio.transform()
+        gt = ds.rio.transform()
         # convert angles to rad
         inc_angle = np.deg2rad(ds.incidenceAngle.data)
         az_angle = np.deg2rad(ds.azimuthAngle.data-90)
