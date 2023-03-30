@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import numpy as np
-from shapely.geometry import box
 from isce.components.isceobj.Alos2Proc.runDownloadDem import download_wbd
+from shapely.geometry import box
 
 
 def download_water_mask(
