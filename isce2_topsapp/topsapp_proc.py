@@ -75,6 +75,9 @@ def topsapp_processing(*,
     if estimate_ionosphere_delay:
         geocode_list.append('merged/topophase.ion')
 
+    if do_dense_offsets:
+        geocode_list.append('merged/dense_offsets.bil')
+
     topsApp_xml = template.render(orbit_directory=orbit_directory,
                                   output_reference_directory='reference',
                                   output_secondary_directory='secondary',

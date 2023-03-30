@@ -169,6 +169,11 @@ def gunw_slc():
     additional_2d_layers = []
     if args.estimate_ionosphere_delay:
         additional_2d_layers.append('ionosphere')
+    if args.dense_offsets:
+        additional_2d_layers.append('rangePixelOffsets')
+        additional_2d_layers.append('azimuthPixelOffsets')
+    if args.unfiltered_coherence:
+        additional_2d_layers.append('unfilteredCoherence')
 
     additional_2d_layers = additional_2d_layers or None
 
