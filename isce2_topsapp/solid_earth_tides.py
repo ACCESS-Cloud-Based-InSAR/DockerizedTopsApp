@@ -41,7 +41,7 @@ def compute_solid_earth_tide_from_gunw(gunw_path: str, acq_type: str) -> xr.Data
                                                  set_attrs)
 
     # compute SET LOS estimate for each height level
-    tide_los = np.zeros(inc_angle.shape, dtype=float)
+    tide_los = np.zeros(inc_angle.shape, dtype=np.float32)
     for i in range(len(z_meta)):
         tide_los[i] = compute_los_solid_earth_tide(tide_e,
                                                    tide_n,
@@ -146,7 +146,7 @@ def export_se_tides_to_dataset(gunw_path: str,
     solidtide_corr_ds[lyr_name] = (dim_order, tide_los)
     solidtide_corr_ds[lyr_name].attrs.update(attrs)
     solidtide_corr_ds = solidtide_corr_ds[[lyr_name]]
-    solidtide_corr_ds = solidtide_corr_ds.astype(float)
+    solidtide_corr_ds = solidtide_corr_ds.astype(np.float32)
     solidtide_corr_ds.rio.write_crs('epsg:4326', inplace=True)
     solidtide_corr_ds['solidEarthTide'].rio.write_nodata(0, inplace=True)
     return solidtide_corr_ds
