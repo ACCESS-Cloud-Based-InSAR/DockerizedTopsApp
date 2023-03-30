@@ -24,7 +24,7 @@
                 }
         },
         "rangePixelOffsets": {
-                "dst_group": "/science/grids/data/pixelOffsets",
+                "dst_group": "/science/grids/data",
                 "dst_variable": "rangePixelOffsets",
                 "input_relative_path": "merged/dense_offsets.bil.geo",
                 "band_number": 1,
@@ -36,7 +36,7 @@
                 }
         },
         "azimuthPixelOffsets": {
-                "dst_group": "/science/grids/data/pixelOffsets",
+                "dst_group": "/science/grids/data",
                 "dst_variable": "azimuthPixelOffsets",
                 "input_relative_path": "merged/dense_offsets.bil.geo",
                 "band_number": 2,
