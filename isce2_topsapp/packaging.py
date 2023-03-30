@@ -218,7 +218,7 @@ def perform_netcdf_packaging(*,
     subprocess.check_call(cmd, shell=True)
     os.chdir(cwd)
 
-    out_nc_file = merged_dir/f'{gunw_id}.nc'
+    out_nc_file = merged_dir / f'{gunw_id}.nc'
 
     # Check if the netcdf file was created
     assert out_nc_file.exists()

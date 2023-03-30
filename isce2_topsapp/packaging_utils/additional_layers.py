@@ -67,7 +67,6 @@ def add_2d_layer(layer_name: str,
                                   'standard_name': 'longitude'})
 
     ds[layer_name].attrs.update(layer_data['attrs'])
-    print(ds)
 
     ds.to_netcdf(gunw_netcdf_path,
                  group=layer_data['dst_group'],
