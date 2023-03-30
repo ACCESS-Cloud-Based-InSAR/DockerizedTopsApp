@@ -10,14 +10,12 @@ import h5py
 from dateparser import parse
 
 import isce2_topsapp
-from isce2_topsapp.packaging_utils.additional_layers import add_2d_layer
+from isce2_topsapp.packaging_utils.additional_layers import (
+    PERMISSIBLE_ADDITIONAL_2D_LAYERS, add_2d_layer)
 from isce2_topsapp.packaging_utils.ionosphere import format_ionosphere_for_gunw
 from isce2_topsapp.templates import read_netcdf_packaging_template
 
 DATASET_VERSION = '2.0.6'
-
-
-PERMISSIBLE_2D_LAYERS = ['ionosphere']
 
 
 """Warning: the packaging scripts were written as command line scripts and
@@ -234,9 +232,9 @@ def package_additional_layers_into_gunw(gunw_path: Path,
     # 1. Do any additional processing/formatting outside of GUNW
     # 2. Add layer into GUNW
     # 3. Update Version
-    if not set(additional_2d_layers).issubset(set(PERMISSIBLE_2D_LAYERS)):
+    if not set(additional_2d_layers).issubset(set(PERMISSIBLE_ADDITIONAL_2D_LAYERS)):
         raise RuntimeError('Additional 2d layers must be subset of '
-                           f'{PERMISSIBLE_2D_LAYERS}')
+                           f'{PERMISSIBLE_ADDITIONAL_2D_LAYERS}')
 
     if 'ionosphere' in additional_2d_layers:
         # current working directory is ISCE directory

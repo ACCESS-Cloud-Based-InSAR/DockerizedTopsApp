@@ -5,7 +5,7 @@ import h5py
 import xarray as xr
 
 LAYER_JSON = Path(__file__).parents[0] / 'additional_layers.json'
-ADDITIONAL_LAYERS = json.load(open(LAYER_JSON))
+PERMISSIBLE_ADDITIONAL_2D_LAYERS = json.load(open(LAYER_JSON))
 
 
 def add_2d_layer(layer_name: str,
@@ -18,11 +18,11 @@ def add_2d_layer(layer_name: str,
     this function.
     """
 
-    possible_layers = list(ADDITIONAL_LAYERS.keys())
+    possible_layers = list(PERMISSIBLE_ADDITIONAL_2D_LAYERS.keys())
     if layer_name not in possible_layers:
         ValueError('layer_name must be in {", ".join(possible_layers)}')
 
-    layer_data = ADDITIONAL_LAYERS[layer_name]
+    layer_data = PERMISSIBLE_ADDITIONAL_2D_LAYERS[layer_name]
     dst_group = layer_data['dst_group']
     dst_variable = layer_data['dst_variable']
     band_number = layer_data['band_number']
