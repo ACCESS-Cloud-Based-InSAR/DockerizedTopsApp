@@ -41,7 +41,7 @@ def compute_solid_earth_tide_from_gunw(gunw_path: str, acq_type: str) -> xr.Data
                                                  set_attrs)
 
     # compute SET LOS estimate for each height level
-    tide_los = np.zeros(inc_angle.shape)
+    tide_los = np.zeros(inc_angle.shape, dtype=np.float32)
     for i in range(len(z_meta)):
         tide_los[i] = compute_los_solid_earth_tide(tide_e,
                                                    tide_n,
@@ -66,18 +66,17 @@ def get_gunw_attrs(gunw_path: str) -> Tuple[float, np.array, np.array,
     group = 'science/grids/imagingGeometry'
     with xr.open_dataset(gunw_path, group=group, engine='rasterio') as ds:
         z_meta = ds.heightsMeta.data
-        lat_meta = ds.y.data
-        lon_meta = ds.x.data
+        gt = ds.rio.transform()
         # convert angles to rad
         inc_angle = np.deg2rad(ds.incidenceAngle.data)
         az_angle = np.deg2rad(ds.azimuthAngle.data-90)
         solidtide_atr = {
-            'LENGTH': len(lat_meta),
-            'WIDTH': len(lon_meta),
-            'X_FIRST': lon_meta[0],
-            'Y_FIRST': lat_meta[0],
-            'X_STEP':  lon_meta[1] - lon_meta[0],
-            'Y_STEP': lat_meta[1] - lat_meta[0],
+            'LENGTH': az_angle.shape[1],
+            'WIDTH': az_angle.shape[2],
+            'X_FIRST': gt.c,
+            'Y_FIRST': gt.f,
+            'X_STEP':  gt.a,
+            'Y_STEP': gt.e,
         }
 
     return wavelength, z_meta, inc_angle, az_angle, solidtide_atr
@@ -113,8 +112,8 @@ def compute_los_solid_earth_tide(tide_e: np.array,
 
     # project ENU to radar line-of-sight (LOS)
     # with positive for motion towards satellite
-    tide_e_slant = tide_e * np.sin(inc_angle) * np.sin(az_angle) * -1
-    tide_n_slant = tide_n * np.sin(inc_angle) * np.cos(az_angle)
+    tide_e_slant = tide_e * (np.sin(inc_angle) * np.sin(az_angle) * -1)
+    tide_n_slant = tide_n * (np.sin(inc_angle) * np.cos(az_angle))
     tide_u_slant = tide_u * np.cos(inc_angle)
     tide_los = tide_e_slant + tide_n_slant + tide_u_slant
 
