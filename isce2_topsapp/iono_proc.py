@@ -4,14 +4,14 @@ import subprocess
 from pathlib import Path
 from typing import Union
 
+import numpy as np
 from isce.components import isceobj
 from isce.components.isceobj.TopsProc.runMergeBursts import (
     interpolateDifferentNumberOfLooks,
 )
-import numpy as np
 from jinja2 import Template
-from tqdm import tqdm
 from numpy.typing import NDArray
+from tqdm import tqdm
 from osgeo import gdal
 
 # List of parameters for ionospheric correction:
