@@ -12,27 +12,34 @@ def add_2d_layer(layer_name: str,
                  gunw_netcdf_path: Path) -> Path:
     """
     Combines a lot of standard formatting of the netcdf via rioxarray and
-    deletes the previous placeholder (we assume it exists via the placeholder).
+    deletes the previous placeholder if there is one.
 
-    We also assume any additional processing specific to GUNW is done outside of
+    We assume any additional processing specific to GUNW is done outside of
     this function.
     """
+
+    possible_layers = list(ADDITIONAL_LAYERS.keys())
+    if layer_name not in possible_layers:
+        ValueError('layer_name must be in {", ".join(possible_layers)}')
 
     layer_data = ADDITIONAL_LAYERS[layer_name]
     dst_group = layer_data['dst_group']
     dst_variable = layer_data['dst_variable']
     band_number = layer_data['band_number']
-    if not isinstance(band_number, int):
+    if not isinstance(band_number, int) and (band_number >= 1):
         ValueError('Layers must select individual layers from outputs i.e '
                    '1, 2, ...')
 
-    # The layers generally already exist within the file
+    # If the layers already exist within the file, we need to delete them otherwise the dummy placeholder
+    # Causes type errors when attempting to overwrite
     with h5py.File(gunw_netcdf_path, mode='a') as file:
         if dst_group in file:
             # Delete the variable to be written to
             if dst_variable in file[dst_group]:
                 del file[dst_group][dst_variable]
-            # Delete the group if there are no variables left
+            # Delete the group if there are no variables left to ensure correct type of arrays.
+            # If there are variables left, this routine appends the new array to the group (assumes same dims
+            # as existing arrays)
             if len(file[dst_group].keys()) == 0:
                 del file[dst_group]
 
