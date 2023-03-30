@@ -1,18 +1,15 @@
 import os
-
 import site
 import subprocess
-
 from pathlib import Path
 from typing import Union
-
-import numpy as np
-from jinja2 import Template
 
 from isce.components import isceobj
 from isce.components.isceobj.TopsProc.runMergeBursts import (
     interpolateDifferentNumberOfLooks,
 )
+import numpy as np
+from jinja2 import Template
 from tqdm import tqdm
 from numpy.typing import NDArray
 from osgeo import gdal
