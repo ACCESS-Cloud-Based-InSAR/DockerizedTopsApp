@@ -30,6 +30,6 @@ def download_water_mask(
 
     elif water_name == "GSHHS":
         # from water_mask import get_water_mask_raster
-        raise NotImplementedError("Your Message")
+        raise NotImplementedError("TODO, GSHHS not yet available")
 
     return {"water_mask": str(output_dir / mask_filename)}

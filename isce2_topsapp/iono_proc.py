@@ -11,8 +11,9 @@ from isce.components.isceobj.TopsProc.runMergeBursts import (
 )
 from jinja2 import Template
 from numpy.typing import NDArray
-from tqdm import tqdm
 from osgeo import gdal
+from tqdm import tqdm
+
 
 # List of parameters for ionospheric correction:
 # https://github.com/isce-framework/isce2/blob/8af43d2b9f291e2370e9112a3ead1449d0f2a386/examples/input_files/topsApp.xml#L182
