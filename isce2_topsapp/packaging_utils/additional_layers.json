@@ -29,7 +29,7 @@
                 "input_relative_path": "merged/dense_offsets.bil.geo",
                 "band_number": 2,
                 "attrs": {
-                        "standard_name": "azimuthPixelOffsets",
+                        "standard_name": "rangePixelOffsets",
                         "long_name": "rangePixelOffsets",
                         "units": "range radar pixel",
                         "description": "Range pixel offsets measured through patch correlation"
