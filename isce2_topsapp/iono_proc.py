@@ -1,20 +1,20 @@
 import os
-import site
 
+import site
 import subprocess
+
 from pathlib import Path
 from typing import Union
 
 import numpy as np
 from jinja2 import Template
-from tqdm import tqdm
 
-from numpy.typing import NDArray
 from isce.components import isceobj
 from isce.components.isceobj.TopsProc.runMergeBursts import (
     interpolateDifferentNumberOfLooks,
 )
-
+from tqdm import tqdm
+from numpy.typing import NDArray
 from osgeo import gdal
 
 # List of parameters for ionospheric correction:
@@ -95,68 +95,10 @@ def iono_processing(
         raise ValueError("TopsApp failed at step: ion-subband")
 
     # Step-2 Mask upper and lower band burst wrapped interferograms
-    # path to burst ifgs:
-    # ion/lower|upper/fine_interferogram/IW{1,2,3}/burst_{##}.int
-    # path to burst geometry: geom_reference/IW{1,2,3}/lat|lon_{##}.rdr
-
     if mask_filename:
         # Project mask to burst image coordinate space
-        workdir = Path(".").absolute()
-
-        def get_swath(x):
-            return x.split("/")[-2]
-
-        def get_burst(x):
-            return x.split("/")[-1].split("_")[-1].split(".")[0]
-
-        # Get all geometry files
-        geom_files = list(workdir.glob("geom_reference/IW*/lat*.rdr"))
-
-        # NOTE: THis can be easily parallized, skipped for now
-        with tqdm(total=len(geom_files)) as pbar:
-            for lat in geom_files:
-                pbar.set_description(
-                    f"Geo2radar mask {get_swath(str(lat))}\
-                                        /{get_burst(str(lat))}"
-                )
-
-                lon = str(lat).replace("lat", "lon")
-                # Get the swath and burst number
-                swath = get_swath(str(lat))
-                burst = get_burst(str(lat))
-                # Get output dir and file
-                output_dir = workdir / f"mask/{swath}"
-                output_dir.mkdir(parents=True, exist_ok=True)
-                output_file = output_dir / f"msk_{burst}.rdr"
-                # Projct mask to radar coordinate space
-                mask_geo2radar(mask_filename, str(lat), lon, str(output_file))
-                pbar.update()
-
-        # Get lower and upper band full-resolution interferograms
-        iono_location = "ion/{band}/fine_interferogram/IW*/burst*.int"
-        lower_band_ifgs = workdir.glob(iono_location.format(band="lower"))
-        upper_band_ifgs = workdir.glob(iono_location.format(band="upper"))
-
-        # Lower band interferograms
-        with tqdm(total=len(lower_band_ifgs + upper_band_ifgs)) as pbar:
-            for ifg in lower_band_ifgs + upper_band_ifgs:
-                band = str(ifg).split("/")[-4]
-                pbar.set_description(
-                    f"Masking {band}-iono interferograms \
-                                     {get_swath(str(ifg))}\
-                                     /{get_burst(str(ifg))}"
-                )
-
-                # Get the swath and burst number
-                swath = get_swath(str(ifg))
-                burst = get_burst(str(ifg))
-                # Get mask
-                mask_file = workdir / f"mask/{swath}/msk_{burst}.rdr.vrt"
-                mask_ds = gdal.Open(str(mask_file), gdal.GA_ReadOnly)
-                # Mask
-                mask_interferogram(str(ifg), mask_ds.ReadAsArray())
-                mask_ds = None  # close
-                pbar.update()
+        workdir = Path(".").resolve()
+        mask_iono_ifg_bursts(workdir, mask_filename)
 
     # Step-3 Compute ionospheric correction
     iono_xml = template.render(
@@ -202,8 +144,9 @@ def merge_bursts(
     img = isceobj.createImage()
     img.load(ionFilt + ".xml")
     ionFiltImage = (
-        np.fromfile(ionFilt, dtype=np.float32).reshape(img.length * 2, img.width)
-    )[1 : img.length * 2 : 2, :]
+        np.fromfile(ionFilt, dtype=np.float32).reshape(
+            img.length * 2, img.width)
+    )[1: img.length * 2: 2, :]
     img = isceobj.createImage()
     img.load(os.path.join(mergedir, mergedIfgname + ".xml"))
 
@@ -229,9 +172,69 @@ def merge_bursts(
     image.renderHdr()
 
 
+def mask_iono_ifg_bursts(tops_dir: Path,
+                         mask_filename: Union[str, Path]) -> None:
+    # Project mask to burst image coordinate space
+
+    def get_swath(x):
+        return x.split("/")[-2]
+
+    def get_burst(x):
+        return x.split("/")[-1].split("_")[-1].split(".")[0]
+
+    # Get all geometry files
+    geom_files = list(tops_dir.glob("geom_reference/IW*/lat*.rdr"))
+
+    # NOTE: THis can be easily parallized, skipped for now
+    with tqdm(total=len(geom_files)) as pbar:
+        for lat in geom_files:
+            pbar.set_description(
+                f"Geo2radar mask {get_swath(str(lat))}\
+                                        /{get_burst(str(lat))}"
+            )
+
+            lon = str(lat).replace("lat", "lon")
+            # Get the swath and burst number
+            swath = get_swath(str(lat))
+            burst = get_burst(str(lat))
+            # Get output dir and file
+            output_dir = tops_dir / f"mask/{swath}"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            output_file = output_dir / f"msk_{burst}.rdr"
+            # Projct mask to radar coordinate space
+            raster_geo2radar(mask_filename, str(lat), lon, str(output_file))
+            pbar.update()
+
+    # Get lower and upper band full-resolution interferograms
+    iono_location = "ion/{band}/fine_interferogram/IW*/burst*.int"
+    lower_band_ifgs = tops_dir.glob(iono_location.format(band="lower"))
+    upper_band_ifgs = tops_dir.glob(iono_location.format(band="upper"))
+
+    # Lower band interferograms
+    with tqdm(total=len(lower_band_ifgs + upper_band_ifgs)) as pbar:
+        for ifg in lower_band_ifgs + upper_band_ifgs:
+            band = str(ifg).split("/")[-4]
+            pbar.set_description(
+                f"Masking {band}-iono interferograms \
+                                     {get_swath(str(ifg))}\
+                                     /{get_burst(str(ifg))}"
+            )
+
+            # Get the swath and burst number
+            swath = get_swath(str(ifg))
+            burst = get_burst(str(ifg))
+            # Get mask
+            mask_file = tops_dir / f"mask/{swath}/msk_{burst}.rdr.vrt"
+            mask_ds = gdal.Open(str(mask_file), gdal.GA_ReadOnly)
+            # Mask
+            mask_interferogram(str(ifg), mask_ds.ReadAsArray())
+            mask_ds = None  # close
+            pbar.update()
+
+
 # UTILITIES FOR MASKING
-def mask_geo2radar(
-    maskFilename: Union[str, Path],
+def raster_geo2radar(
+    rasterFilename: Union[str, Path],
     latFilename: Union[str, Path],
     lonFilename: Union[str, Path],
     outputFilename: Union[str, Path],
@@ -255,10 +258,11 @@ def mask_geo2radar(
             path to save mask output file
     saveFlag : bool
             flag to locally save mask in radar coordinates
+            if False, function returns rdr mask array
     """
 
     # Open mask file
-    mask_ds = gdal.Open(maskFilename + ".vrt")
+    mask_ds = gdal.Open(rasterFilename + ".vrt")
     # Open lon and lat file
     lon_ds = gdal.Open(lonFilename + ".vrt")
     lat_ds = gdal.Open(latFilename + ".vrt")
@@ -267,12 +271,14 @@ def mask_geo2radar(
     lons = lon_ds.ReadAsArray()
     lats = lat_ds.ReadAsArray()
 
-    # Translate mask geo corrdinate to radar
+    # Translate raster from geographical to radar coordinate space
     lineIdx = np.int32(
-        (lats - mask_ds.GetGeoTransform()[3]) / mask_ds.GetGeoTransform()[5] + 0.5
+        (lats - mask_ds.GetGeoTransform()[3]) /
+        mask_ds.GetGeoTransform()[5] + 0.5
     )
     sampleIdx = np.int32(
-        (lons - mask_ds.GetGeoTransform()[0]) / mask_ds.GetGeoTransform()[1] + 0.5
+        (lons - mask_ds.GetGeoTransform()[0]) /
+        mask_ds.GetGeoTransform()[1] + 0.5
     )
     inboundIndex = np.logical_and(
         np.logical_and(lineIdx >= 0, lineIdx <= mask_ds.RasterYSize - 1),
@@ -288,7 +294,7 @@ def mask_geo2radar(
     lon_ds = None
     lat_ds = None
 
-    # Save
+    # Save in isce format
     if saveFlag:
         mask_radarcoord.astype(np.int8).tofile(outputFilename)
         image = isceobj.createImage()
