@@ -239,11 +239,11 @@ def raster_geo2radar(
     saveFlag: bool = True,
 ) -> NDArray:
     """
-    This routine translates mask raster
+    This routine translates raster
     from geographical to radar(image) coordinate space
 
-    maskFilename : str
-            path to georeferenced mask raster (must have vrt extension)
+    rasterFilename : str
+            path to georeferenced raster (must have vrt extension)
     latFilename : str
             path to radar lat.rdr file
             (bursts: geom_reference/IW{1,2,3}/lat_burst.rdr
@@ -253,10 +253,10 @@ def raster_geo2radar(
             (bursts: geom_reference/IW{1,2,3}/lon_burst.rdr
                      merged: merged/lon.rdr.full.vrt)
     outputFilename : str
-            path to save mask output file
+            path to save output file
     saveFlag : bool
-            flag to locally save mask in radar coordinates
-            if False, function returns rdr mask array
+            flag to locally save output in radar coordinates
+            if False, function returns rdr numpy array
     """
 
     # Open mask file
@@ -312,7 +312,7 @@ def mask_interferogram(
     outFilename: Union[str, Path] = None,
 ) -> None:
     """
-    This routine uses mask np.array to mask wrapped interferogram
+    This routine uses mask np.array in rdr to mask wrapped interferogram
     ifgFilename : str
             path to georeferenced mask raster (must have vrt extension)
     maskArray : np.array
