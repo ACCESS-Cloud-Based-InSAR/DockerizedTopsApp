@@ -15,6 +15,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Updated
 * Explode footprints polygons
+* Added support for using water mask in ionospheric correction computation
 
 ### Removed
 * Python 3.8 Support
