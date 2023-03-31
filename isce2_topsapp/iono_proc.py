@@ -187,8 +187,8 @@ def mask_iono_ifg_bursts(tops_dir: Path,
     with tqdm(total=len(geom_files)) as pbar:
         for lat in geom_files:
             pbar.set_description(
-                f'Geo2radar mask {get_swath(str(lat))}'
-                f'/ {get_burst(str(lat))}'
+                f"Geo2radar mask {get_swath(str(lat))}"
+                f" /{get_burst(str(lat))}"
             )
 
             lon = str(lat).replace("lat", "lon")
@@ -325,6 +325,10 @@ def mask_interferogram(
     # Read interferogram
     int_ds = gdal.Open(ifgFilename + ".vrt")
     int_array = int_ds.ReadAsArray()
+
+    if not np.array_equal(int_array.shape, maskArray.shape):
+        raise ValueError('Mask array dimensions do not match'
+                         ' the interferogram dimensions!')
 
     # Mask interferogram
     int_array.imag[np.bool_(maskArray)] = 0
