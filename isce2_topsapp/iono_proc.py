@@ -48,6 +48,8 @@ def iono_processing(
     isce_app_path = Path(f"{site.getsitepackages()[0]}" "/isce/applications/")
     os.environ["PATH"] += ":" + str(isce_app_path)
 
+    tops_app_cmd = f"{isce_app_path}/topsApp.py"
+
     # Define topsApp input xml parameters
     ion_kwargs = {
         "orbit_directory": orbit_directory,
@@ -84,8 +86,6 @@ def iono_processing(
 
     with open("ionoApp.xml", "w") as file:
         file.write(iono_xml)
-
-    tops_app_cmd = f"{isce_app_path}/topsApp.py"
 
     step_cmd = f"{tops_app_cmd} ionoApp.xml --dostep=ion"
     result = subprocess.run(step_cmd, shell=True)
@@ -187,8 +187,8 @@ def mask_iono_ifg_bursts(tops_dir: Path,
     with tqdm(total=len(geom_files)) as pbar:
         for lat in geom_files:
             pbar.set_description(
-                f"Geo2radar mask {get_swath(str(lat))}\
-                                        /{get_burst(str(lat))}"
+                f'Geo2radar mask {get_swath(str(lat))}'
+                f'/ {get_burst(str(lat))}'
             )
 
             lon = str(lat).replace("lat", "lon")
@@ -205,17 +205,16 @@ def mask_iono_ifg_bursts(tops_dir: Path,
 
     # Get lower and upper band full-resolution interferograms
     iono_location = "ion/{band}/fine_interferogram/IW*/burst*.int"
-    lower_band_ifgs = tops_dir.glob(iono_location.format(band="lower"))
-    upper_band_ifgs = tops_dir.glob(iono_location.format(band="upper"))
+    lower_band_ifgs = list(tops_dir.glob(iono_location.format(band="lower")))
+    upper_band_ifgs = list(tops_dir.glob(iono_location.format(band="upper")))
 
     # Lower band interferograms
     with tqdm(total=len(lower_band_ifgs + upper_band_ifgs)) as pbar:
         for ifg in lower_band_ifgs + upper_band_ifgs:
             band = str(ifg).split("/")[-4]
             pbar.set_description(
-                f"Masking {band}-iono interferograms \
-                                     {get_swath(str(ifg))}\
-                                     /{get_burst(str(ifg))}"
+                f"Masking {band}-iono interferograms"
+                f" {get_swath(str(ifg))}/{get_burst(str(ifg))}"
             )
 
             # Get the swath and burst number
@@ -246,12 +245,12 @@ def raster_geo2radar(
             path to georeferenced raster (must have vrt extension)
     latFilename : str
             path to radar lat.rdr file
-            (bursts: geom_reference/IW{1,2,3}/lat_burst.rdr
-                     merged: merged/lat.rdr.full.vrt)
+            bursts: geom_reference/IW{1,2,3}/lat_burst.rdr
+                    merged: merged/lat.rdr.full.vrt
     lonFilename : str
             path to radar lon.rdr file
-            (bursts: geom_reference/IW{1,2,3}/lon_burst.rdr
-                     merged: merged/lon.rdr.full.vrt)
+            bursts: geom_reference/IW{1,2,3}/lon_burst.rdr
+                    merged: merged/lon.rdr.full.vrt
     outputFilename : str
             path to save output file
     saveFlag : bool
@@ -317,10 +316,10 @@ def mask_interferogram(
             path to georeferenced mask raster (must have vrt extension)
     maskArray : np.array
             mask 2d array  in rdr coordinates
-            (1: mask values, 0; no-mask values))
+            1: mask values, 0; no-mask values
     outFilename : str
             path where to save masked interferogram
-            (default: None = overwrite existing)
+            default: None = overwrite existing
     """
 
     # Read interferogram
