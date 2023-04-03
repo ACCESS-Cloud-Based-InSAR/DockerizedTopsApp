@@ -169,6 +169,7 @@ def gunw_slc():
         args.secondary_scenes,
         dry_run=args.dry_run,
         frame_id=args.frame_id,
+        water_mask_flag=args.estimate_ionosphere_delay,
     )
     loc_data["frame_id"] = args.frame_id
 
