@@ -151,7 +151,6 @@ def gunw_slc():
         "--compute-solid-earth-tide", type=true_false_string_argument, default=False
     )
     parser.add_argument("--esd-coherence-threshold", type=float, default=-1.0)
-    parser.add_argument("--no-water-mask", action="store_false")
     args = parser.parse_args()
 
     ensure_earthdata_credentials(args.username, args.password)
@@ -168,7 +167,6 @@ def gunw_slc():
         args.reference_scenes,
         args.secondary_scenes,
         dry_run=args.dry_run,
-        mask_flag=args.no_water_mask,
         frame_id=args.frame_id,
     )
     loc_data["frame_id"] = args.frame_id
