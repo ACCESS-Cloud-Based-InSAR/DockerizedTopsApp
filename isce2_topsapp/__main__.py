@@ -34,6 +34,7 @@ def localize_data(
     secondary_scenes: list,
     frame_id: int = -1,
     dry_run: bool = False,
+    mask_flag: bool = True,
 ) -> dict:
     """The dry-run prevents gets necessary metadata from SLCs and orbits.
 
@@ -53,7 +54,11 @@ def localize_data(
     out_aux_cal = {}
     if not dry_run:
         out_dem = download_dem_for_isce2(out_slc["extent"])
-        out_water_mask = download_water_mask(out_slc["extent"])
+        if mask_flag:
+            out_water_mask = download_water_mask(out_slc["extent"])
+        else:
+            print('Skip using water mask!')
+            out_water_mask = {"water_mask": None}
         out_aux_cal = download_aux_cal()
 
     out = {
@@ -146,6 +151,7 @@ def gunw_slc():
         "--compute-solid-earth-tide", type=true_false_string_argument, default=False
     )
     parser.add_argument("--esd-coherence-threshold", type=float, default=-1.0)
+    parser.add_argument("--no-water-mask", action="store_false")
     args = parser.parse_args()
 
     ensure_earthdata_credentials(args.username, args.password)
@@ -162,6 +168,7 @@ def gunw_slc():
         args.reference_scenes,
         args.secondary_scenes,
         dry_run=args.dry_run,
+        mask_flag=args.no_water_mask,
         frame_id=args.frame_id,
     )
     loc_data["frame_id"] = args.frame_id
