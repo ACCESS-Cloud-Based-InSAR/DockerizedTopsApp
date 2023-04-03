@@ -34,6 +34,7 @@ def localize_data(
     secondary_scenes: list,
     frame_id: int = -1,
     dry_run: bool = False,
+    water_mask_flag: bool = True,
 ) -> dict:
     """The dry-run prevents gets necessary metadata from SLCs and orbits.
 
@@ -53,7 +54,12 @@ def localize_data(
     out_aux_cal = {}
     if not dry_run:
         out_dem = download_dem_for_isce2(out_slc["extent"])
-        out_water_mask = download_water_mask(out_slc["extent"])
+        out_water_mask = {"water_mask": None}
+        # For ionospheric correction computation
+        if water_mask_flag:
+            out_water_mask = download_water_mask(
+                out_slc["extent"],  water_name='SWDB')
+
         out_aux_cal = download_aux_cal()
 
     out = {
@@ -163,6 +169,7 @@ def gunw_slc():
         args.secondary_scenes,
         dry_run=args.dry_run,
         frame_id=args.frame_id,
+        water_mask_flag=args.estimate_ionosphere_delay,
     )
     loc_data["frame_id"] = args.frame_id
 

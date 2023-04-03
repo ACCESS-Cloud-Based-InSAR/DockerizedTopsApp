@@ -8,8 +8,12 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.2.4]
 
-## Fixed
+### Fixed
 * For Solid Earth Tide computation, derive coordinates and spacing from geotrans as opposed to latitude/longitude metadata arrays
+* Include topsapp_iono template. 
+
+### Added
+* localize_data within __main__.py added option to use/not use water mask for ionosphere processing
 
 ## [0.2.3]
 

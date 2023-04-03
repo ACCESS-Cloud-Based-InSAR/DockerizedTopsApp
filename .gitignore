@@ -92,6 +92,7 @@ conf/settings.conf
 
 # Include template directory
 !isce2_topsapp/templates/topsapp_template.xml
+!isce2_topsapp/templates/topsapp_iono_template.xml
 
 
 # Tests
