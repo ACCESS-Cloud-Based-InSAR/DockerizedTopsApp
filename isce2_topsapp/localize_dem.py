@@ -53,7 +53,7 @@ def download_dem_for_isce2(extent: list,
     full_res_dem_dir : Path, optional
     low_res_dem_dir : Path, optional
     buffer : float, optional
-        In degrees, by default .1, which is about 11 km at equator
+        In degrees, by default .4, which is about 44 km at equator (or about 2.5 bursts at the equator)
     Returns
     -------
     dict
