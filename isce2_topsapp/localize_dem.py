@@ -47,7 +47,7 @@ def download_dem_for_isce2(extent: list,
     Parameters
     ----------
     extent : list
-        [xmin, ymin, xmax, ymin] for epsg:4326 (i.e. (x, y) = (lon, lat))
+        [xmin, ymin, xmax, ymax] for epsg:4326 (i.e. (x, y) = (lon, lat))
     dem_name : str, optional
         See names in `dem_stitcher`
     full_res_dem_dir : Path, optional
