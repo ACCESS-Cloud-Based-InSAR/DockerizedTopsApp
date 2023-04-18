@@ -2,18 +2,18 @@
 # Copyright 2023
 # California Institute of Technology
 
-import os
 import multiprocessing
+import os
 import site
 from pathlib import Path
 from typing import Union
 
-import scipy.signal as ss
 import numpy as np
-from skimage import morphology
+import scipy.signal as ss
 
 from isce.applications import topsApp
 from isce.components import isceobj
+from skimage import morphology
 
 from isce.components.isceobj.TopsProc import runIon
 from isce.components.isceobj.TopsProc.runMergeBursts import (
@@ -21,6 +21,7 @@ from isce.components.isceobj.TopsProc.runMergeBursts import (
     mergeBursts2, multilook,
 
 )
+
 from numpy.typing import NDArray
 from osgeo import gdal
 from tqdm import tqdm
