@@ -8,16 +8,16 @@ import site
 from pathlib import Path
 from typing import Union
 
-from isce.applications import topsApp
 import numpy as np
+from isce.applications import topsApp
 from isce.components import isceobj
 from isce.components.isceobj.TopsProc import runIon
+import scipy.signal as ss
 from isce.components.isceobj.TopsProc.runMergeBursts import (
     interpolateDifferentNumberOfLooks, mergeBox,
     mergeBursts2, multilook,
 
 )
-import scipy.signal as ss
 from numpy.typing import NDArray
 from osgeo import gdal
 from skimage import morphology
