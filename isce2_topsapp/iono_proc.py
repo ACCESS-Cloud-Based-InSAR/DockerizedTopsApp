@@ -10,6 +10,7 @@ from typing import Union
 
 from isce.applications import topsApp
 from isce.components import isceobj
+import numpy as np
 from isce.components.isceobj.TopsProc import runIon
 from isce.components.isceobj.TopsProc.runMergeBursts import (
     interpolateDifferentNumberOfLooks, mergeBox,
@@ -17,15 +18,10 @@ from isce.components.isceobj.TopsProc.runMergeBursts import (
 
 )
 
-import numpy as np
 from numpy.typing import NDArray
-
-from osgeo import gdal
-
 import scipy.signal as ss
-
+from osgeo import gdal
 from skimage import morphology
-
 from tqdm import tqdm
 
 '''
