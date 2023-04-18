@@ -4,21 +4,24 @@
 
 import os
 import site
+import multiprocessing
 from pathlib import Path
 from typing import Union
-from skimage import morphology
+
 import scipy.signal as ss
-import multiprocessing
+from skimage import morphology
+
 
 import numpy as np
+from isce.components import isceobj
 from isce.applications import topsApp
 from isce.components.isceobj.TopsProc import runIon
-from isce.components import isceobj
-from isce.components.isceobj.TopsProc.runMergeBursts import (
-    interpolateDifferentNumberOfLooks, multilook,
-    mergeBursts2, mergeBox
-)
 
+from isce.components.isceobj.TopsProc.runMergeBursts import (
+    interpolateDifferentNumberOfLooks, mergeBox,
+    mergeBursts2, multilook,
+
+)
 from numpy.typing import NDArray
 from osgeo import gdal
 from tqdm import tqdm
