@@ -11,13 +11,11 @@ from typing import Union
 import numpy as np
 from isce.applications import topsApp
 from isce.components import isceobj
-from isce.components.isceobj.TopsProc import runIon
 import scipy.signal as ss
+from isce.components.isceobj.TopsProc import runIon
 from isce.components.isceobj.TopsProc.runMergeBursts import (
     interpolateDifferentNumberOfLooks, mergeBox,
-    mergeBursts2, multilook,
-
-)
+    mergeBursts2, multilook)
 from numpy.typing import NDArray
 from osgeo import gdal
 from skimage import morphology
