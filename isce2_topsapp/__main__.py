@@ -193,15 +193,16 @@ def gunw_slc():
     )
 
     # Run ionospheric correction
+    # MG: correct burst jumps, e.g. needed for Arabian
+    #   processing. TODO: We need a trigger function for
+    #   this option (it adds almost double time to iono)
+    #   example: look at filt_toposphase.unw or .flat
+    #   and analyze if there are any burst jumps,
+    #   if yes, set this option True
     if args.estimate_ionosphere_delay:
         iono_processing(
-            reference_slc_zips=loc_data["ref_paths"],
-            secondary_slc_zips=loc_data["sec_paths"],
-            orbit_directory=loc_data["orbit_directory"],
-            extent=loc_data["processing_extent"],
-            dem_for_proc=loc_data["full_res_dem_path"],
-            dem_for_geoc=loc_data["low_res_dem_path"],
             mask_filename=loc_data["water_mask"],
+            correct_burst_jumps=False,
         )
 
     ref_properties = loc_data["reference_properties"]
