@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
+import scipy.signal as ss
 from isce.applications import topsApp
 from isce.components import isceobj
-import scipy.signal as ss
 from isce.components.isceobj.TopsProc import runIon
 from isce.components.isceobj.TopsProc.runMergeBursts import (
     interpolateDifferentNumberOfLooks, mergeBox,
