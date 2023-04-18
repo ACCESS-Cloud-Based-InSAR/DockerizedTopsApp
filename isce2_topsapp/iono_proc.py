@@ -3,20 +3,19 @@
 # California Institute of Technology
 
 import os
-import site
 import multiprocessing
+import site
 from pathlib import Path
 from typing import Union
 
 import scipy.signal as ss
+import numpy as np
 from skimage import morphology
 
-
-import numpy as np
-from isce.components import isceobj
 from isce.applications import topsApp
-from isce.components.isceobj.TopsProc import runIon
+from isce.components import isceobj
 
+from isce.components.isceobj.TopsProc import runIon
 from isce.components.isceobj.TopsProc.runMergeBursts import (
     interpolateDifferentNumberOfLooks, mergeBox,
     mergeBursts2, multilook,
