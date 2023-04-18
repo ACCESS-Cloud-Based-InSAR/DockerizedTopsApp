@@ -9,17 +9,16 @@ from pathlib import Path
 from typing import Union
 
 from isce.applications import topsApp
-from isce.components import isceobj
 import numpy as np
+from isce.components import isceobj
 from isce.components.isceobj.TopsProc import runIon
 from isce.components.isceobj.TopsProc.runMergeBursts import (
     interpolateDifferentNumberOfLooks, mergeBox,
     mergeBursts2, multilook,
 
 )
-
-from numpy.typing import NDArray
 import scipy.signal as ss
+from numpy.typing import NDArray
 from osgeo import gdal
 from skimage import morphology
 from tqdm import tqdm
