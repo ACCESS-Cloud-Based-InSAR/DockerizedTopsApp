@@ -10,7 +10,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 * For Solid Earth Tide computation, derive coordinates and spacing from geotrans as opposed to latitude/longitude metadata arrays
-* Include topsapp_iono template.
+* Include topsapp_iono template. 
 * Increases DEM buffer to .4 from .1 to ensure the extent of at least two bursts (~40 km) are added when retrieving DEM (because estimated footprint can differ from what ISCE2 generates for a GUNW extent)
 * Fixed ionosphere computation over water, includes masking conncomp zero, phase bridging, and modified adaptive gaussian filtering
 
