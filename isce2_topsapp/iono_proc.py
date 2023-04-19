@@ -6,7 +6,7 @@ import multiprocessing
 import os
 import site
 from pathlib import Path
-from typing import Union
+from typing import Union, Type
 
 import numpy as np
 import scipy.signal as ss
@@ -22,6 +22,9 @@ from skimage import morphology
 from tqdm import tqdm
 
 '''
+Reference: Liang et al. (2019): Ionospheric Correction of InSAR Time Series
+Analysis of C-band Sentinel-1 TOPS Data, doi:0.1109/TGRS.2019.2908494
+
 TODO: add unwrapping changes to ionosphere swath by swath
 '''
 
@@ -277,7 +280,7 @@ def merge_bursts(
     image.renderHdr()
 
 
-def merge_multilook_bursts(self,
+def merge_multilook_bursts(self: Type[topsApp.TopsInSAR],
                            input_dir: str = 'ion/ion_burst',
                            output_filename: str = 'topophase.ion',
                            mergedir: Union[str, Path] = "./merged") -> None:
@@ -480,11 +483,10 @@ def brige_components(unwrapped_ifg: str, connected_components: str) -> None:
 
         # Create a binary mask for the current component
         mask = np.zeros_like(interferogram, dtype=bool)
-        mask[labels == i] = True
+        mask = (labels == i)
 
         # Apply a binary closing operation to the mask
-        # to bridge any unwrapping errors
-        mask = morphology.binary_closing(mask)
+        mask = morphology.binary_closing(mask, structure=None, iterations=1)
 
         # Calculate the median phase value for the current component
         median_phase = np.median(interferogram[mask])
@@ -502,7 +504,8 @@ def brige_components(unwrapped_ifg: str, connected_components: str) -> None:
 # MODIFIED FUNCTIONS FROM ISCE2/TOPSPROC, TRIED TO KEEP THEM
 # IN AN ORIGINAL FORM
 
-def unwrap(self, ionParam, use_bridging=True, use_conncomp=True) -> None:
+def unwrap(self: Type[topsApp.TopsInSAR], ionParam: Type[runIon.dummy],
+           use_bridging: bool = True, use_conncomp: bool = True) -> None:
     '''
     unwrap lower and upper band interferograms
     ref: isce2/components/isceobj/TopsProc/runIon.py#L915
@@ -548,8 +551,8 @@ def unwrap(self, ionParam, use_bridging=True, use_conncomp=True) -> None:
     runIon.multilook_unw(self, ionParam, ionParam.mergedDirname)
 
 
-def filt_gaussian(self, ionParam,
-                  coh_threshold=0.5, sigma_rule=2) -> None:
+def filt_gaussian(self: Type[topsApp.TopsInSAR], ionParam: Type[runIon.dummy],
+                  coh_threshold: float = 0.5, sigma_rule: int = 2) -> None:
     '''
     This function filters image using gaussian filter
 
@@ -634,7 +637,8 @@ def filt_gaussian(self, ionParam,
     cor_ds = None
 
 
-def adaptive_gaussian(ionos, wgt, size_max, size_min):
+def adaptive_gaussian(ionos: NDArray, wgt: NDArray,
+                      size_max: int = 200, size_min: int = 100) -> NDArray:
     '''
     This program performs Gaussian filtering with adaptive window size.
 
