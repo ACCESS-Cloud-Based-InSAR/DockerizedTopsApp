@@ -6,7 +6,7 @@ import multiprocessing
 import os
 import site
 from pathlib import Path
-from typing import Union, Type
+from typing import Type, Union
 
 import numpy as np
 import scipy.signal as ss
