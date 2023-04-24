@@ -4,10 +4,10 @@
 
 import multiprocessing
 import os
-import site
 import datetime
-from pathlib import Path
+import site
 import shutil
+from pathlib import Path
 from typing import Type, Union
 
 import numpy as np
