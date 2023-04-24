@@ -3,10 +3,10 @@
 # California Institute of Technology
 
 import multiprocessing
-import os
 import datetime
-import site
+import os
 import shutil
+import site
 from pathlib import Path
 from typing import Type, Union
 
