@@ -6,19 +6,18 @@ import multiprocessing
 import os
 import site
 from pathlib import Path
+import datetime
+import shutil
 from typing import Type, Union
 
-import shutil
-import datetime
 import numpy as np
 import scipy.signal as ss
 from isce.applications import topsApp
 from isce.components import isceobj
 from isce.components.isceobj.TopsProc import runIon
 from isce.components.isceobj.TopsProc.runMergeBursts import (
-    interpolateDifferentNumberOfLooks, mergeBox,
-    adjustValidWithLooks, mergeBurstsVirtual,
-    mergeBursts2, multilook)
+    adjustValidWithLooks, interpolateDifferentNumberOfLooks,
+    mergeBox, mergeBursts2, mergeBurstsVirtual, multilook)
 from numpy.typing import NDArray
 from osgeo import gdal
 from skimage import morphology
@@ -456,8 +455,8 @@ def mask_interferogram(
 def brige_components(unwrapped_ifg: str,
                      connected_components: str) -> None:
     """
-    This routine preforms "bridging' of unwrapped phase 
-    connected components. Each component is shifted with 
+    This routine preforms "bridging' of unwrapped phase
+    connected components. Each component is shifted with
     its median value
 
     unwrapped_ifg : str
@@ -882,7 +881,7 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
         ########################################################
         # slight filtering to improve the estimation accuarcy
         # of swath difference
-        if 1 and shutil.which('psfilt1') != None:
+        if 1 and shutil.which('psfilt1') is not None:
             cmd1 = 'mv {} tmp'.format(lowerintfile)
             cmd2 = 'psfilt1 tmp {} {} .3 32 8'.format(lowerintfile, width)
             cmd3 = 'rm tmp'
