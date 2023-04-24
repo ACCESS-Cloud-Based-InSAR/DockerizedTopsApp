@@ -2,8 +2,8 @@
 # Copyright 2023
 # California Institute of Technology
 
-import multiprocessing
 import datetime
+import multiprocessing
 import os
 import shutil
 import site
