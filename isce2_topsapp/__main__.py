@@ -178,6 +178,10 @@ def gunw_slc():
     json.dump(loc_data, open("loc_data.json", "w"),
               indent=2, cls=MetadataEncoder)
 
+    # Turn-off ESD when using ionospheric computation
+    if args.estimate_ionosphere_delay:
+        args.esd_coherence_threshold = -1
+
     topsapp_processing(
         reference_slc_zips=loc_data["ref_paths"],
         secondary_slc_zips=loc_data["sec_paths"],
