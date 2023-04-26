@@ -222,8 +222,9 @@ def gunw_slc():
     )
 
     if args.compute_solid_earth_tide:
-        nc_path = update_gunw_with_solid_earth_tide(nc_path, "reference")
-        nc_path = update_gunw_with_solid_earth_tide(nc_path, "secondary")
+        # The last path specifies the ISCE data directory to read import metadata
+        nc_path = update_gunw_with_solid_earth_tide(nc_path, "reference", Path.cwd())
+        nc_path = update_gunw_with_solid_earth_tide(nc_path, "secondary", Path.cwd())
 
     if args.compute_solid_earth_tide or args.estimate_ionosphere_delay:
         update_gunw_internal_version_attribute(nc_path, new_version="1c")
