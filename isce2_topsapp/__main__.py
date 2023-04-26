@@ -222,7 +222,8 @@ def gunw_slc():
     )
 
     if args.compute_solid_earth_tide:
-        # The last path specifies the ISCE data directory to read import metadata
+        # The last path specifies the ISCE data directory (as above) to read orbit metadata required by ISCE2
+        # for azimuth time computation used in Solid Earth Tide Layers
         nc_path = update_gunw_with_solid_earth_tide(nc_path, "reference", Path.cwd())
         nc_path = update_gunw_with_solid_earth_tide(nc_path, "secondary", Path.cwd())
 
