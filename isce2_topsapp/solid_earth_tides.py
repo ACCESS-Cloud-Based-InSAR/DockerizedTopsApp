@@ -62,14 +62,19 @@ def compute_solid_earth_tide_from_gunw(*,
         lon_res, lat_res = ds.rio.resolution()
         lat_res = -lat_res
 
+        height_coord_arr = ds.heightsMeta.data
+        # half pixel shift to ensure AREA (i.e. upper left corner) convention assumed by pysolid
+        # the xarray coordinates are pixel centered
+        latitude_coord_arr = ds.latitudeMeta.data - lat_res / 2.
+        longitude_coord_arr = ds.longitudeMeta.data + lon_res / 2.
         # compute differential SET ENU
-        # the sapes will match the variables of the xarray dataset (or mesh of the coords) i.e.
+        # the output shapes will match the variables of the xarray dataset (or mesh of the coords) i.e.
         # height_dim x latitude_dim x longitude_dim
         tide_e, tide_n, tide_u = compute_enu_solid_earth_tide(isce_data_dir=isce_data_dir,
                                                               reference_or_secondary=reference_or_secondary,
-                                                              height_coord_arr=ds.heightsMeta.data,
-                                                              latitude_coord_arr=ds.latitudeMeta.data,
-                                                              longitude_coord_arr=ds.longitudeMeta.data,
+                                                              height_coord_arr=height_coord_arr,
+                                                              latitude_coord_arr=latitude_coord_arr,
+                                                              longitude_coord_arr=longitude_coord_arr,
                                                               res_y=lat_res,
                                                               res_x=lon_res)
 
