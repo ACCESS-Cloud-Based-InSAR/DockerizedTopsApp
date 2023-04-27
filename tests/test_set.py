@@ -1,13 +1,14 @@
 import shutil
 
-import rasterio
-from affine import Affine
-from rasterio.crs import CRS
-import xarray as xr
 import numpy as np
+import rasterio
+import xarray as xr
+from affine import Affine
 from numpy.testing import assert_almost_equal
+from rasterio.crs import CRS
 
-from isce2_topsapp.solid_earth_tides import update_gunw_with_solid_earth_tide, get_azimuth_time_array
+from isce2_topsapp.solid_earth_tides import (get_azimuth_time_array,
+                                             update_gunw_with_solid_earth_tide)
 
 
 def test_set_workflow(isce_data_dir_for_set,
@@ -33,6 +34,7 @@ def test_set_workflow(isce_data_dir_for_set,
 
 
 def test_azimuth_time(isce_data_dir_for_set, gunw_path_for_set):
+    """Ensures deviation of retrieved azimuth time array is within 1e-3 seconds"""
     group = 'science/grids/imagingGeometry'
     with xr.open_dataset(gunw_path_for_set, group=group) as ds:
         lon_res, lat_res = ds.rio.resolution()
