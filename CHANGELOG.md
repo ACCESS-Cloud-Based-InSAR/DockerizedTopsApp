@@ -9,8 +9,8 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.2.4]
 
 ### Fixed
-* For Solid Earth Tide computation, derive coordinates and spacing from geotrans as opposed to latitude/longitude metadata arrays
-* Include topsapp_iono template. 
+* For Solid Earth Tide computation, use azimuth timing to calculate solid earth tide in `science/grids/imagingGeometry` reference frame using ISCE2 rdr2geo.
+* Include topsapp_iono template.
 
 ### Added
 * localize_data within __main__.py added option to use/not use water mask for ionosphere processing
