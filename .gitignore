@@ -107,6 +107,14 @@ tests/out/*.ipynb
 tests/**/*.json
 !tests/sample_loc_metadata.json
 !tests/midnight_crossing_metadata.json
+!tests/set_test_data/S1-GUNW-A-R-064-tops-20210723_20210711-015000-00119W_00033N-PP-6267-v2_0_6.nc
+!tests/set_test_data/reference/IW1.xml
+!tests/set_test_data/reference/IW2.xml
+!tests/set_test_data/reference/IW3.xml
+!tests/set_test_data/secondary/IW1.xml
+!tests/set_test_data/secondary/IW2.xml
+!tests/set_test_data/secondary/IW3.xml
+
 
 # Use geojson zip file for ARIA s1 frame data
 !isce2_topsapp/data/s1_gunw_frame_footprints.geojson.zip
