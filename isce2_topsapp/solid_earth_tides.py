@@ -65,8 +65,8 @@ def compute_solid_earth_tide_from_gunw(*,
         height_coord_arr = ds.heightsMeta.data
         # half pixel shift to ensure AREA (i.e. upper left corner) convention assumed by pysolid
         # the xarray coordinates are pixel centered
-        latitude_coord_arr = ds.latitudeMeta.data - lat_res / 2.
-        longitude_coord_arr = ds.longitudeMeta.data + lon_res / 2.
+        latitude_coord_arr = ds.latitudeMeta.data + lat_res / 2.
+        longitude_coord_arr = ds.longitudeMeta.data - lon_res / 2.
         # compute differential SET ENU
         # the output shapes will match the variables of the xarray dataset (or mesh of the coords) i.e.
         # height_dim x latitude_dim x longitude_dim
@@ -102,10 +102,10 @@ def get_orbit_from_isce_xml(product_dir: Path):
     return orb
 
 
-def get_azimuth_array(product_dir: Path,
-                      height_mesh_arr: np.ndarray,
-                      latitude_mesh_arr: np.ndarray,
-                      longitude_mesh_arr: np.ndarray) -> np.ndarray:
+def get_azimuth_time_array(product_dir: Path,
+                           height_mesh_arr: np.ndarray,
+                           latitude_mesh_arr: np.ndarray,
+                           longitude_mesh_arr: np.ndarray) -> np.ndarray:
 
     orb = get_orbit_from_isce_xml(product_dir)
 
@@ -201,10 +201,10 @@ def compute_enu_solid_earth_tide(*,
                                                                          # height x latitude x longitude
                                                                          indexing='ij')
 
-    azimuth_time_arr = get_azimuth_array(product_dir,
-                                         height_mesh_arr,
-                                         latitude_mesh_arr,
-                                         longitude_mesh_arr)
+    azimuth_time_arr = get_azimuth_time_array(product_dir,
+                                              height_mesh_arr,
+                                              latitude_mesh_arr,
+                                              longitude_mesh_arr)
 
     latitude_flat = latitude_mesh_arr.ravel()
     longitude_flat = latitude_mesh_arr.ravel()
