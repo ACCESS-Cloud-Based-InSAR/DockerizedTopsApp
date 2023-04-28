@@ -11,14 +11,14 @@ from isce2_topsapp.solid_earth_tides import (get_azimuth_time_array,
                                              update_gunw_with_solid_earth_tide)
 
 
-def test_set_workflow(isce_data_dir_for_set,
+def test_set_workflow(orbit_files_for_set,
                       gunw_path_for_set,
                       tmp_path):
     tmp_gunw = tmp_path / 'temp.nc'
     shutil.copy(gunw_path_for_set, tmp_gunw)
 
-    update_gunw_with_solid_earth_tide(tmp_gunw, 'reference', isce_data_dir_for_set)
-    # update_gunw_with_solid_earth_tide(tmp_gunw, 'secondary', isce_data_dir_for_set)
+    update_gunw_with_solid_earth_tide(tmp_gunw, 'reference', [orbit_files_for_set['reference']])
+    update_gunw_with_solid_earth_tide(tmp_gunw, 'secondary', [orbit_files_for_set['secondary']])
 
     for acq_type in ['reference']:  # , 'secondary']:
         group = f'/science/grids/corrections/external/tides/solidEarth/{acq_type}'
@@ -33,7 +33,7 @@ def test_set_workflow(isce_data_dir_for_set,
             assert t != Affine(1, 0, 0, 0, 1, 0)
 
 
-def test_azimuth_time(isce_data_dir_for_set, gunw_path_for_set):
+def test_azimuth_time(orbit_files_for_set, gunw_path_for_set):
     """Ensures deviation of retrieved azimuth time array is within 1e-3 seconds"""
     group = 'science/grids/imagingGeometry'
     with xr.open_dataset(gunw_path_for_set, group=group) as ds:
@@ -47,7 +47,7 @@ def test_azimuth_time(isce_data_dir_for_set, gunw_path_for_set):
 
     hgt_mesh, lat_mesh, lon_mesh = np.meshgrid(hgt, lat, lon, indexing='ij')
     # Azimuth time array
-    X = get_azimuth_time_array(product_dir=isce_data_dir_for_set / 'reference',
+    X = get_azimuth_time_array(orbit_xmls=[orbit_files_for_set['reference']],
                                height_mesh_arr=hgt_mesh,
                                latitude_mesh_arr=lat_mesh,
                                longitude_mesh_arr=lon_mesh)

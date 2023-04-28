@@ -7,25 +7,107 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 import datetime
+import xml.etree.ElementTree as ET
 from itertools import starmap
 from pathlib import Path
+from typing import Union
 
 import h5py
 import numpy as np
 import pandas as pd
 import xarray as xr
 from isce.components.isceobj.Constants import SPEED_OF_LIGHT
+from isce.components.isceobj.Orbit.Orbit import Orbit, StateVector
 from pysolid.solid import solid_grid
 from tqdm import tqdm
 
-from isce2_topsapp.packaging_utils.makeGeocube import (getMergedOrbit,
-                                                       loadProduct)
+
+def read_ESA_Orbit_file(orbit_xml: Union[str, Path]) -> list[np.ndarray]:
+    """
+    Source: https://github.com/dbekaert/RAiDER/blob/dev/tools/RAiDER/losreader.py#L465
+    Note: Raider cannot be imported because ISCE2 and ISCE3 require very different
+    environments.
+
+    Parameters
+    ----------
+    orbit_xml : str | Path
+        Orbit xml file
+
+    Returns
+    -------
+    list[np.ndarray]
+      [t, pos_x, pos_y, pos_z, vel_x, vel_y, vel_z] each entry is a vector
+      denoting the state vector of the satellite at a given time, i.e. at time
+      t[k], the state vector is pos_x[k], ..., vel_z[k].
+    """
+    tree = ET.parse(orbit_xml)
+    root = tree.getroot()
+    data_block = root[1]
+    numOSV = len(data_block[0])
+
+    t = []
+    x = np.ones(numOSV)
+    y = np.ones(numOSV)
+    z = np.ones(numOSV)
+    vx = np.ones(numOSV)
+    vy = np.ones(numOSV)
+    vz = np.ones(numOSV)
+
+    for i, st in enumerate(data_block[0]):
+        t.append(
+            datetime.datetime.strptime(
+                st[1].text,
+                'UTC=%Y-%m-%dT%H:%M:%S.%f'
+            )
+        )
+
+        x[i] = float(st[4].text)
+        y[i] = float(st[5].text)
+        z[i] = float(st[6].text)
+        vx[i] = float(st[7].text)
+        vy[i] = float(st[8].text)
+        vz[i] = float(st[9].text)
+    t = np.array(t)
+    return [t, x, y, z, vx, vy, vz]
+
+
+def get_state_vector_arrays(orbit_xml: Union[str, Path]) -> list[StateVector]:
+    """Source: https://github.com/dbekaert/RAiDER/blob/dev/tools/RAiDER/losreader.py
+    """
+    state_vector_list = []
+    t, x, y, z, vx, vy, vz = read_ESA_Orbit_file(orbit_xml)
+    for idx in range(len(t)):
+        position = x[idx], y[idx], z[idx]
+        velocity = vx[idx], vy[idx], z[idx]
+        state_vector = StateVector(time=t[idx],
+                                   position=position,
+                                   velocity=velocity)
+        state_vector_list.append(state_vector)
+
+    return state_vector_list
+
+
+def get_orbit_obj_from_orbit_xmls(orbit_xmls: list[Path]) -> Orbit:
+    """
+    Source: https://github.com/dbekaert/RAiDER/blob/dev/tools/RAiDER/losreader.py
+    """
+    state_vectors = []
+    for orbit_xml in orbit_xmls:
+        state_vectors.extend(get_state_vector_arrays(orbit_xml))
+    orb = Orbit()
+    orb.configure()
+    for sv in state_vectors:
+        # I am not sure why this is necessary except maybe if ESA denotes problematic
+        # state vectors with wonky times
+        if (sv.time < orb.minTime) or (sv.time > orb.maxTime):
+            orb.addStateVector(sv)
+    return orb
 
 
 def compute_solid_earth_tide_from_gunw(*,
                                        gunw_path: str,
                                        reference_or_secondary: str,
-                                       isce_data_dir: Path) -> xr.Dataset:
+                                       orbit_xmls: list[Path]) -> xr.Dataset:
     """
     Read GUNW and compute/export differential SET
 
@@ -36,8 +118,8 @@ def compute_solid_earth_tide_from_gunw(*,
     reference_or_secondary : str
         Needs to be either "reference" or "secondary" - refers to category of
         pass for which SET will be calculated
-    isce_data_dir : Path
-        The data directory of ISCE outputs to extract orbit information
+    orbit_xml : Path
+        The ESA burst xml
 
     Returns
     -------
@@ -70,7 +152,7 @@ def compute_solid_earth_tide_from_gunw(*,
         # compute differential SET ENU
         # the output shapes will match the variables of the xarray dataset (or mesh of the coords) i.e.
         # height_dim x latitude_dim x longitude_dim
-        tide_e, tide_n, tide_u = compute_enu_solid_earth_tide(isce_data_dir=isce_data_dir,
+        tide_e, tide_n, tide_u = compute_enu_solid_earth_tide(orbit_xmls=orbit_xmls,
                                                               reference_or_secondary=reference_or_secondary,
                                                               height_coord_arr=height_coord_arr,
                                                               latitude_coord_arr=latitude_coord_arr,
@@ -93,21 +175,12 @@ def compute_solid_earth_tide_from_gunw(*,
     return solidtide_corr_ds
 
 
-def get_orbit_from_isce_xml(product_dir: Path):
-    swath_xmls = list(product_dir.glob('IW*.xml'))
-    if len(swath_xmls) == 0:
-        raise ValueError('No IW files found in product directory')
-    products = list(map(loadProduct, swath_xmls))
-    orb = getMergedOrbit(products)
-    return orb
-
-
-def get_azimuth_time_array(product_dir: Path,
+def get_azimuth_time_array(orbit_xmls: list[Path],
                            height_mesh_arr: np.ndarray,
                            latitude_mesh_arr: np.ndarray,
                            longitude_mesh_arr: np.ndarray) -> np.ndarray:
 
-    orb = get_orbit_from_isce_xml(product_dir)
+    orb = get_orbit_obj_from_orbit_xmls(orbit_xmls)
 
     m, n, p = height_mesh_arr.shape
 
@@ -119,8 +192,8 @@ def get_azimuth_time_array(product_dir: Path,
     for (lon, lat, hgt) in zip(tqdm(longitude_flat), latitude_flat, heights_flat):
         datetime_isce, rng = orb.geo2rdr([lat, lon, hgt])
         rng_seconds = rng / SPEED_OF_LIGHT
-        total_time_isce2 = datetime_isce + datetime.timedelta(seconds=rng_seconds)
-        dt_np = pd.to_datetime(str(total_time_isce2))
+        total_time_isce = datetime_isce + datetime.timedelta(seconds=rng_seconds)
+        dt_np = pd.to_datetime(str(total_time_isce))
         azimuth_time_list.append(dt_np)
     azimuth_time_flat_np = np.array(azimuth_time_list, dtype='datetime64')
     azimuth_time = azimuth_time_flat_np.reshape((m, n, p))
@@ -175,7 +248,7 @@ def solid_grid_pixel_interpolated_across_second_est(np_datetime: np.datetime64,
 
 
 def compute_enu_solid_earth_tide(*,
-                                 isce_data_dir: Path,
+                                 orbit_xmls: Path,
                                  reference_or_secondary: str,
                                  height_coord_arr: np.ndarray,
                                  latitude_coord_arr: np.ndarray,
@@ -188,10 +261,6 @@ def compute_enu_solid_earth_tide(*,
     if (res_x <= 0) or (res_y <= 0):
         raise ValueError('Resolutions must be positive')
 
-    product_dir = Path(isce_data_dir / reference_or_secondary)
-    if not product_dir.exists():
-        raise ValueError(f'The isce data directory specified doesn\'t have a "{reference_or_secondary}" directory')
-
     height_mesh_arr, latitude_mesh_arr, longitude_mesh_arr = np.meshgrid(height_coord_arr,
                                                                          latitude_coord_arr,
                                                                          longitude_coord_arr,
@@ -201,7 +270,7 @@ def compute_enu_solid_earth_tide(*,
                                                                          # height x latitude x longitude
                                                                          indexing='ij')
 
-    azimuth_time_arr = get_azimuth_time_array(product_dir,
+    azimuth_time_arr = get_azimuth_time_array(orbit_xmls,
                                               height_mesh_arr,
                                               latitude_mesh_arr,
                                               longitude_mesh_arr)
@@ -291,7 +360,7 @@ def export_se_tides_to_dataset(gunw_path: str,
 
 def update_gunw_with_solid_earth_tide(gunw_path: Path,
                                       reference_or_secondary: str,
-                                      isce_data_dir: Path = None) -> Path:
+                                      orbit_xmls: list[Path] = None) -> Path:
     if reference_or_secondary not in ['reference', 'secondary']:
         raise ValueError('acq_type must be in "reference" or "secondary"')
     tide_group = '/science/grids/corrections/external/tides'
@@ -303,7 +372,7 @@ def update_gunw_with_solid_earth_tide(gunw_path: Path,
         if se_tide_group_dummy in file:
             del file[se_tide_group_dummy]
     solid_earth_tide_ds = compute_solid_earth_tide_from_gunw(gunw_path=gunw_path,
-                                                             isce_data_dir=isce_data_dir,
+                                                             orbit_xmls=orbit_xmls,
                                                              reference_or_secondary=reference_or_secondary)
     solid_earth_tide_ds.to_netcdf(gunw_path,
                                   mode='a',
