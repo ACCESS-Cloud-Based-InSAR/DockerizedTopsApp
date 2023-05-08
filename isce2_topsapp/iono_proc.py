@@ -487,7 +487,7 @@ def deramp(data: NDArray, mask_in: NDArray = None, ramp_type: str = 'linear') ->
 
     # design matrix
     xx, yy = np.meshgrid(np.arange(0, width),
-                        np.arange(0, length))
+                         np.arange(0, length))
     xx = np.array(xx, dtype=np.float32).reshape(-1, 1)
     yy = np.array(yy, dtype=np.float32).reshape(-1, 1)
     ones = np.ones(xx.shape, dtype=np.float32)
