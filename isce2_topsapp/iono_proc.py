@@ -452,6 +452,61 @@ def mask_interferogram(
         int_array.astype(np.complex64).tofile(ifgFilename)
 
 
+def deramp(data: NDArray, mask_in: NDArray= None,
+           ramp_type: str= 'linear') -> NDArray:
+    '''
+    Taken from: https://github.com/insarlab/MintPy
+                        /src/mintpy/objects/ramp.py#L23
+
+    This function preforms deramping of unwrapped phase
+
+    data : NDarray
+        2D array data to be derampped
+    mask_in : NDarray
+        2D np.ndarray, mask of pixels used for ramp estimation
+    ramp_type : str
+        name of ramp to be estimated. "linear" or 'quadratic"
+
+    '''
+
+    dshape = data.shape
+    length, width = dshape[-2:]
+
+    # for 2d only
+    data = data.reshape(-1, 1)
+    dmean = np.array(data).flatten()
+
+    if mask_in is None:
+        mask_in = np.ones((length, width), dtype=np.float32)
+    mask = (mask_in != 0).flatten()
+    del mask_in
+
+    # 2. ignore pixels with NaN and/or zero data value
+    mask *= ~np.isnan(dmean)
+    mask *= (dmean != 0.)
+    del dmean
+
+    # design matrix
+    xx, yy = np.meshgrid(np.arange(0, width),
+                        np.arange(0, length))
+    xx = np.array(xx, dtype=np.float32).reshape(-1, 1)
+    yy = np.array(yy, dtype=np.float32).reshape(-1, 1)
+    ones = np.ones(xx.shape, dtype=np.float32)
+    if ramp_type == 'linear':
+        G = np.hstack((yy, xx, ones))
+    elif ramp_type == 'quadratic':
+        G = np.hstack((yy**2, xx**2, yy*xx, yy, xx, ones))
+    else:
+        raise ValueError(f'un-recognized ramp type: {ramp_type}')
+
+    # estimate ramp
+    X = np.dot(np.linalg.pinv(G[mask, :], rcond=1e-15), data[mask, :])
+    ramp = np.dot(G, X)
+    ramp = np.array(ramp, dtype=data.dtype)
+
+    return ramp.reshape(dshape)
+
+
 def brige_components(unwrapped_ifg: str,
                      connected_components: str) -> None:
     """
@@ -482,8 +537,15 @@ def brige_components(unwrapped_ifg: str,
         # Apply a binary closing operation to the mask
         mask = morphology.binary_closing(mask)
 
+        # Deramp the data, to remove any trend
+        # before estimating median
+        print('Deramp')
+        ramp = deramp(data=interferogram, mask_in=mask,
+                      ramp_type='linear')
+        derampped_interferogram = interferogram - ramp
+
         # Calculate the median phase value for the current component
-        median_phase = np.median(interferogram[mask])
+        median_phase = np.median(derampped_interferogram[mask])
 
         # Subtract the median phase from the current component
         # to remove any phase jumps
