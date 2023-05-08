@@ -452,8 +452,7 @@ def mask_interferogram(
         int_array.astype(np.complex64).tofile(ifgFilename)
 
 
-def deramp(data: NDArray, mask_in: NDArray= None,
-           ramp_type: str= 'linear') -> NDArray:
+def deramp(data: NDArray, mask_in: NDArray = None, ramp_type: str = 'linear') -> NDArray:
     '''
     Taken from: https://github.com/insarlab/MintPy
                         /src/mintpy/objects/ramp.py#L23
