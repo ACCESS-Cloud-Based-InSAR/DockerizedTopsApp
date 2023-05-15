@@ -8,6 +8,10 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.2.4]
 
+### Added
+* `++omp-num-threads` parameter to the `main()` entrypoint to limit the number of threads used by ISCE2 during
+  multiprocessing.
+
 ### Fixed
 * For Solid Earth Tide computation, derive coordinates and spacing from geotrans as opposed to latitude/longitude metadata arrays
 * Include topsapp_iono template.
