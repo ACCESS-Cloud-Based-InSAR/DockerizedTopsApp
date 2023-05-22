@@ -85,8 +85,8 @@ def test_warnings_over_water():
     # Make sure water warning is not thrown
     with warnings.catch_warnings(record=True) as warning_records:
         download_slcs(ref_ids, sec_ids, frame_id=-1, dry_run=True)
-        if warning_records:
-            assert all([wtr_msg not in str(r.message) for r in warning_records])
+    if warning_records:
+        assert all([wtr_msg not in str(r.message) for r in warning_records])
 
 
 def test_bad_date_order():
