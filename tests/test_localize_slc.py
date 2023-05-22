@@ -67,20 +67,26 @@ def test_bad_tracks_with_same_flight_direction():
 
 def test_warnings_over_water():
 
+    wtr_msg = 'If there are not enough bursts over land - ISCE2 will fail.'
+
     # Intersection over water
     ref_ids = ['S1B_IW_SLC__1SDV_20211210T153506_20211210T153533_029965_0393C6_D840']
     sec_ids = ['S1A_IW_SLC__1SDV_20211122T153535_20211122T153602_040686_04D3DB_520A']
 
-    with pytest.warns(RuntimeWarning):
+    with pytest.warns(RuntimeWarning) as records:
         download_slcs(ref_ids, sec_ids, frame_id=-1, dry_run=True)
+    assert any([wtr_msg in str(r.message) for r in records])
 
     # Tibet (no water)
     ref_ids = ['S1A_IW_SLC__1SDV_20170817T120001_20170817T120028_017963_01E230_A23A']
     sec_ids = ['S1A_IW_SLC__1SSV_20160717T115946_20160717T120014_012188_012E84_F684',
                'S1A_IW_SLC__1SSV_20160717T120012_20160717T120039_012188_012E84_4198']
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
+
+    # Make sure water warning is not thrown
+    with pytest.warns(Warning) as records:
         download_slcs(ref_ids, sec_ids, frame_id=-1, dry_run=True)
+    if records:
+        assert all([wtr_msg not in str(r.message) for r in records])
 
 
 def test_bad_date_order():
