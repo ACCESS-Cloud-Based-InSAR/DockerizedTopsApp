@@ -14,7 +14,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Increases DEM buffer to .4 from .1 to ensure the extent of at least two bursts (~40 km) are added when retrieving DEM (because estimated footprint can differ from what ISCE2 generates for a GUNW extent)
 * Catch warnings in tests and match messages to ensure package warnings do not fail test suite
 * Read low resolution Natural Earth land masses from public url due to removal from geopandas package.
-
+* For ionosphere computation over water, includes masking conncomp zero, phase bridging, and modified adaptive gaussian filtering
 
 ### Added
 * localize_data within __main__.py added option to use/not use water mask for ionosphere processing
