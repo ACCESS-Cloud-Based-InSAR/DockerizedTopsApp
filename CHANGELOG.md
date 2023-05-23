@@ -12,6 +12,8 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * For Solid Earth Tide computation, derive coordinates and spacing from geotrans as opposed to latitude/longitude metadata arrays
 * Include topsapp_iono template.
 * Increases DEM buffer to .4 from .1 to ensure the extent of at least two bursts (~40 km) are added when retrieving DEM (because estimated footprint can differ from what ISCE2 generates for a GUNW extent)
+* Catch warnings in tests and match messages to ensure package warnings do not fail test suite
+* Read low resolution Natural Earth land masses from public url due to removal from geopandas package.
 
 ### Added
 * localize_data within __main__.py added option to use/not use water mask for ionosphere processing
