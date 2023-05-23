@@ -335,7 +335,7 @@ def main():
     parser.add_argument(
         "++omp-num-threads",
         type=int,
-        help="The number of OpenMP threads to use for parallel processing"
+        help="The number of OpenMP threads to use for parallel processing; when running locally, this routine will utilize all resources; suggest to use 8 to 16 so other processes can running locally."
     )
 
     args, unknowns = parser.parse_known_args()
