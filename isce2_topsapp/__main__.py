@@ -335,9 +335,9 @@ def main():
     parser.add_argument(
         "++omp-num-threads",
         type=int,
-        help=("The number of OpenMP threads to use for parallel processing; " 
-              "when running locally, this routine will utilize all resources; "
-              "suggest to use 8 to 16 so other processes can running locally.")
+        help=("The number of OpenMP threads to use for parallel processing in ISCE2 routines; "
+              "when running locally, this topsapp will utilize all resources, which is not recommended; "
+              "suggest to set this option to 8 - 16 so other processes on server/workstation can running.")
     )
 
     args, unknowns = parser.parse_known_args()
