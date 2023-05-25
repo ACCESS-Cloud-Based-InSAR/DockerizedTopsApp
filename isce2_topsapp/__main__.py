@@ -67,6 +67,7 @@ def localize_data(
            'frame_id': frame_id,
            **out_slc,
            **out_dem,
+           **out_water_mask,
            **out_aux_cal,
            **out_orbits}
     return out
