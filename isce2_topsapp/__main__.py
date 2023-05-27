@@ -62,15 +62,14 @@ def localize_data(
 
         out_aux_cal = download_aux_cal()
 
-    out = {
-        "reference_scenes": reference_scenes,
-        "secondary_scenes": secondary_scenes,
-        **out_slc,
-        **out_dem,
-        **out_water_mask,
-        **out_aux_cal,
-        **out_orbits,
-    }
+    out = {'reference_scenes': reference_scenes,
+           'secondary_scenes': secondary_scenes,
+           'frame_id': frame_id,
+           **out_slc,
+           **out_dem,
+           **out_water_mask,
+           **out_aux_cal,
+           **out_orbits}
     return out
 
 
