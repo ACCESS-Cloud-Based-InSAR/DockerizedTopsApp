@@ -3,7 +3,6 @@
 # California Institute of Technology
 
 import datetime
-import multiprocessing
 import os
 import shutil
 import site
@@ -33,18 +32,14 @@ List of parameters for ionospheric correction:
 
 GEOCODE_LIST_ION = ["merged/topophase.ion"]
 
-omp_env = os.getenv('OMP_NUM_THREADS')
-# set default number of threads to 4 if env does not exist
-if not omp_env:
-    omp_env = str(4)
-
 
 def iono_processing(
     *,
     topsapp_xml_filename: str = 'topsApp.xml',
     mask_filename: str = '',
     correct_burst_jumps: bool = False,
-        num_threads: str = '4') -> None:
+        ) -> None:
+
     '''
     NOTE: If water mask is not used, the code will return to its
         default processing with addition of using briding of unwrapped
@@ -52,13 +47,6 @@ def iono_processing(
         Outlier removal and masking using connected component 0 will
         be skipped
     '''
-
-    # Update the number of threads
-    if num_threads == 'all':
-        # Use all possible threads
-        num_threads = str(multiprocessing.cpu_count())
-
-    os.environ["OMP_NUM_THREADS"] = str(num_threads)
 
     # Update PATH with ISCE2 applications
     # Need for isce2/bin/imageMath.py in runIon.unwrap function
@@ -160,9 +148,6 @@ def iono_processing(
     # This step can be faster ^  with num_of_threads
     topsapp.runGeocode(GEOCODE_LIST_ION, topsapp.do_unwrap,
                        topsapp.geocode_bbox)
-
-    # Return number of threads to default
-    os.environ["OMP_NUM_THREADS"] = omp_env
 
 
 def mask_iono_ifg_bursts(tops_dir: Path,
@@ -452,7 +437,9 @@ def mask_interferogram(
         int_array.astype(np.complex64).tofile(ifgFilename)
 
 
-def deramp(data: NDArray, mask_in: NDArray = None, ramp_type: str = 'linear') -> NDArray:
+def deramp(data: NDArray,
+           mask_in: NDArray = None,
+           ramp_type: str = 'linear') -> NDArray:
     '''
     Taken from: https://github.com/insarlab/MintPy
                         /src/mintpy/objects/ramp.py#L23
@@ -1027,7 +1014,7 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
     ionParam.mergedDirname = mergedDirname
     ionParam.ioncalDirname = ioncalDirname
 
-    # do adjustment between ajacent swaths
+    # do adjustment between adjacent swaths
     if numValidSwaths == 3:
         adjustList = [ionosList[0], ionosList[2]]
     else:
