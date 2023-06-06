@@ -198,7 +198,7 @@ def gunw_slc():
     # Run ionospheric correction
     # MG: correct burst jumps, e.g. needed for Arabian
     #   processing. TODO: We need a trigger function for
-    #   this option (it adds almost double time to iono)
+    #   this option (it adds 10min to iono for frame processing)
     #   example: look at filt_toposphase.unw or .flat
     #   and analyze if there are any burst jumps,
     #   if yes, set this option True
