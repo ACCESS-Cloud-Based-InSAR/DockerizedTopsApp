@@ -179,8 +179,8 @@ def gunw_slc():
 
     # Turn-off ESD when using ionospheric computation
     # NOTE: note sure if this needs to be off
-    #       esd is calculate with iono only when
-    #       considerBurstProperties is on which off 
+    #       esd is calculated with iono only when
+    #       considerBurstProperties is on which off
     #       by default
     if args.estimate_ionosphere_delay:
         args.esd_coherence_threshold = -1
