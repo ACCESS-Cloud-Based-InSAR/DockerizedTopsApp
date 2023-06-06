@@ -58,7 +58,7 @@ def localize_data(
         # For ionospheric correction computation
         if water_mask_flag:
             out_water_mask = download_water_mask(
-                out_slc["extent"],  water_name='SWDB')
+                out_slc["extent"],  water_name='SWBD')
 
         out_aux_cal = download_aux_cal()
 
