@@ -15,6 +15,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Catch warnings in tests and match messages to ensure package warnings do not fail test suite
 * Read low resolution Natural Earth land masses from public url due to removal from geopandas package.
 * For ionosphere computation over water, includes masking conncomp zero, phase bridging, and modified adaptive gaussian filtering
+* Fix for #135, skip iono computation if there are not land (all zero values) and skip using water mask if the area is outside of SWBD coverage
 
 ### Added
 * localize_data within __main__.py added option to use/not use water mask for ionosphere processing

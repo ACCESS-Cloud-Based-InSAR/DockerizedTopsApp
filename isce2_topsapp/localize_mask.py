@@ -6,7 +6,7 @@ from shapely.geometry import box
 
 
 def download_water_mask(
-    extent: list, water_name: str = "SWDB", buffer: float = 0.1
+    extent: list, water_name: str = "SWBD", buffer: float = 0.1
 ) -> dict:
     output_dir = Path(".").absolute()
 
@@ -19,17 +19,27 @@ def download_water_mask(
         np.ceil(extent_buffered[3]),
     ]
 
-    if water_name == "SWDB":
+    if water_name == "SWBD":
         # Download SRTM-SWDB water mask
-        mask_filename = download_wbd(
-            extent_buffered[1],
-            extent_buffered[3],
-            extent_buffered[0],
-            extent_buffered[2],
-        )
+        # Water mask dataset extent
+        # Latitude S55 - N60
+
+        lats = [extent_buffered[1], extent_buffered[3]]
+        if (np.abs(lats) < 59.9).all():
+            mask_filename = download_wbd(
+                extent_buffered[1],
+                extent_buffered[3],
+                extent_buffered[0],
+                extent_buffered[2],
+            )
+            mask_filename = str(output_dir / mask_filename)
+        else:
+            print('Request out of SWBD coverage ',
+                  'Skip downloading water mask!!')
+            mask_filename = ''
 
     elif water_name == "GSHHS":
         # from water_mask import get_water_mask_raster
         raise NotImplementedError("TODO, GSHHS not yet available")
 
-    return {"water_mask": str(output_dir / mask_filename)}
+    return {"water_mask": mask_filename}

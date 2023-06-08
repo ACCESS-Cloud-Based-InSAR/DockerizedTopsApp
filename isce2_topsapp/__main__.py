@@ -58,7 +58,7 @@ def localize_data(
         # For ionospheric correction computation
         if water_mask_flag:
             out_water_mask = download_water_mask(
-                out_slc["extent"],  water_name='SWDB')
+                out_slc["extent"],  water_name='SWBD')
 
         out_aux_cal = download_aux_cal()
 
@@ -178,6 +178,10 @@ def gunw_slc():
               indent=2, cls=MetadataEncoder)
 
     # Turn-off ESD when using ionospheric computation
+    # NOTE: note sure if this needs to be off
+    #       esd is calculated with iono only when
+    #       considerBurstProperties is on which off
+    #       by default
     if args.estimate_ionosphere_delay:
         args.esd_coherence_threshold = -1
 
@@ -198,10 +202,11 @@ def gunw_slc():
     # Run ionospheric correction
     # MG: correct burst jumps, e.g. needed for Arabian
     #   processing. TODO: We need a trigger function for
-    #   this option (it adds almost double time to iono)
+    #   this option (it adds 10min to iono for frame processing)
     #   example: look at filt_toposphase.unw or .flat
     #   and analyze if there are any burst jumps,
-    #   if yes, set this option True
+    #   if yes, set this option True, or we could run it always
+    #   and store both iono-long wavelength and burst jumps(az_shifts)
     if args.estimate_ionosphere_delay:
         iono_processing(
             mask_filename=loc_data["water_mask"],

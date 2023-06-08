@@ -3,7 +3,6 @@
 # California Institute of Technology
 
 import datetime
-import multiprocessing
 import os
 import shutil
 import site
@@ -33,18 +32,14 @@ List of parameters for ionospheric correction:
 
 GEOCODE_LIST_ION = ["merged/topophase.ion"]
 
-omp_env = os.getenv('OMP_NUM_THREADS')
-# set default number of threads to 4 if env does not exist
-if not omp_env:
-    omp_env = str(4)
-
 
 def iono_processing(
     *,
     topsapp_xml_filename: str = 'topsApp.xml',
     mask_filename: str = '',
     correct_burst_jumps: bool = False,
-        num_threads: str = '4') -> None:
+        ) -> None:
+
     '''
     NOTE: If water mask is not used, the code will return to its
         default processing with addition of using briding of unwrapped
@@ -52,13 +47,6 @@ def iono_processing(
         Outlier removal and masking using connected component 0 will
         be skipped
     '''
-
-    # Update the number of threads
-    if num_threads == 'all':
-        # Use all possible threads
-        num_threads = str(multiprocessing.cpu_count())
-
-    os.environ["OMP_NUM_THREADS"] = str(num_threads)
 
     # Update PATH with ISCE2 applications
     # Need for isce2/bin/imageMath.py in runIon.unwrap function
@@ -115,7 +103,7 @@ def iono_processing(
                use_bridging=True, use_conncomp=conncomp_flag)
 
         # Run iono step rawion : ionosphere
-        runIon.ionosphere(topsapp, ionParam)
+        ionosphere(topsapp, ionParam)
     else:
         # This mode is used for cross
         # Sentinel-1A/B interferogram
@@ -160,9 +148,6 @@ def iono_processing(
     # This step can be faster ^  with num_of_threads
     topsapp.runGeocode(GEOCODE_LIST_ION, topsapp.do_unwrap,
                        topsapp.geocode_bbox)
-
-    # Return number of threads to default
-    os.environ["OMP_NUM_THREADS"] = omp_env
 
 
 def mask_iono_ifg_bursts(tops_dir: Path,
@@ -452,9 +437,11 @@ def mask_interferogram(
         int_array.astype(np.complex64).tofile(ifgFilename)
 
 
-def deramp(data: NDArray, mask_in: NDArray = None, ramp_type: str = 'linear') -> NDArray:
+def deramp(data: NDArray,
+           mask_in: NDArray = None,
+           ramp_type: str = 'linear') -> NDArray:
     '''
-    Taken from: https://github.com/insarlab/MintPy
+    REF: https://github.com/insarlab/MintPy
                         /src/mintpy/objects/ramp.py#L23
 
     This function preforms deramping of unwrapped phase
@@ -538,7 +525,7 @@ def brige_components(unwrapped_ifg: str,
 
         # Deramp the data, to remove any trend
         # before estimating median
-        print('Deramp')
+        # NOTE: move this out of loop, first test it out
         ramp = deramp(data=interferogram, mask_in=mask,
                       ramp_type='linear')
         derampped_interferogram = interferogram - ramp
@@ -844,7 +831,8 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
             'method to compute ionosphere!')
     else:
         xmlDirname = os.path.join(
-            ionParam.ionDirname, ionParam.lowerDirname, ionParam.fineIfgDirname)
+            ionParam.ionDirname, ionParam.lowerDirname, ionParam.fineIfgDirname
+            )
 
         merge_kwargs = {'numberRangeLooks': ionParam.numberRangeLooks,
                         'numberAzimuthLooks': ionParam.numberAzimuthLooks}
@@ -986,7 +974,7 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
                use_conncomp=conncomp_flag)
 
         # STEP 3. COMPUTE IONOSPHERE
-        runIon.ionosphere(self, ionParam)
+        ionosphere(self, ionParam)
 
         # Load the results of ionosphere computation
         outDir = os.path.join(ionParam.ionDirname, ionParam.ioncalDirname)
@@ -1027,7 +1015,7 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
     ionParam.mergedDirname = mergedDirname
     ionParam.ioncalDirname = ioncalDirname
 
-    # do adjustment between ajacent swaths
+    # do adjustment between adjacent swaths
     if numValidSwaths == 3:
         adjustList = [ionosList[0], ionosList[2]]
     else:
@@ -1038,7 +1026,7 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
             (adjdata != 0) * (ionosList[1] != 0) * masked_cor)
         if index[0].size < 5:
             print(f'WARNING: too few samples available for adjustment'
-                  f'between swaths: {index[0].size} with coherence '
+                  f' between swaths: {index[0].size} with coherence '
                   f'threshold: {corThresholdSwathAdj}')
             print('         no adjustment made!')
             print(
@@ -1128,6 +1116,91 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
     # dump coherence
     outFilename = os.path.join(outDir, ionParam.ionCorNoProj)
     ion[1:length*2:2, :] = corMerged
+    ion.astype(np.float32).tofile(outFilename)
+    img.filename = outFilename
+    img.extraFilename = outFilename + '.vrt'
+    img.renderHdr()
+
+
+def ionosphere(self, ionParam):
+
+    ###################################
+    # SET PARAMETERS HERE
+    # THESE SHOULD BE GOOD ENOUGH, NO NEED TO SET IN setup(self)
+    corThresholdAdj = 0.85
+    ###################################
+
+    print('computing ionosphere')
+    # get files
+    unw_filename = self._insar.unwrappedIntFilename
+    cor_filename = self._insar.correlationFilename
+
+    lowerUnwfile = os.path.join(ionParam.ionDirname, ionParam.lowerDirname,
+                                ionParam.mergedDirname, unw_filename)
+    upperUnwfile = os.path.join(ionParam.ionDirname, ionParam.upperDirname,
+                                ionParam.mergedDirname, unw_filename)
+    corfile = os.path.join(ionParam.ionDirname, ionParam.lowerDirname,
+                           ionParam.mergedDirname, cor_filename)
+
+    # use image size from lower unwrapped interferogram
+    img = isceobj.createImage()
+    img.load(lowerUnwfile + '.xml')
+    width = img.width
+    length = img.length
+
+    lowerUnw = np.fromfile(lowerUnwfile, dtype=np.float32)
+    lowerUnw = lowerUnw.reshape(length*2, width)[1:length*2:2, :]
+    upperUnw = np.fromfile(upperUnwfile, dtype=np.float32)
+    upperUnw = upperUnw.reshape(length*2, width)[1:length*2:2, :]
+    lowerAmp = np.fromfile(lowerUnwfile, dtype=np.float32)
+    lowerAmp = lowerAmp.reshape(length*2, width)[0:length*2:2, :]
+    upperAmp = np.fromfile(upperUnwfile, dtype=np.float32)
+    upperAmp = upperAmp.reshape(length*2, width)[0:length*2:2, :]
+    cor = np.fromfile(corfile, dtype=np.float32)
+    cor = cor.reshape(length*2, width)[1:length*2:2, :]
+    amp = np.sqrt(lowerAmp**2+upperAmp**2)
+
+    # masked out user-specified areas
+    if ionParam.maskedAreas is not None:
+        maskedAreas = runIon.reformatMaskedAreas(ionParam.maskedAreas,
+                                                 length, width)
+        for area in maskedAreas:
+            lowerUnw[area[0]:area[1], area[2]:area[3]] = 0
+            upperUnw[area[0]:area[1], area[2]:area[3]] = 0
+            cor[area[0]:area[1], area[2]:area[3]] = 0
+
+    # MG: Check if there is data for compution iono
+    # skip if array is all 0s
+    if np.flatnonzero(lowerUnw).size == 0:
+        print('WARNING: lower/upper band data all zero'
+              ' skip iono computation!')
+        ionos = np.zeros_like(lowerUnw)
+    else:
+        # compute ionosphere
+        fl = runIon.SPEED_OF_LIGHT / ionParam.radarWavelengthLower
+        fu = runIon.SPEED_OF_LIGHT / ionParam.radarWavelengthUpper
+        # polynomial method for removing relative phase unwrapping errors
+        adjFlag = 1
+        ionos = runIon.computeIonosphere(lowerUnw, upperUnw, cor, fl, fu,
+                                         adjFlag, corThresholdAdj, 0)
+
+    # dump ionosphere
+    outDir = os.path.join(ionParam.ionDirname, ionParam.ioncalDirname)
+    os.makedirs(outDir, exist_ok=True)
+    outFilename = os.path.join(outDir, ionParam.ionRawNoProj)
+    ion = np.zeros((length*2, width), dtype=np.float32)
+    ion[0:length*2:2, :] = amp
+    ion[1:length*2:2, :] = ionos
+    ion.astype(np.float32).tofile(outFilename)
+    img.filename = outFilename
+    img.extraFilename = outFilename + '.vrt'
+    img.renderHdr()
+
+    # dump coherence
+    outFilename = os.path.join(ionParam.ionDirname,
+                               ionParam.ioncalDirname,
+                               ionParam.ionCorNoProj)
+    ion[1:length*2:2, :] = cor
     ion.astype(np.float32).tofile(outFilename)
     img.filename = outFilename
     img.extraFilename = outFilename + '.vrt'
