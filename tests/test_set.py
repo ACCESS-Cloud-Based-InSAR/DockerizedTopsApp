@@ -1,6 +1,7 @@
 import shutil
 
 import numpy as np
+import pandas as pd
 import rasterio
 import xarray as xr
 from affine import Affine
@@ -66,3 +67,13 @@ def test_azimuth_time(orbit_files_for_set, gunw_path_for_set):
     # Vertical standard deviation
     Y_std = Y.std(axis=0)
     assert_almost_equal(Y_std, 0, decimal=3)
+
+    # Ensure that azimuth times are all within specified padding used in computation
+    # Padding used is 600 seconds - we check for 70 - note we are using the SLC id start time
+    # From secondary and there are TWO slcs so this makes sense with an SLC requiring being acquired
+    # over about 20-30 seconds; also the meshgrid for this layer is slightly larger than the GUNW as well
+    # indicating why the 10 second buffer is used.
+    x = pd.to_datetime(X.ravel())
+    differences_in_sec = (x - slc_start_time).total_seconds()
+    result = np.all(differences_in_sec < 70)
+    assert result
