@@ -8,6 +8,7 @@ from numpy.testing import assert_almost_equal
 from rasterio.crs import CRS
 
 from isce2_topsapp.solid_earth_tides import (get_azimuth_time_array,
+                                             get_start_time_from_slc_id,
                                              update_gunw_with_solid_earth_tide)
 
 
@@ -45,9 +46,18 @@ def test_azimuth_time(orbit_files_for_set, gunw_path_for_set):
         lat = ds.latitudeMeta.data + lat_res / 2.
         lon = ds.longitudeMeta.data - lon_res / 2.
 
+    # Uses secondary image
+    group = 'science/radarMetaData/inputSLC'
+    with xr.open_dataset(gunw_path_for_set, group=f'{group}/secondary') as ds:
+        slc_ids = ds['L1InputGranules'].data
+        # Ensure non-empty and sorted by acq_time
+        slc_ids = sorted(list(filter(lambda x: x, slc_ids)))
+        slc_start_time = get_start_time_from_slc_id(slc_ids[0])
+
     hgt_mesh, lat_mesh, lon_mesh = np.meshgrid(hgt, lat, lon, indexing='ij')
     # Azimuth time array
     X = get_azimuth_time_array(orbit_xmls=[orbit_files_for_set['reference']],
+                               slc_start_time=slc_start_time,
                                height_mesh_arr=hgt_mesh,
                                latitude_mesh_arr=lat_mesh,
                                longitude_mesh_arr=lon_mesh)

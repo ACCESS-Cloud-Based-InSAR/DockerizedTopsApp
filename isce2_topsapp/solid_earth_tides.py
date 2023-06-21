@@ -78,7 +78,7 @@ def get_state_vector_arrays(orbit_xml: Union[str, Path]) -> list[StateVector]:
     t, x, y, z, vx, vy, vz = read_ESA_Orbit_file(orbit_xml)
     for idx in range(len(t)):
         position = x[idx], y[idx], z[idx]
-        velocity = vx[idx], vy[idx], z[idx]
+        velocity = vx[idx], vy[idx], vz[idx]
         state_vector = StateVector(time=t[idx],
                                    position=position,
                                    velocity=velocity)
@@ -87,21 +87,41 @@ def get_state_vector_arrays(orbit_xml: Union[str, Path]) -> list[StateVector]:
     return state_vector_list
 
 
-def get_orbit_obj_from_orbit_xmls(orbit_xmls: list[Path]) -> Orbit:
+def get_orbit_obj_from_orbit_xmls(orbit_xmls: list[Path],
+                                  slc_start_time: datetime.datetime,
+                                  pad_in_seconds: int = 600) -> Orbit:
     """
     Source: https://github.com/dbekaert/RAiDER/blob/dev/tools/RAiDER/losreader.py
+
+    **Warning**: geo2rdr numerically finds azimuth and range time by Newton's method. The clipping is
+    essential and larger than 100,000 seconds yielded errors.
+
+    The reason for the above errors were observed are due to how geo2rdr initializes the root finding method.
+    Specifically, using the midpoint of the orbi min/max times. If the clipping
+    is too large then the initial point likely is not centered near the frame and a different
+    point is coverged to. Using a smaller window ensures a correct time is converged to.
+
+    See: https://github.com/isce-framework/isce2/blob/main/components/isceobj/Orbit/Orbit.py#L1000
+
+    Note that `slc_start_time` is used here to initialize the center of window for the orb.geo2rdr because it's easy to
+    get from the name.
     """
     state_vectors = []
     for orbit_xml in orbit_xmls:
         state_vectors.extend(get_state_vector_arrays(orbit_xml))
     orb = Orbit()
     orb.configure()
+    window_min = slc_start_time - datetime.timedelta(seconds=pad_in_seconds)
+    window_max = slc_start_time + datetime.timedelta(seconds=pad_in_seconds)
     for sv in state_vectors:
-        # I am not sure why this is necessary except maybe if ESA denotes problematic
-        # state vectors with wonky times
-        if (sv.time < orb.minTime) or (sv.time > orb.maxTime):
+        if (sv.time < window_max) and (sv.time > window_min):
             orb.addStateVector(sv)
     return orb
+
+
+def get_start_time_from_slc_id(slc_id: str) -> pd.Timestamp:
+    acq_start_time_token = slc_id.split('_')[5]
+    return pd.to_datetime(acq_start_time_token)
 
 
 def compute_solid_earth_tide_from_gunw(*,
@@ -139,6 +159,13 @@ def compute_solid_earth_tide_from_gunw(*,
     with xr.open_dataset(gunw_path, group=group) as ds:
         wavelength = ds['wavelength'].item()
 
+    group = 'science/radarMetaData/inputSLC'
+    with xr.open_dataset(gunw_path, group=f'{group}/{reference_or_secondary}') as ds:
+        slc_ids = ds['L1InputGranules'].data
+        # Ensure non-empty and sorted by acq_time
+        slc_ids = sorted(list(filter(lambda x: x, slc_ids)))
+        slc_start_time = get_start_time_from_slc_id(slc_ids[0])
+
     group = 'science/grids/imagingGeometry'
     with xr.open_dataset(gunw_path, group=group, mode='r') as ds:
         lon_res, lat_res = ds.rio.resolution()
@@ -153,7 +180,7 @@ def compute_solid_earth_tide_from_gunw(*,
         # the output shapes will match the variables of the xarray dataset (or mesh of the coords) i.e.
         # height_dim x latitude_dim x longitude_dim
         tide_e, tide_n, tide_u = compute_enu_solid_earth_tide(orbit_xmls=orbit_xmls,
-                                                              reference_or_secondary=reference_or_secondary,
+                                                              slc_start_time=slc_start_time,
                                                               height_coord_arr=height_coord_arr,
                                                               latitude_coord_arr=latitude_coord_arr,
                                                               longitude_coord_arr=longitude_coord_arr,
@@ -176,11 +203,39 @@ def compute_solid_earth_tide_from_gunw(*,
 
 
 def get_azimuth_time_array(orbit_xmls: list[Path],
+                           slc_start_time: datetime.datetime,
                            height_mesh_arr: np.ndarray,
                            latitude_mesh_arr: np.ndarray,
-                           longitude_mesh_arr: np.ndarray) -> np.ndarray:
+                           longitude_mesh_arr: np.ndarray,
+                           orbit_padding_in_seconds: int = 600) -> np.ndarray:
+    """Get azimuth time array in which each pixel in mesh array is matched to a azimuth time corresponding to time
+    which satellite passes (zero-doppler).
 
-    orb = get_orbit_obj_from_orbit_xmls(orbit_xmls)
+    Parameters
+    ----------
+    orbit_xmls : list[Path]
+    slc_start_time : datetime.datetime
+        This is required to truncate state vector times roughly around a window of the SLC. Used for geo2rdr
+    height_mesh_arr : np.ndarray
+    latitude_mesh_arr : np.ndarray
+    longitude_mesh_arr : np.ndarray
+    orbit_padding_in_seconds : int, optional
+        This is required to truncate state vector times roughly around a window of the SLC. Used for geo2rdr
+
+    Returns
+    -------
+    np.ndarray
+        Array which matches the size of the input mesh arrays and obtains the zero-doppler time with respect to the
+        satellite orbit.
+
+    Notes
+    -----
+    See get_orbit_obj_from_orbit_xmls as to why slc start time and padding is required.
+    """
+
+    orb = get_orbit_obj_from_orbit_xmls(orbit_xmls,
+                                        slc_start_time,
+                                        pad_in_seconds=orbit_padding_in_seconds)
 
     m, n, p = height_mesh_arr.shape
 
@@ -249,7 +304,7 @@ def solid_grid_pixel_interpolated_across_second_est(np_datetime: np.datetime64,
 
 def compute_enu_solid_earth_tide(*,
                                  orbit_xmls: Path,
-                                 reference_or_secondary: str,
+                                 slc_start_time: pd.Timestamp,
                                  height_coord_arr: np.ndarray,
                                  latitude_coord_arr: np.ndarray,
                                  longitude_coord_arr: np.ndarray,
@@ -271,6 +326,7 @@ def compute_enu_solid_earth_tide(*,
                                                                          indexing='ij')
 
     azimuth_time_arr = get_azimuth_time_array(orbit_xmls,
+                                              slc_start_time,
                                               height_mesh_arr,
                                               latitude_mesh_arr,
                                               longitude_mesh_arr)
