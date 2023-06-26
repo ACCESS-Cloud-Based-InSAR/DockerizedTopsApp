@@ -37,7 +37,7 @@ def iono_processing(
     *,
     topsapp_xml_filename: str = 'topsApp.xml',
     mask_filename: str = '',
-    correct_burst_jumps: bool = False,
+    correct_burst_jumps: bool = True,
         ) -> None:
 
     '''
@@ -119,7 +119,9 @@ def iono_processing(
                   coh_threshold=coh_threshold, sigma_rule=sigma_rule)
 
     # Step when using azimuth shift correction
-    # between bursts
+    # between bursts, misregistration due to high iono content
+    # based on long wavelength ionosphere delay estimation
+    # NOTE: wrong long-wavelength iono estimates can effect this steps
     if correct_burst_jumps:
         # ionosphere shift
         runIon.ionosphere_shift(topsapp, ionParam)
@@ -131,10 +133,16 @@ def iono_processing(
         # esd
         runIon.esd(topsapp, ionParam)
 
-        # Create merged/topophase.ion file
+        # Create merged/topophase.ion.az_shift file
         # using ion/ion_burst/ files
         merge_multilook_bursts(topsapp, input_dir='ion/ion_burst',
-                               output_filename='topophase.ion')
+                               output_filename='topophase.ion.az_shift')
+
+        GEOCODE_LIST_ION.extend('topophase.ion.az_shift')
+
+        # Iono long wavelength
+        merge_bursts(input_file="ion/ion_cal/filt.ion",
+                     output_filename="topophase.ion")
 
     else:
         # Create merged/topophase.ion file
