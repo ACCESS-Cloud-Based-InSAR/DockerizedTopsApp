@@ -227,7 +227,8 @@ def perform_netcdf_packaging(*,
 
 def package_additional_layers_into_gunw(gunw_path: Path,
                                         isce_data_directory: Path,
-                                        additional_2d_layers: list):
+                                        additional_2d_layers: list,
+                                        additional_attributes: list):
     # Current workflow of additional layers
     # 1. Do any additional processing/formatting outside of GUNW
     # 2. Add layer into GUNW
@@ -241,7 +242,8 @@ def package_additional_layers_into_gunw(gunw_path: Path,
         _ = format_ionosphere_for_gunw(isce_data_directory, gunw_path)
 
     # Assumes ionosphere raster is written to specific path
-    [add_2d_layer(layer, gunw_path) for layer in additional_2d_layers]
+    additional_dataset = zip(additional_2d_layers, additional_attributes)
+    [add_2d_layer(layer, gunw_path, attributes) for layer, attributes in additional_dataset]
 
     # Update
     with h5py.File(gunw_path, mode='a') as file:
@@ -254,7 +256,8 @@ def package_gunw_product(*,
                          reference_properties: list,
                          secondary_properties: list,
                          extent: list,
-                         additional_2d_layers: list = None) -> Path:
+                         additional_2d_layers: list = None,
+                         additional_attributes: list = None) -> Path:
     """Creates a GUNW standard product netcdf from the ISCE outputs and some
     initial metadata.
 
@@ -270,6 +273,9 @@ def package_gunw_product(*,
         List of extents ([xmin, ymin, xmax, ymax])
     additional_2d_layers: list
         List of 2d layers to add. Currently, supported is ionosphere.
+    additional_attributes: list
+        List of attributs dicts for additional layers o add.
+        Currently, supported only for ionosphere.
 
     Returns
     -------
@@ -288,5 +294,6 @@ def package_gunw_product(*,
     if additional_2d_layers is not None:
         package_additional_layers_into_gunw(out_nc_file,
                                             isce_data_directory,
-                                            additional_2d_layers)
+                                            additional_2d_layers,
+                                            additional_attributes)
     return out_nc_file
