@@ -162,11 +162,11 @@ def iono_processing(
             do_phase_bridging=str(True),
             estimate_burst_jumps=str(ionParam.considerBurstProperties),
             burst_jumps_description=('calculation of burst jumps'
-                                    ' (scalloping effect) due'
-                                    ' to misaligment in coregistration'
-                                    ' caused be large ionosphere'
-                                    ' content/delay, typically low or'
-                                    ' high latitudes'),
+                                     ' (scalloping effect) due'
+                                     ' to misaligment in coregistration'
+                                     ' caused be large ionosphere'
+                                     ' content/delay, typically low or'
+                                     ' high latitudes'),
             swath_mode=str(True) if ionParam.calIonWithMerged is False else str(False),
             swath_ramp_removal=str(np.bool_(ionParam.rampRemovel)),
             swath_mode_description=('raw_ion ionosphere calculation'
