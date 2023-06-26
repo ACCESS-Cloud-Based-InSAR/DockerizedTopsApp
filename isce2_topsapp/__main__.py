@@ -208,7 +208,7 @@ def gunw_slc():
     #   if yes, set this option True, or we could run it always
     #   and store both iono-long wavelength and burst jumps(az_shifts)
     if args.estimate_ionosphere_delay:
-        iono_processing(
+        iono_attributes = iono_processing(
             mask_filename=loc_data["water_mask"],
             correct_burst_jumps=False,
         )
@@ -218,8 +218,10 @@ def gunw_slc():
     extent = loc_data["extent"]
 
     additional_2d_layers = []
+    aditional_attributes = []
     if args.estimate_ionosphere_delay:
         additional_2d_layers.append("ionosphere")
+        aditional_attributes.append(iono_attributes)
 
     additional_2d_layers = additional_2d_layers or None
     nc_path = package_gunw_product(
@@ -228,6 +230,7 @@ def gunw_slc():
         secondary_properties=sec_properties,
         extent=extent,
         additional_2d_layers=additional_2d_layers,
+        additional_attributes=aditional_attributes
     )
 
     if args.compute_solid_earth_tide:

@@ -84,9 +84,6 @@ def iono_processing(
 
     # Run iono step subband
     # Generate lower and upper band  fin interferograms
-    # NOTE: doing resampling ^ speed with n_threads
-    #       Max threads used in resampling is 8, avoid using
-    #       all threads for resampling as somehow this causes slowdown
     runIon.subband(topsapp, ionParam)
 
     # Mask fine interferograms
@@ -145,9 +142,49 @@ def iono_processing(
                      output_filename="topophase.ion")
 
     # Geocode ionospheric correction outputs
-    # This step can be faster ^  with num_of_threads
     topsapp.runGeocode(GEOCODE_LIST_ION, topsapp.do_unwrap,
                        topsapp.geocode_bbox)
+
+    # Create attribute iono processing dict
+    if correct_burst_jumps:
+        steps = ionParam.allSteps
+    else:
+        steps = ionParam.allSteps[:-3]
+    # as we skip grd2ion projection to ionospheric thin shell
+    del steps[2]
+    steps.append('geocode')
+
+    # attributes dict items must be in the following
+    # format: str, Number, ndarray, number, list, tuple
+    iono_dict = dict(
+        processing_steps=steps,
+        mask=str(mask_filename),
+        mask_connected_component_zero=str(conncomp_flag),
+        do_phase_bridging=str(True),
+        estimate_burst_jumps=str(ionParam.considerBurstProperties),
+        burst_jumps_description=('calculation of burst jumps'
+                                 ' (scalloping effect) due'
+                                 ' to misaligment in coregistration'
+                                 ' caused be large ionosphere'
+                                 ' content/delay, typically low or'
+                                 ' high latitudes'),
+        swath_mode=str(False) if ionParam.calIonWithMerged else str(True),
+        swath_ramp_removal=str(np.bool_(ionParam.rampRemovel)),
+        swath_mode_description=('raw_ion ionosphere calculation'
+                                ' done per swath rather per scene'
+                                ' to adjust for misaligment between'
+                                ' swaths when doing processing on cross'
+                                ' Sentinel 1A/B pair or when there'
+                                ' is a different starting range between'
+                                ' reference and secondary image'),
+        multilook_az_rg1=[ionParam.numberAzimuthLooks,
+                          ionParam.numberRangeLooks],
+        multilook_az_rg2=[ionParam.numberAzimuthLooks0,
+                          ionParam.numberRangeLooks0],
+        iono_height=ionParam.ionHeight
+        )
+
+    return iono_dict
 
 
 def mask_iono_ifg_bursts(tops_dir: Path,
