@@ -156,31 +156,32 @@ def iono_processing(
 
     # attributes dict items must be in the following
     # format: str, Number, ndarray, number, list, tuple
-    iono_dict = dict(processing_steps=steps,
-            mask=str(mask_filename),
-            mask_connected_component_zero=str(conncomp_flag),
-            do_phase_bridging=str(True),
-            estimate_burst_jumps=str(ionParam.considerBurstProperties),
-            burst_jumps_description=('calculation of burst jumps'
-                                     ' (scalloping effect) due'
-                                     ' to misaligment in coregistration'
-                                     ' caused be large ionosphere'
-                                     ' content/delay, typically low or'
-                                     ' high latitudes'),
-            swath_mode=str(True) if ionParam.calIonWithMerged is False else str(False),
-            swath_ramp_removal=str(np.bool_(ionParam.rampRemovel)),
-            swath_mode_description=('raw_ion ionosphere calculation'
-                                    ' done per swath rather per scene'
-                                    ' to adjust for misaligment between'
-                                    ' swaths when doing processing on cross'
-                                    ' Sentinel 1A/B pair or when there'
-                                    ' is a different starting range between'
-                                    ' reference and secondary image'),
-            multilook_az_rg1=[ionParam.numberAzimuthLooks,
-                              ionParam.numberRangeLooks],
-            multilook_az_rg2=[ionParam.numberAzimuthLooks0,
-                              ionParam.numberRangeLooks0],
-            iono_height=ionParam.ionHeight)
+    iono_dict = dict(
+        processing_steps=steps,
+        mask=str(mask_filename),
+        mask_connected_component_zero=str(conncomp_flag),
+        do_phase_bridging=str(True),
+        estimate_burst_jumps=str(ionParam.considerBurstProperties),
+        burst_jumps_description=('calculation of burst jumps'
+                                 ' (scalloping effect) due'
+                                 ' to misaligment in coregistration'
+                                 ' caused be large ionosphere'
+                                 ' content/delay, typically low or'
+                                 ' high latitudes'),
+        swath_mode=str(True) if ionParam.calIonWithMerged is False else str(False),
+        swath_ramp_removal=str(np.bool_(ionParam.rampRemovel)),
+        swath_mode_description=('raw_ion ionosphere calculation'
+                                ' done per swath rather per scene'
+                                ' to adjust for misaligment between'
+                                ' swaths when doing processing on cross'
+                                ' Sentinel 1A/B pair or when there'
+                                ' is a different starting range between'
+                                ' reference and secondary image'),
+        multilook_az_rg1=[ionParam.numberAzimuthLooks,
+                          ionParam.numberRangeLooks],
+        multilook_az_rg2=[ionParam.numberAzimuthLooks0,
+                          ionParam.numberRangeLooks0],
+        iono_height=ionParam.ionHeight)
 
     return iono_dict
 
