@@ -166,7 +166,7 @@ def iono_processing(
     # format: str, Number, ndarray, number, list, tuple
     iono_dict = dict(
         processing_steps=steps,
-        mask=str(mask_filename),
+        water_mask=str(mask_filename),
         mask_connected_component_zero=str(conncomp_flag),
         do_phase_bridging=str(True),
         estimate_burst_jumps=str(ionParam.considerBurstProperties),
