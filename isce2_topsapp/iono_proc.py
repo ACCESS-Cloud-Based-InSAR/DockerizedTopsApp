@@ -168,7 +168,7 @@ def iono_processing(
                                  ' caused be large ionosphere'
                                  ' content/delay, typically low or'
                                  ' high latitudes'),
-        swath_mode=str(True) if ionParam.calIonWithMerged is False else str(False),
+        swath_mode=str(False) if ionParam.calIonWithMerged else str(True),
         swath_ramp_removal=str(np.bool_(ionParam.rampRemovel)),
         swath_mode_description=('raw_ion ionosphere calculation'
                                 ' done per swath rather per scene'
@@ -181,7 +181,8 @@ def iono_processing(
                           ionParam.numberRangeLooks],
         multilook_az_rg2=[ionParam.numberAzimuthLooks0,
                           ionParam.numberRangeLooks0],
-        iono_height=ionParam.ionHeight)
+        iono_height=ionParam.ionHeight
+        )
 
     return iono_dict
 
