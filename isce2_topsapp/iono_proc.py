@@ -138,7 +138,7 @@ def iono_processing(
         merge_multilook_bursts(topsapp, input_dir='ion/ion_burst',
                                output_filename='topophase.ion.az_shift')
 
-        GEOCODE_LIST_ION.extend('topophase.ion.az_shift')
+        GEOCODE_LIST_ION.append('merged/topophase.ion.az_shift')
 
         # Iono long wavelength
         merge_bursts(input_file="ion/ion_cal/filt.ion",
