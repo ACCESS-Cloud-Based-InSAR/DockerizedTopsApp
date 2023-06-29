@@ -174,7 +174,7 @@ def compute_solid_earth_tide_from_gunw(*,
         height_coord_arr = ds.heightsMeta.data
         # half pixel shift to ensure AREA (i.e. upper left corner) convention assumed by pysolid
         # the xarray coordinates are pixel centered
-        latitude_coord_arr = ds.latitudeMeta.data + lat_res / 2.
+        latitude_coord_arr = ds.latitudeMeta.data - lat_res / 2.
         longitude_coord_arr = ds.longitudeMeta.data - lon_res / 2.
         # compute differential SET ENU
         # the output shapes will match the variables of the xarray dataset (or mesh of the coords) i.e.
