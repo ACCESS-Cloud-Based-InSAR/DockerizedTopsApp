@@ -282,7 +282,8 @@ def solid_grid_pixel_interpolated_across_second_est(np_datetime: np.datetime64,
     dt_sec_floor = dt.floor('S')
     dt_sec_ceil = dt.ceil('S')
 
-    # The sum of these differences is 1 so can serve as weights
+    # The sum of these differences is 1 so can serve as linear weights
+    # When we use 1 - diff; the closer the time, the more it should be valued
     seconds_diff_low = (dt - dt_sec_floor).total_seconds()
     seconds_diff_high = (dt_sec_ceil - dt).total_seconds()
 
@@ -292,7 +293,7 @@ def solid_grid_pixel_interpolated_across_second_est(np_datetime: np.datetime64,
 
     # The rare case in which the truncated time occurs exactly on the seconds marker (w.r.t. floating point)
     # This would mean seconds_diff_low and seconds_diff_high are both 0.
-    if seconds_diff_low == seconds_diff_high:
+    if np.abs(seconds_diff_low) < 1e-9:
         interpolated_se_tides = solid_grid_pixel_rounded_to_nearest_sec(dt_sec_floor,
                                                                         lon,
                                                                         lat,
@@ -311,7 +312,9 @@ def solid_grid_pixel_interpolated_across_second_est(np_datetime: np.datetime64,
                                                                 res_x,
                                                                 res_y)
 
-        interpolated_se_tides = se_tides_low * seconds_diff_low + se_tides_high * seconds_diff_high
+        # The closer a time is to its ceiling or floor, the smaller the difference is; and the higher the linear weight
+        # in (0, 1) should be
+        interpolated_se_tides = se_tides_low * (1 - seconds_diff_low) + se_tides_high * (1 - seconds_diff_high)
     return interpolated_se_tides
 
 
