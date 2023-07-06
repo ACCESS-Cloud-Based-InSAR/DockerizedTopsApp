@@ -104,7 +104,7 @@ def get_orbit_obj_from_orbit_xmls(orbit_xmls: list[Path],
     See: https://github.com/isce-framework/isce2/blob/main/components/isceobj/Orbit/Orbit.py#L1000
 
     Note that `slc_start_time` is used here to initialize the center of window for the orb.geo2rdr because it's easy to
-    get from the name.
+    get from the slc_id stored in GUNW products.
     """
     state_vectors = []
     for orbit_xml in orbit_xmls:
@@ -444,16 +444,18 @@ def update_gunw_with_solid_earth_tide(gunw_path: Path,
     if reference_or_secondary not in ['reference', 'secondary']:
         raise ValueError('acq_type must be in "reference" or "secondary"')
     tide_group = '/science/grids/corrections/external/tides'
+
     # If GUNW has dummy placeholder - delete it
     se_tide_group_dummy = f'{tide_group}/solidEarthTide'
-
-    se_tide_group_acq = f'{tide_group}/solidEarth/{reference_or_secondary}'
     with h5py.File(gunw_path, 'a') as file:
         if se_tide_group_dummy in file:
             del file[se_tide_group_dummy]
+
     solid_earth_tide_ds = compute_solid_earth_tide_from_gunw(gunw_path=gunw_path,
                                                              orbit_xmls=orbit_xmls,
                                                              reference_or_secondary=reference_or_secondary)
+
+    se_tide_group_acq = f'{tide_group}/solidEarth/{reference_or_secondary}'
     solid_earth_tide_ds.to_netcdf(gunw_path,
                                   mode='a',
                                   group=se_tide_group_acq)
