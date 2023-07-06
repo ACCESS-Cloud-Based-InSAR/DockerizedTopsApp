@@ -356,7 +356,7 @@ def compute_enu_solid_earth_tide(*,
                                               longitude_mesh_arr)
 
     latitude_flat = latitude_mesh_arr.ravel()
-    longitude_flat = latitude_mesh_arr.ravel()
+    longitude_flat = longitude_mesh_arr.ravel()
 
     input_data = zip(azimuth_time_arr.ravel(),
                      longitude_flat,
