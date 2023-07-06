@@ -111,8 +111,11 @@ def get_gunw_attrs_for_pysolid(gunw_path: str) -> dict:
     return solidtide_atr
 
 
-def get_pysolid_set(gunw_path: Path, acq_type='reference'):
-    """Source: https://github.com/insarlab/PySolid/blob/main/docs/plot_grid_SET.ipynb"""
+def get_pysolid_set(gunw_path: Path, acq_type='reference') -> np.ndarray:
+    """Source: https://github.com/insarlab/PySolid/blob/main/docs/plot_grid_SET.ipynb
+
+    returns the SET cube as displacement in millimeters (mm)
+    """
     assert acq_type in ['reference', 'secondary']
 
     group = f'science/radarMetaData/inputSLC/{acq_type}'
