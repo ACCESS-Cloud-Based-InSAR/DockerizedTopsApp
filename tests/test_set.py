@@ -64,7 +64,7 @@ def test_azimuth_time(orbit_files_for_set: list, gunw_paths_for_set: list, acq_t
 
         hgt_mesh, lat_mesh, lon_mesh = np.meshgrid(hgt, lat, lon, indexing='ij')
         # Azimuth time array
-        X = get_azimuth_time_array(orbit_xmls=[orbit_dict['secondary']],
+        X = get_azimuth_time_array(orbit_xmls=[orbit_dict[acq_type]],
                                    slc_start_time=slc_start_time,
                                    height_mesh_arr=hgt_mesh,
                                    latitude_mesh_arr=lat_mesh,
