@@ -148,7 +148,17 @@ def get_pysolid_set(gunw_path: Path, acq_type='reference'):
 def test_magnitude_of_set_with_variable_timing(acq_type: str, orbit_files_for_set: list,
                                                gunw_paths_for_set: list, tmp_path):
     """This test verifies (with the functions above) the SET correction doesn't deviate more than 1 mm than
-    a fixed time calculation"""
+    a fixed time calculation.
+
+    Note to get an orbit file from a gunw use:
+    ```
+    group = f'science/radarMetaData/inputSLC/{acq_type}'
+    with xr.open_dataset(gunw_path_for_set_2, group=group) as ds:
+        slc_id = ds['L1InputGranules'].values[0]
+
+    orb_file, _ = get_orb.downloadSentinelOrbitFile(slc_id)
+    ```
+    """
     for gunw_path_for_set, orbit_dict in zip(gunw_paths_for_set, orbit_files_for_set):
 
         tmp_gunw = tmp_path / 'temp.nc'
