@@ -168,13 +168,13 @@ def compute_solid_earth_tide_from_gunw(*,
 
     group = 'science/grids/imagingGeometry'
     with xr.open_dataset(gunw_path, group=group, mode='r') as ds:
+        # latitude resolution will match the rasterio transformed; i.e. it will be negative
         lon_res, lat_res = ds.rio.resolution()
-        lat_res = -lat_res
 
         height_coord_arr = ds.heightsMeta.data
         # half pixel shift to ensure AREA (i.e. upper left corner) convention assumed by pysolid
-        # the xarray coordinates are pixel centered
-        latitude_coord_arr = ds.latitudeMeta.data + lat_res / 2.
+        # the xarray coordinates are pixel centered; latitude resolution moves up due to sign (see above)
+        latitude_coord_arr = ds.latitudeMeta.data - lat_res / 2.
         longitude_coord_arr = ds.longitudeMeta.data - lon_res / 2.
         # compute differential SET ENU
         # the output shapes will match the variables of the xarray dataset (or mesh of the coords) i.e.
@@ -286,19 +286,32 @@ def solid_grid_pixel_interpolated_across_second_est(np_datetime: np.datetime64,
     seconds_diff_low = (dt - dt_sec_floor).total_seconds()
     seconds_diff_high = (dt_sec_ceil - dt).total_seconds()
 
-    se_tides_low = solid_grid_pixel_rounded_to_nearest_sec(dt_sec_floor,
-                                                           lon,
-                                                           lat,
-                                                           res_x,
-                                                           res_y)
+    for diff_time in [seconds_diff_low, seconds_diff_high]:
+        if (diff_time < 0) or (diff_time >= 1):
+            raise ValueError('The truncated times were invalid; should be in [0, 1)')
 
-    se_tides_high = solid_grid_pixel_rounded_to_nearest_sec(dt_sec_ceil,
-                                                            lon,
-                                                            lat,
-                                                            res_x,
-                                                            res_y)
+    # The rare case in which the truncated time occurs exactly on the seconds marker (w.r.t. floating point)
+    # This would mean seconds_diff_low and seconds_diff_high are both 0.
+    if seconds_diff_low == seconds_diff_high:
+        interpolated_se_tides = solid_grid_pixel_rounded_to_nearest_sec(dt_sec_floor,
+                                                                        lon,
+                                                                        lat,
+                                                                        res_x,
+                                                                        res_y)
+    else:
+        se_tides_low = solid_grid_pixel_rounded_to_nearest_sec(dt_sec_floor,
+                                                               lon,
+                                                               lat,
+                                                               res_x,
+                                                               res_y)
 
-    interpolated_se_tides = se_tides_low * seconds_diff_low + se_tides_high * seconds_diff_high
+        se_tides_high = solid_grid_pixel_rounded_to_nearest_sec(dt_sec_ceil,
+                                                                lon,
+                                                                lat,
+                                                                res_x,
+                                                                res_y)
+
+        interpolated_se_tides = se_tides_low * seconds_diff_low + se_tides_high * seconds_diff_high
     return interpolated_se_tides
 
 
