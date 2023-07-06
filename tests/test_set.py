@@ -145,26 +145,29 @@ def get_pysolid_set(gunw_path: Path, acq_type='reference'):
 
 
 @pytest.mark.parametrize('acq_type', ['reference', 'secondary'])
-def test_magnitude_of_set_with_variable_timing(acq_type: str, gunw_path_for_set_2, tmp_path):
+def test_magnitude_of_set_with_variable_timing(acq_type: str, orbit_files_for_set: list,
+                                               gunw_paths_for_set: list, tmp_path):
     """This test verifies (with the functions above) the SET correction doesn't deviate more than 1 mm than
     a fixed time calculation"""
-    tmp_gunw = tmp_path / 'temp.nc'
-    shutil.copy(gunw_path_for_set_2, tmp_gunw)
+    for gunw_path_for_set, orbit_dict in zip(gunw_paths_for_set, orbit_files_for_set):
 
-    group = f'science/radarMetaData/inputSLC/{acq_type}'
-    with xr.open_dataset(gunw_path_for_set_2, group=group) as ds:
-        slc_id = ds['L1InputGranules'].values[0]
+        tmp_gunw = tmp_path / 'temp.nc'
+        shutil.copy(gunw_path_for_set, tmp_gunw)
 
-    orb_file, _ = get_orb.downloadSentinelOrbitFile(slc_id)
-    update_gunw_with_solid_earth_tide(tmp_gunw, acq_type, [orb_file])
+        group = f'science/radarMetaData/inputSLC/{acq_type}'
+        with xr.open_dataset(gunw_path_for_set, group=group) as ds:
+            slc_id = ds['L1InputGranules'].values[0]
 
-    path_to_set = (f'netcdf:{tmp_gunw}:/science/grids/corrections/external/'
-                   f'tides/solidEarth/{acq_type}/solidEarthTide')
-    with rasterio.open(path_to_set) as ds:
-        X = ds.read()
+        orb_file = orbit_dict[acq_type]
+        update_gunw_with_solid_earth_tide(tmp_gunw, acq_type, [orb_file])
 
-    X_set_plugin_mm = X * 0.055465761572122574 / np.pi / 4 * 1_000
-    X_set_pysolid_mm = get_pysolid_set(tmp_gunw, acq_type=acq_type)
+        path_to_set = (f'netcdf:{tmp_gunw}:/science/grids/corrections/external/'
+                       f'tides/solidEarth/{acq_type}/solidEarthTide')
+        with rasterio.open(path_to_set) as ds:
+            X = ds.read()
 
-    set_abs_diff = np.abs(X_set_pysolid_mm - X_set_plugin_mm)
-    assert np.max(set_abs_diff) < 1
+        X_set_plugin_mm = X * 0.055465761572122574 / np.pi / 4 * 1_000
+        X_set_pysolid_mm = get_pysolid_set(tmp_gunw, acq_type=acq_type)
+
+        set_abs_diff = np.abs(X_set_pysolid_mm - X_set_plugin_mm)
+        assert np.max(set_abs_diff) < 1
