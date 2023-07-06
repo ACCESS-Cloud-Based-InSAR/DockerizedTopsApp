@@ -8,7 +8,6 @@ import pytest
 import rasterio
 import xarray as xr
 from affine import Affine
-from hyp3lib import get_orb
 from numpy.testing import assert_almost_equal
 from rasterio.crs import CRS
 
