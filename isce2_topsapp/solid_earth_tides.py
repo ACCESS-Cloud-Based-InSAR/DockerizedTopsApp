@@ -170,11 +170,13 @@ def compute_solid_earth_tide_from_gunw(*,
     with xr.open_dataset(gunw_path, group=group, mode='r') as ds:
         # latitude resolution will match the rasterio transformed; i.e. it will be negative
         lon_res, lat_res = ds.rio.resolution()
+        # We make the resolution positive
+        lat_res = -lat_res
 
         height_coord_arr = ds.heightsMeta.data
         # half pixel shift to ensure AREA (i.e. upper left corner) convention assumed by pysolid
         # the xarray coordinates are pixel centered; latitude resolution moves up due to sign (see above)
-        latitude_coord_arr = ds.latitudeMeta.data - lat_res / 2.
+        latitude_coord_arr = ds.latitudeMeta.data + lat_res / 2.
         longitude_coord_arr = ds.longitudeMeta.data - lon_res / 2.
         # compute differential SET ENU
         # the output shapes will match the variables of the xarray dataset (or mesh of the coords) i.e.
@@ -182,10 +184,10 @@ def compute_solid_earth_tide_from_gunw(*,
         tide_e, tide_n, tide_u = compute_enu_solid_earth_tide(orbit_xmls=orbit_xmls,
                                                               slc_start_time=slc_start_time,
                                                               height_coord_arr=height_coord_arr,
-                                                              latitude_coord_arr=latitude_coord_arr,
                                                               longitude_coord_arr=longitude_coord_arr,
-                                                              res_y=lat_res,
-                                                              res_x=lon_res)
+                                                              latitude_coord_arr=latitude_coord_arr,
+                                                              res_x=lon_res,
+                                                              res_y=lat_res,)
 
         # For LOS computation
         inc_angle = np.deg2rad(ds.incidenceAngle.data)
@@ -260,14 +262,20 @@ def solid_grid_pixel_rounded_to_nearest_sec(timestamp: pd.Timestamp,
                                             lat: float,
                                             res_x: float,
                                             res_y: float) -> np.ndarray:
+    if any([res <= 0 for res in [res_x, res_y]]):
+        raise ValueError('Resolutions must be positive')
+    # https://github.com/insarlab/PySolid/blob/main/src/pysolid/grid.py#L69-L79
+    # Make sure that our steps are in line with the geo-transform
+    lat_step = -res_y
+    lon_step = res_x
     tide_e, tide_n, tide_u = solid_grid(timestamp.year,
                                         timestamp.month,
                                         timestamp.day,
                                         timestamp.hour,
                                         timestamp.minute,
                                         timestamp.second,
-                                        lat, res_y, 1,
-                                        lon, res_x, 1)
+                                        lat, lat_step, 1,
+                                        lon, lon_step, 1)
     # The output is a 1 x 1 matrix and we want the floats within them
     tide_e, tide_n, tide_u = tide_e[0, 0], tide_n[0, 0], tide_u[0, 0]
     return np.array([tide_e, tide_n, tide_u])
