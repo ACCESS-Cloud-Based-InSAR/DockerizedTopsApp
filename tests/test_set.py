@@ -18,70 +18,73 @@ from isce2_topsapp.solid_earth_tides import (get_azimuth_time_array,
 
 
 def test_set_workflow(orbit_files_for_set,
-                      gunw_path_for_set,
+                      gunw_paths_for_set,
                       tmp_path):
-    tmp_gunw = tmp_path / 'temp.nc'
-    shutil.copy(gunw_path_for_set, tmp_gunw)
+    for gunw_path_for_set, orbit_dict in zip(gunw_paths_for_set, orbit_files_for_set):
+        tmp_gunw = tmp_path / 'temp.nc'
+        shutil.copy(gunw_path_for_set, tmp_gunw)
 
-    update_gunw_with_solid_earth_tide(tmp_gunw, 'reference', [orbit_files_for_set['reference']])
-    update_gunw_with_solid_earth_tide(tmp_gunw, 'secondary', [orbit_files_for_set['secondary']])
+        update_gunw_with_solid_earth_tide(tmp_gunw, 'reference', [orbit_dict['reference']])
+        update_gunw_with_solid_earth_tide(tmp_gunw, 'secondary', [orbit_dict['secondary']])
 
-    for acq_type in ['reference']:  # , 'secondary']:
-        group = f'/science/grids/corrections/external/tides/solidEarth/{acq_type}'
-        variable = 'solidEarthTide'
-        with rasterio.open(f'netcdf:{tmp_gunw}:{group}/{variable}') as ds:
-            # Check nodata and CRS
-            assert ds.nodata == 0
-            assert ds.crs == CRS.from_epsg(4326)
+        for acq_type in ['reference', 'secondary']:
+            group = f'/science/grids/corrections/external/tides/solidEarth/{acq_type}'
+            variable = 'solidEarthTide'
+            with rasterio.open(f'netcdf:{tmp_gunw}:{group}/{variable}') as ds:
+                # Check nodata and CRS
+                assert ds.nodata == 0
+                assert ds.crs == CRS.from_epsg(4326)
 
-            # Transform should not be the identity
-            t = ds.transform
-            assert t != Affine(1, 0, 0, 0, 1, 0)
+                # Transform should not be the identity
+                t = ds.transform
+                assert t != Affine(1, 0, 0, 0, 1, 0)
 
 
-def test_azimuth_time(orbit_files_for_set, gunw_path_for_set):
+@pytest.mark.parametrize('acq_type', ['reference', 'secondary'])
+def test_azimuth_time(orbit_files_for_set: list, gunw_paths_for_set: list, acq_type: str):
     """Ensures deviation of retrieved azimuth time array is within 1e-3 seconds"""
-    group = 'science/grids/imagingGeometry'
-    with xr.open_dataset(gunw_path_for_set, group=group) as ds:
-        # lon_res is pos (+) and lat_res is neg (-)
-        lon_res, lat_res = ds.rio.resolution()
+    for gunw_path_for_set, orbit_dict in zip(gunw_paths_for_set, orbit_files_for_set):
+        group = 'science/grids/imagingGeometry'
+        with xr.open_dataset(gunw_path_for_set, group=group) as ds:
+            # lon_res is pos (+) and lat_res is neg (-)
+            lon_res, lat_res = ds.rio.resolution()
 
-        # Need upper left corner rather than pixel center
-        hgt = ds.heightsMeta.data
-        # This moves the lats northword due to sign of lat_res (see above)
-        lat = ds.latitudeMeta.data - lat_res / 2.
-        lon = ds.longitudeMeta.data - lon_res / 2.
+            # Need upper left corner rather than pixel center
+            hgt = ds.heightsMeta.data
+            # This moves the lats northword due to sign of lat_res (see above)
+            lat = ds.latitudeMeta.data - lat_res / 2.
+            lon = ds.longitudeMeta.data - lon_res / 2.
 
-    # Uses secondary image
-    group = 'science/radarMetaData/inputSLC'
-    with xr.open_dataset(gunw_path_for_set, group=f'{group}/secondary') as ds:
-        slc_ids = ds['L1InputGranules'].data
-        # Ensure non-empty and sorted by acq_time
-        slc_ids = sorted(list(filter(lambda x: x, slc_ids)))
-        slc_start_time = get_start_time_from_slc_id(slc_ids[0])
+        # Uses secondary image
+        group = 'science/radarMetaData/inputSLC'
+        with xr.open_dataset(gunw_path_for_set, group=f'{group}/{acq_type}') as ds:
+            slc_ids = ds['L1InputGranules'].data
+            # Ensure non-empty and sorted by acq_time
+            slc_ids = sorted(list(filter(lambda x: x, slc_ids)))
+            slc_start_time = get_start_time_from_slc_id(slc_ids[0])
 
-    hgt_mesh, lat_mesh, lon_mesh = np.meshgrid(hgt, lat, lon, indexing='ij')
-    # Azimuth time array
-    X = get_azimuth_time_array(orbit_xmls=[orbit_files_for_set['secondary']],
-                               slc_start_time=slc_start_time,
-                               height_mesh_arr=hgt_mesh,
-                               latitude_mesh_arr=lat_mesh,
-                               longitude_mesh_arr=lon_mesh)
-    # Total seconds from minimum time
-    Y = (X - X.min()) / np.timedelta64(1, 's')
-    # Vertical standard deviation
-    Y_std = Y.std(axis=0)
-    assert_almost_equal(Y_std, 0, decimal=3)
+        hgt_mesh, lat_mesh, lon_mesh = np.meshgrid(hgt, lat, lon, indexing='ij')
+        # Azimuth time array
+        X = get_azimuth_time_array(orbit_xmls=[orbit_dict['secondary']],
+                                   slc_start_time=slc_start_time,
+                                   height_mesh_arr=hgt_mesh,
+                                   latitude_mesh_arr=lat_mesh,
+                                   longitude_mesh_arr=lon_mesh)
+        # Total seconds from minimum time
+        Y = (X - X.min()) / np.timedelta64(1, 's')
+        # Vertical standard deviation
+        Y_std = Y.std(axis=0)
+        assert_almost_equal(Y_std, 0, decimal=3)
 
-    # Ensure that azimuth times are all within specified padding used in computation
-    # Padding used is 600 seconds - we check for 70 - note we are using the SLC id start time
-    # From secondary and there are TWO slcs so this makes sense with an SLC requiring being acquired
-    # over about 20-30 seconds; also the meshgrid for this layer is slightly larger than the GUNW as well
-    # indicating why the 10 second buffer is used.
-    x = pd.to_datetime(X.ravel())
-    differences_in_sec = (x - slc_start_time).total_seconds()
-    result = np.all(differences_in_sec < 70)
-    assert result
+        # Ensure that azimuth times are all within specified padding used in computation
+        # Padding used is 600 seconds - we check for 70 - note we are using the SLC id start time
+        # From secondary and there are TWO slcs so this makes sense with an SLC requiring being acquired
+        # over about 20-30 seconds; also the meshgrid for this layer is slightly larger than the GUNW as well
+        # indicating why the 10 second buffer is used.
+        x = pd.to_datetime(X.ravel())
+        differences_in_sec = (x - slc_start_time).total_seconds()
+        result = np.all(differences_in_sec < 70)
+        assert result
 
 
 def get_gunw_attrs_for_pysolid(gunw_path: str) -> dict:
@@ -110,6 +113,7 @@ def get_gunw_attrs_for_pysolid(gunw_path: str) -> dict:
 
 
 def get_pysolid_set(gunw_path: Path, acq_type='reference'):
+    """Source: https://github.com/insarlab/PySolid/blob/main/docs/plot_grid_SET.ipynb"""
     assert acq_type in ['reference', 'secondary']
 
     group = f'science/radarMetaData/inputSLC/{acq_type}'
@@ -142,6 +146,8 @@ def get_pysolid_set(gunw_path: Path, acq_type='reference'):
 
 @pytest.mark.parametrize('acq_type', ['reference', 'secondary'])
 def test_magnitude_of_set_with_variable_timing(acq_type: str, gunw_path_for_set_2, tmp_path):
+    """This test verifies (with the functions above) the SET correction doesn't deviate more than 1 mm than
+    a fixed time calculation"""
     tmp_gunw = tmp_path / 'temp.nc'
     shutil.copy(gunw_path_for_set_2, tmp_gunw)
 
