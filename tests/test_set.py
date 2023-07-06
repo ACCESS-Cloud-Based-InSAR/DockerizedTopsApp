@@ -39,12 +39,13 @@ def test_azimuth_time(orbit_files_for_set, gunw_path_for_set):
     """Ensures deviation of retrieved azimuth time array is within 1e-3 seconds"""
     group = 'science/grids/imagingGeometry'
     with xr.open_dataset(gunw_path_for_set, group=group) as ds:
+        # lon_res is pos (+) and lat_res is neg (-)
         lon_res, lat_res = ds.rio.resolution()
-        lat_res = -lat_res
 
         # Need upper left corner rather than pixel center
         hgt = ds.heightsMeta.data
-        lat = ds.latitudeMeta.data + lat_res / 2.
+        # This moves the lats northword due to sign of lat_res (see above)
+        lat = ds.latitudeMeta.data - lat_res / 2.
         lon = ds.longitudeMeta.data - lon_res / 2.
 
     # Uses secondary image
