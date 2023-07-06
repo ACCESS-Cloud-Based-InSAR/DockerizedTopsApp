@@ -11,7 +11,7 @@ def test_dir_path() -> Path:
 
 
 @pytest.fixture(scope='session')
-def orbit_files_for_set() -> dict:
+def orbit_files_for_set() -> list[dict]:
     """Is aligned with gunw_paths_for_set"""
     orbit_paths_0 = {'reference': (test_dir / 'set_test_data' /
                                    'S1B_OPER_AUX_POEORB_OPOD_20210812T111941_V20210722T225942_20210724T005942.EOF'),
@@ -27,7 +27,7 @@ def orbit_files_for_set() -> dict:
 
 
 @pytest.fixture(scope='session')
-def gunw_paths_for_set() -> Path:
+def gunw_paths_for_set() -> list[Path]:
     """Is alignd with orbit_files_for_set"""
     p1 = test_dir / 'set_test_data' / 'S1-GUNW-A-R-064-tops-20210723_20210711-015000-00119W_00033N-PP-6267-v2_0_6.nc'
     p2 = test_dir / 'set_test_data' / 'S1-GUNW-A-R-064-tops-20220113_20220101-015048-00119W_00034N-PP-3b1f-v2_0_5.nc'
