@@ -154,10 +154,6 @@ def test_magnitude_of_set_with_variable_timing(acq_type: str, orbit_files_for_se
         tmp_gunw = tmp_path / 'temp.nc'
         shutil.copy(gunw_path_for_set, tmp_gunw)
 
-        group = f'science/radarMetaData/inputSLC/{acq_type}'
-        with xr.open_dataset(gunw_path_for_set, group=group) as ds:
-            slc_id = ds['L1InputGranules'].values[0]
-
         orb_file = orbit_dict[acq_type]
         update_gunw_with_solid_earth_tide(tmp_gunw, acq_type, [orb_file])
 
