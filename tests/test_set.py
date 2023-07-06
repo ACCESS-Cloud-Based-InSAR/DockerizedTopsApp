@@ -1,10 +1,14 @@
 import shutil
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pysolid
+import pytest
 import rasterio
 import xarray as xr
 from affine import Affine
+from hyp3lib import get_orb
 from numpy.testing import assert_almost_equal
 from rasterio.crs import CRS
 
@@ -78,3 +82,83 @@ def test_azimuth_time(orbit_files_for_set, gunw_path_for_set):
     differences_in_sec = (x - slc_start_time).total_seconds()
     result = np.all(differences_in_sec < 70)
     assert result
+
+
+def get_gunw_attrs_for_pysolid(gunw_path: str) -> dict:
+    """ Access necessary GUNW attributes to compute SET """
+    group = 'science/grids/imagingGeometry'
+    with xr.open_dataset(gunw_path, group=group, engine='rasterio') as ds:
+        # z_meta = ds.heightsMeta.data
+        gt = ds.rio.transform()
+        x_step = gt.a
+        y_step = gt.e
+        x_first = gt.c
+        y_first = gt.f
+
+        # convert angles to rad
+        _, length, width = ds.incidenceAngle.shape
+        solidtide_atr = {
+            'LENGTH': length,
+            'WIDTH': width,
+            'X_FIRST': x_first,
+            'Y_FIRST': y_first,
+            'X_STEP':  x_step,
+            'Y_STEP': y_step,
+        }
+
+    return solidtide_atr
+
+
+def get_pysolid_set(gunw_path: Path, acq_type='reference'):
+    assert acq_type in ['reference', 'secondary']
+
+    group = f'science/radarMetaData/inputSLC/{acq_type}'
+    with xr.open_dataset(gunw_path, group=group) as ds:
+        slc_id = ds['L1InputGranules'].values[0]
+    dt_obj = get_start_time_from_slc_id(slc_id).to_pydatetime()
+
+    atr = get_gunw_attrs_for_pysolid(gunw_path)
+
+    tide_e, tide_n, tide_u = pysolid.calc_solid_earth_tides_grid(dt_obj,
+                                                                 atr,
+                                                                 display=False,
+                                                                 verbose=True
+                                                                 )
+
+    group = 'science/grids/imagingGeometry'
+    with xr.open_dataset(gunw_path, group=group, engine='rasterio') as ds:
+        inc_angle = np.deg2rad(ds.incidenceAngle.data)
+        az_angle = np.deg2rad(ds.azimuthAngle.data-90)
+
+    # broadcasting will ensure 2d arrays are copied in height dimension
+    tide_los = (tide_e * np.sin(inc_angle) * np.sin(az_angle) * -1
+                + tide_n * np.sin(inc_angle) * np.cos(az_angle)
+                + tide_u * np.cos(inc_angle))
+
+    # Convert to mm (pysolid is in meters)
+    tide_los *= 1_000
+    return tide_los
+
+
+@pytest.mark.parametrize('acq_type', ['reference', 'secondary'])
+def test_magnitude_of_set_with_variable_timing(acq_type: str, gunw_path_for_set_2, tmp_path):
+    tmp_gunw = tmp_path / 'temp.nc'
+    shutil.copy(gunw_path_for_set_2, tmp_gunw)
+
+    group = f'science/radarMetaData/inputSLC/{acq_type}'
+    with xr.open_dataset(gunw_path_for_set_2, group=group) as ds:
+        slc_id = ds['L1InputGranules'].values[0]
+
+    orb_file, _ = get_orb.downloadSentinelOrbitFile(slc_id)
+    update_gunw_with_solid_earth_tide(tmp_gunw, acq_type, [orb_file])
+
+    path_to_set = (f'netcdf:{tmp_gunw}:/science/grids/corrections/external/'
+                   f'tides/solidEarth/{acq_type}/solidEarthTide')
+    with rasterio.open(path_to_set) as ds:
+        X = ds.read()
+
+    X_set_plugin_mm = X * 0.055465761572122574 / np.pi / 4 * 1_000
+    X_set_pysolid_mm = get_pysolid_set(tmp_gunw, acq_type=acq_type)
+
+    set_abs_diff = np.abs(X_set_pysolid_mm - X_set_plugin_mm)
+    assert np.max(set_abs_diff) < 1
