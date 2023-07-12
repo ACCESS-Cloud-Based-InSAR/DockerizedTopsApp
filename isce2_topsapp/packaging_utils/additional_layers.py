@@ -18,7 +18,7 @@ def add_2d_layer(layer_name: str, gunw_netcdf_path: Path, additional_attrs: dict
     """
 
     layer_data = ADDITIONAL_LAYERS[layer_name]
-    print(layer_name)
+
     dst_group = layer_data['dst_group']
     dst_variable = layer_data['dst_variable']
     if additional_attrs:
