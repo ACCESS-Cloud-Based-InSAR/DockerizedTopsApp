@@ -225,7 +225,7 @@ def gunw_slc():
         secondary_properties=sec_properties,
         extent=extent,
         additional_2d_layers=additional_2d_layers,
-        additional_attributes=aditional_attributes
+        additional_attributes=additional_attributes
     )
 
     if args.compute_solid_earth_tide:

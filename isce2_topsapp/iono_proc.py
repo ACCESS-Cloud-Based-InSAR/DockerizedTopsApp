@@ -185,8 +185,8 @@ def iono_processing(
         processing_steps=steps + ['geocode'],
     )
 
-    attr = dict(ionosphere = iono_dict,
-                ionoBurstRamps = burst_ramps_dict)  
+    attr = dict(ionosphere=iono_dict,
+                ionoBurstRamps=burst_ramps_dict)
 
     return attr
 
