@@ -154,28 +154,17 @@ def iono_processing(
                        topsapp.geocode_bbox)
 
     # Create attribute iono processing dict
-    if correct_burst_jumps:
-        steps = ionParam.allSteps
-    else:
-        steps = ionParam.allSteps[:-3]
+    steps = ionParam.allSteps
     # as we skip grd2ion projection to ionospheric thin shell
     del steps[2]
-    steps.append('geocode')
 
     # attributes dict items must be in the following
     # format: str, Number, ndarray, number, list, tuple
     iono_dict = dict(
-        processing_steps=steps,
+        processing_steps=steps[0:3] + ['geocode'],
         water_mask=str(mask_filename),
         mask_connected_component_zero=str(conncomp_flag),
         do_phase_bridging=str(True),
-        estimate_burst_jumps=str(ionParam.considerBurstProperties),
-        burst_jumps_description=('calculation of burst jumps'
-                                 ' (scalloping effect) due'
-                                 ' to misaligment in coregistration'
-                                 ' caused be large ionosphere'
-                                 ' content/delay, typically low or'
-                                 ' high latitudes'),
         swath_mode=str(False) if ionParam.calIonWithMerged else str(True),
         swath_ramp_removal=str(np.bool_(ionParam.rampRemovel)),
         swath_mode_description=('raw_ion ionosphere calculation'
@@ -192,7 +181,14 @@ def iono_processing(
         iono_height=ionParam.ionHeight
         )
 
-    return iono_dict
+    burst_ramps_dict = dict(
+        processing_steps=steps + ['geocode'],
+    )
+
+    attr = dict(ionosphere = iono_dict,
+                ionoBurstRamps = burst_ramps_dict)  
+
+    return attr
 
 
 def mask_iono_ifg_bursts(tops_dir: Path,
