@@ -203,7 +203,7 @@ def gunw_slc():
     if args.estimate_ionosphere_delay:
         iono_attr = iono_processing(
             mask_filename=loc_data["water_mask"],
-            correct_burst_jumps=True,
+            correct_burst_ramps=True,
         )
 
     ref_properties = loc_data["reference_properties"]

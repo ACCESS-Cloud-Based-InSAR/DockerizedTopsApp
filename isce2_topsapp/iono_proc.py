@@ -37,7 +37,7 @@ def iono_processing(
     *,
     topsapp_xml_filename: str = 'topsApp.xml',
     mask_filename: str = '',
-    correct_burst_jumps: bool = True,
+    correct_burst_ramps: bool = True,
         ) -> None:
 
     '''
@@ -122,7 +122,7 @@ def iono_processing(
     # between bursts, misregistration due to high iono content
     # based on long wavelength ionosphere delay estimation
     # NOTE: wrong long-wavelength iono estimates can effect this steps
-    if correct_burst_jumps:
+    if correct_burst_ramps:
         # ionosphere shift
         runIon.ionosphere_shift(topsapp, ionParam)
 
