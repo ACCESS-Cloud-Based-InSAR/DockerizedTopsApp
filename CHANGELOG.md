@@ -21,6 +21,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * localize_data within __main__.py added option to use/not use water mask for ionosphere processing
 * Added option to estimate burst phase jumps in ionosphere computation
 * Added packing of additional attributes for ionosphere computation into GUNW
+* fsspec is now required in environment due to burst processing.
 
 ## [0.2.3]
 
