@@ -186,7 +186,7 @@ def iono_processing(
     )
 
     attr = dict(ionosphere=iono_dict,
-                ionoBurstRamps=burst_ramps_dict)
+                ionosphereBurstRamps=burst_ramps_dict)
 
     return attr
 

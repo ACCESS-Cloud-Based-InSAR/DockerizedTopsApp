@@ -215,8 +215,8 @@ def gunw_slc():
     if args.estimate_ionosphere_delay:
         additional_2d_layers.append("ionosphere")
         additional_attributes.append(iono_attr['ionosphere'])
-        additional_2d_layers.append("ionoBurstRamps")
-        additional_attributes.append(iono_attr['ionoBurstRamps'])
+        additional_2d_layers.append("ionosphereBurstRamps")
+        additional_attributes.append(iono_attr['ionosphereBurstRamps'])
 
     additional_2d_layers = additional_2d_layers or None
     nc_path = package_gunw_product(
