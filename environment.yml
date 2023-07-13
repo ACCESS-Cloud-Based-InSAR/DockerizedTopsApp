@@ -12,6 +12,7 @@ dependencies:
  - flake8-blind-except
  - flake8-builtins
  - flake8-import-order
+ - fsspec
  - gdal
  - geopandas
  - hyp3lib>=1.7

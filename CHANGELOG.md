@@ -20,8 +20,13 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 * localize_data within __main__.py added option to use/not use water mask for ionosphere processing
 * Added option to estimate burst phase jumps in ionosphere computation
+<<<<<<< HEAD
 * Added additional attributes for ionosphere computation into GUNW ionosphere layer metadata: processing_steps, water_mask, mask_connected_component_zero (flag) , do_phase_bridging (flag), swath_mode (flag), swath_ramp_removal (flag), swath_mode_description, multilook_az_rg1, multilook_az_rg2, iono_height
 
+=======
+* Added packing of additional attributes for ionosphere computation into GUNW
+* fsspec is now required in environment due to burst processing.
+>>>>>>> dev
 
 ## [0.2.3]
 
