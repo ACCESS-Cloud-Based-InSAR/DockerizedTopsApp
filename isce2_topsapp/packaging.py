@@ -11,13 +11,13 @@ from dateparser import parse
 
 import isce2_topsapp
 from isce2_topsapp.packaging_utils.additional_layers import add_2d_layer
-from isce2_topsapp.packaging_utils.ionosphere import format_ionosphere_for_gunw
+from isce2_topsapp.packaging_utils.ionosphere import format_iono_burst_ramps, format_ionosphere_for_gunw
 from isce2_topsapp.templates import read_netcdf_packaging_template
 
 DATASET_VERSION = '3.0.0'
 
 
-PERMISSIBLE_2D_LAYERS = ['ionosphere']
+PERMISSIBLE_2D_LAYERS = ['ionosphere', 'ionosphereBurstRamps']
 
 
 """Warning: the packaging scripts were written as command line scripts and
@@ -240,6 +240,9 @@ def package_additional_layers_into_gunw(gunw_path: Path,
     if 'ionosphere' in additional_2d_layers:
         # current working directory is ISCE directory
         _ = format_ionosphere_for_gunw(isce_data_directory, gunw_path)
+    if 'ionosphereBurstRamps' in additional_2d_layers:
+        # current working directory is ISCE directory
+        _ = format_iono_burst_ramps(isce_data_directory, gunw_path)
 
     # Assumes ionosphere raster is written to specific path
     additional_dataset = zip(additional_2d_layers, additional_attributes)

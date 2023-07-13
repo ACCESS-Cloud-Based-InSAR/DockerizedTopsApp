@@ -200,17 +200,10 @@ def gunw_slc():
     )
 
     # Run ionospheric correction
-    # MG: correct burst jumps, e.g. needed for Arabian
-    #   processing. TODO: We need a trigger function for
-    #   this option (it adds 10min to iono for frame processing)
-    #   example: look at filt_toposphase.unw or .flat
-    #   and analyze if there are any burst jumps,
-    #   if yes, set this option True, or we could run it always
-    #   and store both iono-long wavelength and burst jumps(az_shifts)
     if args.estimate_ionosphere_delay:
-        iono_attributes = iono_processing(
+        iono_attr = iono_processing(
             mask_filename=loc_data["water_mask"],
-            correct_burst_jumps=False,
+            correct_burst_ramps=True,
         )
 
     ref_properties = loc_data["reference_properties"]
@@ -218,10 +211,12 @@ def gunw_slc():
     extent = loc_data["extent"]
 
     additional_2d_layers = []
-    aditional_attributes = []
+    additional_attributes = []
     if args.estimate_ionosphere_delay:
         additional_2d_layers.append("ionosphere")
-        aditional_attributes.append(iono_attributes)
+        additional_attributes.append(iono_attr['ionosphere'])
+        additional_2d_layers.append("ionosphereBurstRamps")
+        additional_attributes.append(iono_attr['ionosphereBurstRamps'])
 
     additional_2d_layers = additional_2d_layers or None
     nc_path = package_gunw_product(
@@ -230,7 +225,7 @@ def gunw_slc():
         secondary_properties=sec_properties,
         extent=extent,
         additional_2d_layers=additional_2d_layers,
-        additional_attributes=aditional_attributes
+        additional_attributes=additional_attributes
     )
 
     if args.compute_solid_earth_tide:

@@ -37,7 +37,7 @@ def iono_processing(
     *,
     topsapp_xml_filename: str = 'topsApp.xml',
     mask_filename: str = '',
-    correct_burst_jumps: bool = False,
+    correct_burst_ramps: bool = True,
         ) -> None:
 
     '''
@@ -119,8 +119,10 @@ def iono_processing(
                   coh_threshold=coh_threshold, sigma_rule=sigma_rule)
 
     # Step when using azimuth shift correction
-    # between bursts
-    if correct_burst_jumps:
+    # between bursts, misregistration due to high iono content
+    # based on long wavelength ionosphere delay estimation
+    # NOTE: wrong long-wavelength iono estimates can effect this steps
+    if correct_burst_ramps:
         # ionosphere shift
         runIon.ionosphere_shift(topsapp, ionParam)
 
@@ -131,10 +133,16 @@ def iono_processing(
         # esd
         runIon.esd(topsapp, ionParam)
 
-        # Create merged/topophase.ion file
+        # Create merged/topophase.ion.az_shift file
         # using ion/ion_burst/ files
         merge_multilook_bursts(topsapp, input_dir='ion/ion_burst',
-                               output_filename='topophase.ion')
+                               output_filename='topophase.ion.az_shift')
+
+        GEOCODE_LIST_ION.append('merged/topophase.ion.az_shift')
+
+        # Iono long wavelength
+        merge_bursts(input_file="ion/ion_cal/filt.ion",
+                     output_filename="topophase.ion")
 
     else:
         # Create merged/topophase.ion file
@@ -146,28 +154,17 @@ def iono_processing(
                        topsapp.geocode_bbox)
 
     # Create attribute iono processing dict
-    if correct_burst_jumps:
-        steps = ionParam.allSteps
-    else:
-        steps = ionParam.allSteps[:-3]
+    steps = ionParam.allSteps
     # as we skip grd2ion projection to ionospheric thin shell
     del steps[2]
-    steps.append('geocode')
 
     # attributes dict items must be in the following
     # format: str, Number, ndarray, number, list, tuple
     iono_dict = dict(
-        processing_steps=steps,
-        mask=str(mask_filename),
+        processing_steps=steps[0:3] + ['geocode'],
+        water_mask=str(mask_filename),
         mask_connected_component_zero=str(conncomp_flag),
         do_phase_bridging=str(True),
-        estimate_burst_jumps=str(ionParam.considerBurstProperties),
-        burst_jumps_description=('calculation of burst jumps'
-                                 ' (scalloping effect) due'
-                                 ' to misaligment in coregistration'
-                                 ' caused be large ionosphere'
-                                 ' content/delay, typically low or'
-                                 ' high latitudes'),
         swath_mode=str(False) if ionParam.calIonWithMerged else str(True),
         swath_ramp_removal=str(np.bool_(ionParam.rampRemovel)),
         swath_mode_description=('raw_ion ionosphere calculation'
@@ -184,7 +181,14 @@ def iono_processing(
         iono_height=ionParam.ionHeight
         )
 
-    return iono_dict
+    burst_ramps_dict = dict(
+        processing_steps=steps + ['geocode'],
+    )
+
+    attr = dict(ionosphere=iono_dict,
+                ionosphereBurstRamps=burst_ramps_dict)
+
+    return attr
 
 
 def mask_iono_ifg_bursts(tops_dir: Path,
