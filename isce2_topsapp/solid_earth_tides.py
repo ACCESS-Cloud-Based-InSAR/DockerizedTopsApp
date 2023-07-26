@@ -107,7 +107,10 @@ def get_orbit_obj_from_orbit_xmls(orbit_xmls: list[Path],
     get from the slc_id stored in GUNW products.
     """
     state_vectors = []
-    for orbit_xml in orbit_xmls:
+    # Duplicate XMLs leads to unexpected behavior in geo2rdr see errors in
+    # https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/issues/145
+    orbit_xmls_unique = list(set(orbit_xmls))
+    for orbit_xml in orbit_xmls_unique:
         state_vectors.extend(get_state_vector_arrays(orbit_xml))
     orb = Orbit()
     orb.configure()
@@ -232,7 +235,7 @@ def get_azimuth_time_array(orbit_xmls: list[Path],
 
     Notes
     -----
-    See get_orbit_obj_from_orbit_xmls as to why slc start time and padding is required.
+    - See get_orbit_obj_from_orbit_xmls as to why slc start time and padding is required.
     """
 
     orb = get_orbit_obj_from_orbit_xmls(orbit_xmls,

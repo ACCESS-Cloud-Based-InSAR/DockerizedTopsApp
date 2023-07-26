@@ -16,6 +16,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Read low resolution Natural Earth land masses from public url due to removal from geopandas package.
 * For ionosphere computation over water, includes masking conncomp zero, phase bridging, and modified adaptive gaussian filtering
 * Fix for #135, skip iono computation if there are not land (all zero values) and skip using water mask if the area is outside of SWBD coverage
+* Fix for #145 and SET - duplicate orbit xmls for computing azimuth time grid with ISCE2 geo2rdr (duplicate state vectors likely culprit). Ensures orbit object is intialized with unique set of orbit xmls passed. Also, localized metadata appropriately.
 
 ### Added
 * localize_data within __main__.py added option to use/not use water mask for ionosphere processing
