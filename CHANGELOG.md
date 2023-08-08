@@ -8,6 +8,10 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.2.4]
 
+### Added
+* `++omp-num-threads` parameter to the `main()` entrypoint to limit the number of threads used by ISCE2 during
+  multiprocessing.
+
 ### Fixed
 * For Solid Earth Tide computation, use azimuth timing to calculate solid earth tide in `science/grids/imagingGeometry` reference frame using ISCE2 rdr2geo.
 * Include topsapp_iono template.

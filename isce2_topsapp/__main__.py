@@ -339,7 +339,18 @@ def main():
         default="gunw_slc",
         help="Select the HyP3 entrypoint to use",
     )
+    parser.add_argument(
+        "++omp-num-threads",
+        type=int,
+        help=("The number of OpenMP threads to use for parallel processing in ISCE2 routines; "
+              "when running locally, this topsapp will utilize all resources, which is not recommended; "
+              "suggest to set this option to 8 - 16 so other processes on server/workstation can running.")
+    )
+
     args, unknowns = parser.parse_known_args()
+
+    if args.omp_num_threads:
+        os.environ["OMP_NUM_THREADS"] = str(args.omp_num_threads)
 
     sys.argv = [args.process, *unknowns]
     # FIXME: this gets better in python 3.10
