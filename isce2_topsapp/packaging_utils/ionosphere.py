@@ -45,3 +45,28 @@ def format_ionosphere_for_gunw(isce_directory: Path,
         ds.write(X_ion_low_res, 1)
 
     return out_path
+
+
+def format_iono_burst_ramps(isce_directory: Path,
+                            gunw_netcdf_path: Path) -> Path:
+    # open long-wavelength ionosphere layer
+    with rasterio.open(isce_directory / "merged/topophase.ion.geo") as ds:
+        X_ion = ds.read(1)
+        p_ion = ds.profile
+
+    X_ion[X_ion == 0] = np.nan
+    p_ion['nodata'] = np.nan
+
+    # open burstRamps layer
+    with rasterio.open(isce_directory / "merged/topophase.ion.az_shift.geo") as ds:
+        X_ramps = ds.read(1)
+    X_ramps[X_ramps == 0] = np.nan
+
+    # Get burst ramps without long-wavength ionospheric delay
+    X_ramps -= X_ion
+
+    out_path = isce_directory / 'merged/ionosphereBurstRamps_for_gunw.geo'
+    with rasterio.open(out_path, 'w', **p_ion) as ds:
+        ds.write(X_ramps, 1)
+
+    return out_path

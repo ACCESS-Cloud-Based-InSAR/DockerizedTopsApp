@@ -6,6 +6,15 @@
                                        "long_name": "ionospherePhaseCorrection",
                                        "description": "Estimated ionosphere phase correction"
                                        }
-                             }
+                             },
+ "ionosphereBurstRamps": {"dst_group": "/science/grids/corrections/derived/ionosphereBurstRamps",
+                    "dst_variable": "ionosphereBurstRamps",
+                    "input_relative_path": "merged/ionosphereBurstRamps_for_gunw.geo",
+                    "attrs": {
+                                "standard_name": "ionosphereBurstRamps",
+                                "long_name": "ionosphereBurstRamps",
+                                "description": "Estimated burst ramps correction due to ionosphere"
+                                }
+              } 
 
 }

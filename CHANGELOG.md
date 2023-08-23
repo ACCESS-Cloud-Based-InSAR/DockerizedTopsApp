@@ -6,12 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4]
+
 ### Added
+* `++omp-num-threads` parameter to the `main()` entrypoint to limit the number of threads used by ISCE2 during
+  multiprocessing.
+
+### Fixed
+* For Solid Earth Tide computation, use azimuth timing to calculate solid earth tide in `science/grids/imagingGeometry` reference frame using ISCE2 rdr2geo.
+* Include topsapp_iono template.
+* Increases DEM buffer to .4 from .1 to ensure the extent of at least two bursts (~40 km) are added when retrieving DEM (because estimated footprint can differ from what ISCE2 generates for a GUNW extent)
+* Catch warnings in tests and match messages to ensure package warnings do not fail test suite
+* Read low resolution Natural Earth land masses from public url due to removal from geopandas package.
+* For ionosphere computation over water, includes masking conncomp zero, phase bridging, and modified adaptive gaussian filtering
+* Fix for #135, skip iono computation if there are not land (all zero values) and skip using water mask if the area is outside of SWBD coverage
+* Fix for #145 and SET - duplicate orbit xmls for computing azimuth time grid with ISCE2 geo2rdr (duplicate state vectors likely culprit). Ensures orbit object is intialized with unique set of orbit xmls passed. Also, localized metadata appropriately.
+
+### Added
+* localize_data within __main__.py added option to use/not use water mask for ionosphere processing
+* Added option to estimate burst phase jumps in ionosphere computation
+* Added additional attributes for ionosphere computation into GUNW ionosphere layer metadata: processing_steps, water_mask, mask_connected_component_zero (flag) , do_phase_bridging (flag), swath_mode (flag), swath_ramp_removal (flag), swath_mode_description, multilook_az_rg1, multilook_az_rg2, iono_height
+* Added packing of additional attributes for ionosphere computation into GUNW
+* fsspec is now required in environment due to burst processing.
 
 ## [0.2.3]
 
 ### Updated
 * Explode footprints polygons
+* Added support for using water mask in ionospheric correction computation
 
 ### Removed
 * Python 3.8 Support
@@ -25,6 +47,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Exposes `frame-id` parameter for fixed frame cropping. Discussion, references, and examples in README.
 * Latitude aligned frames and their expected extents are added as geojson in repository as zip file.
 * Pins ISCE2 version to 2.6.1 and numpy / scipy to previous versions (see environment.yml) - to be amended when newest ISCE2 build is sorted out
+* Includes `frame_id` and `temporal_baseline_days` in json metadata for CMR handshake. The former is the fixed frame id and the latter is the number of days between images (will be multiple of 6).
 * Added support to compute and embed solid earth tide correction layers into GUNW products (see PR #91) - reference and secondary have own groups
 * Raises warning if there is at least 80% of water in the IFG area using Natural Earth Land mask.
 

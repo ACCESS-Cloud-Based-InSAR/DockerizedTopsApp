@@ -37,6 +37,9 @@ def download_orbits(reference_scenes: list,
         orbit_file, _ = orbit_fetcher(scene, str(orbit_dir))
         secondary_orbits.append(orbit_file)
 
+    reference_orbits = list(set(reference_orbits))
+    secondary_orbits = list(set(secondary_orbits))
+
     return {
         'orbit_directory': orbit_directory,
         'reference_orbits': reference_orbits,
