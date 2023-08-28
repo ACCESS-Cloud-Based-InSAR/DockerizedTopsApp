@@ -1,3 +1,4 @@
+import datetime
 import shutil
 from pathlib import Path
 
@@ -179,3 +180,34 @@ def test_magnitude_of_set_with_variable_timing(acq_type: str, orbit_files_for_se
 
         set_abs_diff = np.abs(X_set_pysolid_mm - X_set_plugin_mm)
         assert np.max(set_abs_diff) < 1
+
+
+def test_overlapping_orbits(get_overlapping_orbits_for_set_test):
+    """See https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/issues/148
+
+    relevant granules are:
+
+    ```
+    granules = ['S1A_IW_SLC__1SDV_20230615T225929_20230615T225956_049003_05E492_C8D9',
+                'S1A_IW_SLC__1SDV_20230615T225954_20230615T230021_049003_05E492_3D08']
+    ```
+    """
+    slc_start_time = datetime.datetime(2023, 6, 15, 22, 59, 29)
+    orb_paths = get_overlapping_orbits_for_set_test()
+    bounds = [-77.742622,  39.382721, -74.029358,  42.887646]
+
+    # Build cube
+    lons = np.linspace(bounds[0], bounds[2], 20)
+    lats = np.linspace(bounds[3], bounds[1], 20)
+    hgts = [-500, 0, 500, 1500]
+
+    height_mesh_arr, latitude_mesh_arr, longitude_mesh_arr = np.meshgrid(hgts, lats, lons, indexing='ij')
+
+    # Should not crash
+    X = get_azimuth_time_array(orb_paths,
+                               slc_start_time,
+                               height_mesh_arr,
+                               latitude_mesh_arr,
+                               longitude_mesh_arr,
+                               orbit_padding_in_seconds=600)
+    assert X.shape == height_mesh_arr.shape
