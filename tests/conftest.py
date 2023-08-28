@@ -33,3 +33,11 @@ def gunw_paths_for_set() -> list[Path]:
     p2 = test_dir / 'set_test_data' / 'S1-GUNW-A-R-064-tops-20220113_20220101-015048-00119W_00034N-PP-3b1f-v2_0_5.nc'
     data = [p1, p2]
     return data
+
+
+@pytest.fixture(scope='session')
+def get_overlapping_orbits_for_set_test() -> list[Path]:
+    p1 = test_dir / 'set_test_data' / 'S1A_OPER_AUX_POEORB_OPOD_20230705T080713_V20230614T225942_20230616T005942.EOF'
+    p2 = test_dir / 'set_test_data' / 'S1A_OPER_AUX_POEORB_OPOD_20230706T080750_V20230615T225942_20230617T005942.EOF'
+    data = [p1, p2]
+    return data

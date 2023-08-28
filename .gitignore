@@ -120,6 +120,10 @@ tests/**/*.json
 !tests/test_data/sec_manifest.xml
 !tests/test_data/sec_metadata.xml
 
+# Test for overlapping orbits
+!tests/set_test_data/S1A_OPER_AUX_POEORB_OPOD_20230705T080713_V20230614T225942_20230616T005942.EOF
+!tests/set_test_data/S1A_OPER_AUX_POEORB_OPOD_20230706T080750_V20230615T225942_20230617T005942.EOF
+
 # Use geojson zip file for ARIA s1 frame data
 !isce2_topsapp/data/s1_gunw_frame_footprints.geojson.zip
 !isce2_topsapp/data/s1_frames_latitude_aligned.geojson.zip
