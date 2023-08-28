@@ -193,7 +193,7 @@ def test_overlapping_orbits(get_overlapping_orbits_for_set_test):
     ```
     """
     slc_start_time = datetime.datetime(2023, 6, 15, 22, 59, 29)
-    orb_paths = get_overlapping_orbits_for_set_test()
+    orb_paths = get_overlapping_orbits_for_set_test
     bounds = [-77.742622,  39.382721, -74.029358,  42.887646]
 
     # Build cube
