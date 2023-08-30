@@ -112,11 +112,28 @@ def get_orbit_obj_from_orbit_xmls(orbit_xmls: list[Path],
     orbit_xmls_unique = list(set(orbit_xmls))
     for orbit_xml in orbit_xmls_unique:
         state_vectors.extend(get_state_vector_arrays(orbit_xml))
+
+    # # Filter if overlapping orbits for different frames
+    state_vectors_filtered = state_vectors
+    # # Have to deduplicate statevectors otherwise Newton method will fail to converge
+    # # fnprime will be calcualted as zero in geo2rdrs
+    if len(orbit_xmls_unique) > 1:
+        # Get all state vectors in order of time
+        state_vectors = sorted(state_vectors, key=lambda sv: sv.time)
+        # Ensure only unique state vectors
+        visited_times = []
+        state_vectors_filtered = []
+        for sv in state_vectors:
+            if sv.time in visited_times:
+                continue
+            visited_times.append(sv.time)
+            state_vectors_filtered.append(sv)
+
     orb = Orbit()
     orb.configure()
     window_min = slc_start_time - datetime.timedelta(seconds=pad_in_seconds)
     window_max = slc_start_time + datetime.timedelta(seconds=pad_in_seconds)
-    for sv in state_vectors:
+    for sv in state_vectors_filtered:
         if (sv.time < window_max) and (sv.time > window_min):
             orb.addStateVector(sv)
     return orb

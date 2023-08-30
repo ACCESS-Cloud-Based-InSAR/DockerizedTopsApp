@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5]
+
+### Fixed
+* For SET azimuth time interpolation, overlapping orbits produces errors with prepping state vectors for azimuth time grid. We now ensure state-vecotors are both unique and in order before creating a orbit object in ISCE2.
+
 ## [0.2.4]
 
 ### Added
