@@ -1,21 +1,35 @@
-{"ionosphere": {"dst_group": "/science/grids/corrections/derived/ionosphere",
+{
+        "ionosphere": {
+                "dst_group": "/science/grids/corrections/derived/ionosphere",
                 "dst_variable": "ionosphere",
+                "src_band_number": 1,
                 "input_relative_path": "merged/ionosphere_for_gunw.geo",
-                "band_number": 1,
                 "attrs": {
                         "standard_name": "ionospherePhaseCorrection",
                         "long_name": "ionospherePhaseCorrection",
                         "description": "Estimated ionosphere phase correction"
-                        }
-                },
- "unfilteredCoherence": {"dst_group": "/science/grids/data",
-                         "dst_variable": "unfilteredCoherence",
-                         "input_relative_path": "merged/topophase.cor.geo",
-                         "band_number": 1,
-                         "attrs": {"standard_name": "unfilteredCoherence",
-                                   "long_name": "unfilteredCoherence",
-                                   "description": "Coherence without filters applied"
-                         }
                 }
-
+        },
+        "ionosphereBurstRamps": {
+                "dst_group": "/science/grids/corrections/derived/ionosphereBurstRamps",
+                "dst_variable": "ionosphereBurstRamps",
+                "src_band_number": 1,
+                "input_relative_path": "merged/ionosphereBurstRamps_for_gunw.geo",
+                "attrs": {
+                        "standard_name": "ionosphereBurstRamps",
+                        "long_name": "ionosphereBurstRamps",
+                        "description": "Estimated burst ramps correction due to ionosphere"
+                }
+        },
+        "unfilteredCoherence": {
+                "dst_group": "/science/grids/data",
+                "dst_variable": "unfilteredCoherence",
+                "src_band_number": 1,
+                "input_relative_path": "merged/topophase.cor.geo",
+                "attrs": {
+                        "standard_name": "unfilteredCoherence",
+                        "long_name": "unfilteredCoherence",
+                        "description": "Coherence without filters applied"
+                }
+        }
 }

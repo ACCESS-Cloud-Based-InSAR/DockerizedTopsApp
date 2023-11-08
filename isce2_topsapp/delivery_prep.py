@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import rasterio
 from PIL import Image
+from dateparser import parse
 from matplotlib import cm
 
 from isce2_topsapp.packaging import DATASET_VERSION
@@ -113,37 +114,36 @@ def gen_browse_imagery(nc_path: Path,
     return out_path
 
 
-def format_time_string(time_str: str) -> str:
-    """Generates formatted string for ingest schema using built in python manipulations.
-    New ASF API provides time string as 2022-05-20T07:11:01.000Z and we need 6 decimal places
-    at end of string, specifically, 2022-05-20T07:11:01.000000Z
-    """
-    assert time_str[-1] == 'Z'
-
-    # removes Z at end and focuses in on decimal
-    temp = time_str[:-1].split('.')
-
-    # update the split string with required decimals
-    temp[-1] = f'{int(temp[-1]):06d}'
-
-    # rejoin and return
-    formatted_time_str = '.'.join(temp)
-    return f'{formatted_time_str}Z'
-
-
 def format_metadata(nc_path: Path,
                     all_metadata: dict) -> dict:
 
-    now = datetime.datetime.now()
     label = nc_path.name[:-3]  # removes suffix .nc
     geojson = all_metadata['gunw_geo'].__geo_interface__
 
-    ref_props = all_metadata['reference_properties'][0]
-    sec_props = all_metadata['secondary_properties'][0]
+    ref_props_all = sorted(all_metadata['reference_properties'],
+                           key=lambda prop: prop['startTime'])
+    ref_props_first = ref_props_all[0]
+    sec_props_all = sorted(all_metadata['secondary_properties'],
+                           key=lambda prop: prop['startTime'])
+    sec_props_first = sec_props_all[0]
     b_perp = read_baseline_perp(nc_path).mean()
 
-    startTime_f = format_time_string(ref_props["startTime"])
-    stopTime_f = format_time_string(ref_props["stopTime"])
+    ref_start_times = [parse(props['startTime']) for props in ref_props_all]
+    ref_stop_times = [parse(props['stopTime']) for props in ref_props_all]
+    sec_start_times = [parse(props['startTime']) for props in sec_props_all]
+
+    ref_start_time = ref_start_times[0]
+    ref_stop_time = ref_stop_times[-1]
+    sec_start_time = sec_start_times[0]
+
+    # The %f is miliseconds zero-padded with 6 decimals - just as we need!
+    ref_start_time_formatted = ref_start_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    ref_stop_time_formatted = ref_stop_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    creation_timestamp = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+
+    # We want the nearest day (dt.days takes a floor) so we use total seconds and then round
+    temporal_baseline_seconds = (ref_start_time - sec_start_time).total_seconds()
+    temporal_baseline_days = round(temporal_baseline_seconds / 60 / 60 / 24)
 
     metadata = {}
     # get 4 corners of bounding box of the geometry; default is 5 returning
@@ -152,26 +152,31 @@ def format_metadata(nc_path: Path,
     metadata.update({"ogr_bbox": ogr_bbox,
                      "reference_scenes": all_metadata['reference_scenes'],
                      "secondary_scenes": all_metadata['secondary_scenes'],
-                     "sensing_start": startTime_f,
-                     "sensing_stop": stopTime_f,
-                     "orbit_number": [int(ref_props['orbit']),
-                                      int(sec_props['orbit'])],
-                     "platform": [ref_props['platform'], sec_props['platform']],
-                     "beam_mode": ref_props['beamModeType'],
-                     "orbit_direction": ref_props['flightDirection'].lower(),
+                     "sensing_start": ref_start_time_formatted,
+                     "sensing_stop": ref_stop_time_formatted,
+                     "version": DATASET_VERSION,
+                     "temporal_baseline_days": temporal_baseline_days,
+                     "orbit_number": [int(ref_props_first['orbit']),
+                                      int(sec_props_first['orbit'])],
+                     "platform": [ref_props_first['platform'], sec_props_first['platform']],
+                     "beam_mode": ref_props_first['beamModeType'],
+                     "orbit_direction": ref_props_first['flightDirection'].lower(),
                      "dataset_type": 'slc',
                      "product_type": 'interferogram',
-                     "polarization": "HH",
+                     "polarization": "VV",
                      "look_direction": 'right',
-                     "track_number": int(ref_props['pathNumber']),
+                     "track_number": int(ref_props_first['pathNumber']),
                      "perpendicular_baseline":  round(float(b_perp), 4)
                      })
 
     data = {"label": label,
             "location": geojson,
-            "creation_timestamp": f'{now.isoformat()}Z',
+            "creation_timestamp": creation_timestamp,
             "version": DATASET_VERSION,
             "metadata": metadata}
+
+    if all_metadata['frame_id'] != -1:
+        metadata['frame_number'] = all_metadata['frame_id']
 
     return data
 

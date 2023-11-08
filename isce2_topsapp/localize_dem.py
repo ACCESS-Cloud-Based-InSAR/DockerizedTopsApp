@@ -43,18 +43,18 @@ def download_dem_for_isce2(extent: list,
                            geocode_resolution: int = 90,
                            full_res_dem_dir: Path = None,
                            low_res_dem_dir: Path = None,
-                           buffer: float = .1) -> dict:
+                           buffer: float = .4) -> dict:
     """
     Parameters
     ----------
     extent : list
-        [xmin, ymin, xmax, ymin] for epsg:4326 (i.e. (x, y) = (lon, lat))
+        [xmin, ymin, xmax, ymax] for epsg:4326 (i.e. (x, y) = (lon, lat))
     dem_name : str, optional
         See names in `dem_stitcher`
     full_res_dem_dir : Path, optional
     low_res_dem_dir : Path, optional
     buffer : float, optional
-        In degrees, by default .1, which is about 11 km at equator
+        In degrees, by default .4, which is about 44 km at equator (or about 2.5 bursts at the equator)
     Returns
     -------
     dict
