@@ -3,7 +3,7 @@ import math
 import netrc
 import os
 import sys
-from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Optional
@@ -22,6 +22,7 @@ from isce2_topsapp import (
     package_gunw_product,
     prepare_for_delivery,
     topsapp_processing,
+    topsappParams
 )
 from isce2_topsapp.iono_proc import iono_processing
 from isce2_topsapp.json_encoder import MetadataEncoder
@@ -45,6 +46,7 @@ def localize_data(
     Fixed frames are found here: s3://s1-gunw-frames/s1_frames.geojson
     And discussed in the readme.
     """
+    breakpoint()
     out_slc = download_slcs(
         reference_scenes, secondary_scenes, frame_id=frame_id, dry_run=dry_run
     )
@@ -135,8 +137,7 @@ def esd_threshold_argument(threshold: str) -> float:
         )
     return threshold_float
 
-
-def gunw_slc():
+def get_slc_parser():
     parser = ArgumentParser()
     parser.add_argument('--username')
     parser.add_argument('--password')
@@ -151,13 +152,13 @@ def gunw_slc():
     parser.add_argument('--esd-coherence-threshold', type=float, default=-1.)
     parser.add_argument('--output-resolution', type=int, default=30, required=False)
     parser.add_argument('--unfiltered-coherence', type=true_false_string_argument, default=True)
-    parser.add_argument("--frame-id", type=int, default=-1)
-    args = parser.parse_args()
+    parser.add_argument('--dense-offsets', type=true_false_string_argument, default=False)
+    parser.add_argument('--wrapped-phase-layer', type=true_false_string_argument, default=False)
+    parser.add_argument('--goldstein-filter-power', type=float, default=.4)
+    return parser
 
-    if args.output_resolution not in [30, 90]:
-        raise ValueError('The output resolution can be "30" or "90" meters only.')
 
-    ensure_earthdata_credentials(args.username, args.password)
+def update_slc_namespace(args: Namespace) -> Namespace:
 
     args.reference_scenes = [
         item for sublist in args.reference_scenes for item in sublist
@@ -165,13 +166,29 @@ def gunw_slc():
     args.secondary_scenes = [
         item for sublist in args.secondary_scenes for item in sublist
     ]
+    return args
+
+
+def gunw_slc():
+    cmd_line_str = 'isce2_topsapp ++' + sys.argv
+
+    parser = get_slc_parser()
+    args = parser.parse_args()
+    args = update_slc_namespace(args)
+
+    # Validation
+    ensure_earthdata_credentials(args.username, args.password)
+
+    topsapp_params = vars(args)
+    [topsapp_params.pop(key) for key in ['username', 'password', 'bucket', 'bucket_prefix', 'dry_run']]
+    params = topsappParams(**topsapp_params)
 
     # Region of interest becomes 'extent' in loc_data
     loc_data = localize_data(
         args.reference_scenes,
         args.secondary_scenes,
         dry_run=args.dry_run,
-        output_resolution=args.output_resolution,
+        geocode_resolution=args.output_resolution,
         frame_id=args.frame_id,
         water_mask_flag=args.estimate_ionosphere_delay,
     )
@@ -202,6 +219,9 @@ def gunw_slc():
         dem_for_proc=loc_data["full_res_dem_path"],
         dem_for_geoc=loc_data["low_res_dem_path"],
         dry_run=args.dry_run,
+        do_dense_offsets=args.dense_offsets,
+        wrapped_phase_layer=args.wrapped_phase_layer,
+        goldstein_filter_power=args.goldstein_filter_power,
         output_resolution=args.output_resolution
     )
 
@@ -228,8 +248,6 @@ def gunw_slc():
 
     additional_2d_layers = additional_2d_layers or None
 
-    custom_event_product = False
-    # TODO - figure out CUSTOM determination
     nc_path = package_gunw_product(
         isce_data_directory=Path.cwd(),
         reference_properties=ref_properties,
@@ -237,7 +255,9 @@ def gunw_slc():
         extent=extent,
         additional_2d_layers=additional_2d_layers,
         additional_attributes=additional_attributes,
-        custom_event_product=custom_event_product
+        standard_product=params.is_standard_gunw_product(),
+        cmd_line_str=cmd_line_str,
+        topaspp_params=topsapp_params.dict()
     )
 
     if args.compute_solid_earth_tide:

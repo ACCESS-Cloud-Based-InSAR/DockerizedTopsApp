@@ -12,8 +12,8 @@ setup(
 
     url='https://github.com/dbekaert/DockerizedTopsApp',
 
-    author='Charlie Marshak, David Bekaert, Grace Bato, Simran Sangha  Joseph H. Kennedy Brett Buzzunga, and others',
-    author_email='charlie.z.marshak@jpl.nasa.gov',
+    author='David Bekaert, Grace Bato, Marin Govorcin, Andrew Johnston, Joe Kennedy, Charlie Marshak, Simran Sangha and ARIA-JPL',
+    author_email='access_cloud_based_insar@jpl.nasa.gov',
 
     license='Apache-2.0',
     classifiers=[

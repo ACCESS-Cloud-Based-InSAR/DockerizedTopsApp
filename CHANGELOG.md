@@ -12,14 +12,15 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Provides CLI options for:
   - output resolution: 30 meters or 90 meters (the latter is default and the standardized GUNW resolution)
   - unfiltered coherence layer (True/False)
-  - Goldstein filtering (value in [0, 1])
+  - Goldstein filtering power - power that phase is raised to in patch FFT - default .4
+  - Wrapped Phase
+  - Dense offsets layers
 * Codifies what is meant by standard GUNW with respect to exposed parameters including:
   - 90 m resolution
   - .4 value in the Goldstein filter for InSAR phase
-  - No ESD
+  - No ESD or dense offsets
   - Additional layers: ionosophere, SET, and unfiltered coherence.
 * If parameters are not standard makes filename `S1-GUNW_CUSTOM-...`
-* Exposes option for including `dense_offsets` in tops_processing (not included in main CLI yet)
 
 ## [0.2.5]
 

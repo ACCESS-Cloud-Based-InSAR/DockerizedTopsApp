@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Union
 
 import h5py
+import xarray as xr
 from dateparser import parse
 
 import isce2_topsapp
@@ -15,9 +16,8 @@ from isce2_topsapp.packaging_utils.ionosphere import format_iono_burst_ramps, fo
 from isce2_topsapp.templates import read_netcdf_packaging_template
 
 DATASET_VERSION = '3.0.0'
-
-
-PERMISSIBLE_2D_LAYERS = ['ionosphere', 'ionosphereBurstRamps']
+STANDARD_PROD_PREFIX = 'S1-GUNW'
+CUSTOM_PROD_PREFIX = 'S1-GUNW_CUSTOM'
 
 
 """Warning: the packaging scripts were written as command line scripts and
@@ -79,7 +79,7 @@ def get_center_time(properties: list) -> datetime.datetime:
 def get_gunw_id(reference_properties: list,
                 secondary_properties: list,
                 extent: list,
-                custom_event_product: bool = False,
+                standard_product: bool = True,
                 ) -> str:
 
     # asc_or_desc: will be "A" or "D"
@@ -117,7 +117,7 @@ def get_gunw_id(reference_properties: list,
     version = DATASET_VERSION.replace('.', '_')
     version = f'v{version}'
 
-    gunw_prefix = 'S1-GUNW' if not custom_event_product else 'S1-GUNW-CUSTOM'
+    gunw_prefix = STANDARD_PROD_PREFIX if standard_product else CUSTOM_PROD_PREFIX
     ids = [gunw_prefix,
            asc_or_desc,
            # right looking
@@ -251,15 +251,29 @@ def package_additional_layers_into_gunw(gunw_path: Path,
         file.attrs.modify('version', '1c')
     return gunw_path
 
+def record_params(*,
+                  netcdf_path: Path,
+                  cmd_line_str: str,
+                  topsapp_params: dict) -> Path:
+
+    with h5py.File(netcdf_path, mode='a') as file:
+        file.attrs.update(**topsapp_params)
+        file.attrs.update(command_line_string=cmd_line_str)
+    return netcdf_path
+
+
 
 def package_gunw_product(*,
                          isce_data_directory: Union[str, Path],
                          reference_properties: list,
                          secondary_properties: list,
                          extent: list,
+                         topaspp_params: dict,
+                         cmd_line_str: str,
                          additional_2d_layers: list = None,
-                         custom_event_product: bool = False,
-                         additional_attributes: list = None) -> Path:
+                         standard_product: bool = True,
+                         additional_attributes: list = None,
+                         ) -> Path:
     """Creates a GUNW standard product netcdf from the ISCE outputs and some
     initial metadata.
 
@@ -278,6 +292,10 @@ def package_gunw_product(*,
     additional_attributes: list
         List of attributs dicts for additional layers o add.
         Currently, supported only for ionosphere.
+    standard_product: bool
+        Whether the package is a GUNW standard product or not. Will use the
+        the prefix `S1-GUNW` for standard products and `S1-GUNW_CUSTOM`
+        otherwise
 
     Returns
     -------
@@ -289,14 +307,18 @@ def package_gunw_product(*,
     gunw_id = get_gunw_id(reference_properties=reference_properties,
                           secondary_properties=secondary_properties,
                           extent=extent,
-                          custom_event_product=custom_event_product)
+                          standard_product=standard_product)
 
     out_nc_file = perform_netcdf_packaging(isce_data_dir=isce_data_directory,
                                            gunw_id=gunw_id)
 
     if additional_2d_layers is not None:
+        isce_data_directory = Path(isce_data_directory)
         package_additional_layers_into_gunw(out_nc_file,
                                             isce_data_directory,
                                             additional_2d_layers,
                                             additional_attributes)
+    out_nc_file = record_params(netcdf_path=out_nc_file,
+                                topsapp_params=topaspp_params,
+                                cmd_line_str=cmd_line_str)
     return out_nc_file

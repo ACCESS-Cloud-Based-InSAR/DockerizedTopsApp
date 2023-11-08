@@ -49,6 +49,8 @@ def topsapp_processing(*,
                        esd_coherence_threshold: float = .7,
                        output_resolution: int = 90,
                        do_dense_offsets: bool = False,
+                       wrapped_phase_layer: bool = False,
+                       goldstein_filter_power: float = .4,
                        ampcor_window_size: int = 64):
     swaths = swaths or [1, 2, 3]
     # for [ymin, ymax, xmin, xmax]
@@ -78,6 +80,10 @@ def topsapp_processing(*,
     if do_dense_offsets:
         geocode_list.append('merged/dense_offsets.bil')
 
+    if wrapped_phase_layer:
+        geocode_list.append('')
+        raise NotImplementedError
+
     topsApp_xml = template.render(orbit_directory=orbit_directory,
                                   output_reference_directory='reference',
                                   output_secondary_directory='secondary',
@@ -97,6 +103,7 @@ def topsapp_processing(*,
                                   swaths=swaths,
                                   geocode_list=geocode_list,
                                   do_dense_offsets=do_dense_offsets,
+                                  goldstein_filter_power=goldstein_filter_power,
                                   ampcor_height=ampcor_window_size,
                                   ampcor_width=ampcor_window_size
                                   )

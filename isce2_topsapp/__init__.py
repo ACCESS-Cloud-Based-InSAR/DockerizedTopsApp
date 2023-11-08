@@ -10,6 +10,7 @@ from isce2_topsapp.localize_orbits import download_orbits
 from isce2_topsapp.localize_slc import download_slcs, get_asf_slc_objects
 from isce2_topsapp.packaging import package_gunw_product
 from isce2_topsapp.topsapp_proc import topsapp_processing
+from isce2_topsapp.topsapp_params import topsappParams
 
 try:
     __version__ = version(__name__)
@@ -30,6 +31,7 @@ __all__ = [
     'download_bursts',
     'BurstParams',
     'topsapp_processing',
+    'topsappParams',
     'package_gunw_product',
     'prepare_for_delivery',
     '__version__',
