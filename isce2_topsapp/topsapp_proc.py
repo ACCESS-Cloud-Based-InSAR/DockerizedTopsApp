@@ -49,7 +49,7 @@ def topsapp_processing(*,
                        esd_coherence_threshold: float = .7,
                        output_resolution: int = 90,
                        do_dense_offsets: bool = False,
-                       ampcor_window_size=16):
+                       ampcor_window_size: int = 64):
     swaths = swaths or [1, 2, 3]
     # for [ymin, ymax, xmin, xmax]
     extent_isce = [extent[k] for k in [1, 3, 0, 2]]
@@ -74,6 +74,9 @@ def topsapp_processing(*,
     geocode_list = GEOCODE_LIST_BASE.copy()
     if estimate_ionosphere_delay:
         geocode_list.append('merged/topophase.ion')
+
+    if do_dense_offsets:
+        geocode_list.append('merged/dense_offsets.bil')
 
     topsApp_xml = template.render(orbit_directory=orbit_directory,
                                   output_reference_directory='reference',

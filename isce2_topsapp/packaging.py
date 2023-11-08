@@ -220,7 +220,7 @@ def perform_netcdf_packaging(*,
     subprocess.check_call(cmd, shell=True)
     os.chdir(cwd)
 
-    out_nc_file = merged_dir/f'{gunw_id}.nc'
+    out_nc_file = merged_dir / f'{gunw_id}.nc'
 
     # Check if the netcdf file was created
     assert out_nc_file.exists()
@@ -235,10 +235,6 @@ def package_additional_layers_into_gunw(gunw_path: Path,
     # 1. Do any additional processing/formatting outside of GUNW
     # 2. Add layer into GUNW
     # 3. Update Version
-    if not set(additional_2d_layers).issubset(set(PERMISSIBLE_2D_LAYERS)):
-        raise RuntimeError('Additional 2d layers must be subset of '
-                           f'{PERMISSIBLE_2D_LAYERS}')
-
     if 'ionosphere' in additional_2d_layers:
         # current working directory is ISCE directory
         _ = format_ionosphere_for_gunw(isce_data_directory, gunw_path)
