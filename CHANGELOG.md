@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6]
+
+### Added
+* Provides CLI options for:
+  - output resolution: 30 meters or 90 meters (the latter is default and the standardized GUNW resolution)
+  - unfiltered coherence layer (True/False)
+  - Goldstein filtering (value in [0, 1])
+* Codifies what is meant by standard GUNW with respect to exposed parameters including:
+  - 90 m resolution
+  - .4 value in the Goldstein filter for InSAR phase
+  - No ESD
+  - Additional layers: ionosophere, SET, and unfiltered coherence.
+* If parameters are not standard makes filename `S1-GUNW_CUSTOM-...`
+
 ## [0.2.5]
 
 ### Fixed
