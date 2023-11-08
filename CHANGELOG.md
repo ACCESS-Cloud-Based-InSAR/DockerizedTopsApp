@@ -19,6 +19,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - No ESD
   - Additional layers: ionosophere, SET, and unfiltered coherence.
 * If parameters are not standard makes filename `S1-GUNW_CUSTOM-...`
+* Exposes option for including `dense_offsets` in tops_processing (not included in main CLI yet)
 
 ## [0.2.5]
 
