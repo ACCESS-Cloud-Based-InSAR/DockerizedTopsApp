@@ -223,7 +223,6 @@ def gunw_slc():
         additional_attributes.append(iono_attr['ionosphere'])
         additional_2d_layers.append("ionosphereBurstRamps")
         additional_attributes.append(iono_attr['ionosphereBurstRamps'])
-        additional_2d_layers.append('ionosphere')
     if args.unfiltered_coherence:
         additional_2d_layers.append('unfilteredCoherence')
 
