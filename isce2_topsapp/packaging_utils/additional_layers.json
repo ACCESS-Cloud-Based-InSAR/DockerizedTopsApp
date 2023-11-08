@@ -56,4 +56,5 @@
                         "units": "azimuth radar pixel",
                         "description": "Azimuth pixel offsets measured through patch correlation"
                 }
+        }
 }
