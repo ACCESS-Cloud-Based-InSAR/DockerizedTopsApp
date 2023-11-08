@@ -32,6 +32,7 @@ def add_2d_layer(layer_name: str,
     if not isinstance(band_number, int) or (band_number < 1):
         ValueError('Layers must select individual layers from outputs i.e '
                    '1, 2, ...')
+
     if additional_attrs:
         layer_data['attrs'].update(additional_attrs)
 

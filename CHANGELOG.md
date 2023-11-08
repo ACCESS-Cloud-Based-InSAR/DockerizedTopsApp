@@ -34,16 +34,6 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Added packing of additional attributes for ionosphere computation into GUNW
 * fsspec is now required in environment due to burst processing.
 
-## [0.2.4]
-
-### Added
-* Provides CLI options for:
-  - output resolution: 30 meters or 90 meters (the latter is default and the standardized GUNW resolution)
-  - dense offset layers: azimuth and range offset estimates as separate layers
-  - unfiltered coherence layer
-
-   If the output resolution is changed to 30 meters or any of the latter two layers are requested, then the initial token on product name is change from `S1-GUNW` to `S1-GUNW-CUSTOM`.
-
 ## [0.2.3]
 
 ### Updated
