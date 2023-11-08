@@ -36,6 +36,7 @@ def localize_data(
     dry_run: bool = False,
     water_mask_flag: bool = True,
     geocode_resolution: int = 90
+
 ) -> dict:
     """The dry-run prevents gets necessary metadata from SLCs and orbits.
 
@@ -56,6 +57,7 @@ def localize_data(
     if not dry_run:
         out_dem = download_dem_for_isce2(out_slc['extent'],
                                          geocode_resolution=geocode_resolution)
+
         out_water_mask = {"water_mask": None}
         # For ionospheric correction computation
         if water_mask_flag:
