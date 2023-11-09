@@ -261,7 +261,7 @@ def gunw_slc():
         extent=extent,
         additional_2d_layers=additional_2d_layers_for_packaging,
         additional_attributes=additional_attributes_for_packaging,
-        standard_product=params.is_standard_gunw_product(),
+        standard_product=topsapp_params_obj.is_standard_gunw_product(),
         cmd_line_str=cmd_line_str,
         topaspp_params=topsapp_params_obj.model_dump()
     )
