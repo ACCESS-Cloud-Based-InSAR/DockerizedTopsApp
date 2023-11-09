@@ -31,6 +31,7 @@ dependencies:
  - pysolid
  - papermill
  - pytest
+ - pydantic
  - pytest-cov
  - pytest-mock
  - rasterio
