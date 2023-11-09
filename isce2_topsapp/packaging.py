@@ -7,12 +7,12 @@ from pathlib import Path
 from typing import Union
 
 import h5py
-import xarray as xr
 from dateparser import parse
 
 import isce2_topsapp
 from isce2_topsapp.packaging_utils.additional_layers import add_2d_layer
-from isce2_topsapp.packaging_utils.ionosphere import format_iono_burst_ramps, format_ionosphere_for_gunw
+from isce2_topsapp.packaging_utils.ionosphere import (
+    format_iono_burst_ramps, format_ionosphere_for_gunw)
 from isce2_topsapp.templates import read_netcdf_packaging_template
 
 DATASET_VERSION = '3.0.0'
@@ -251,6 +251,7 @@ def package_additional_layers_into_gunw(gunw_path: Path,
         file.attrs.modify('version', '1c')
     return gunw_path
 
+
 def record_params(*,
                   netcdf_path: Path,
                   cmd_line_str: str,
@@ -260,7 +261,6 @@ def record_params(*,
         file.attrs.update(**topsapp_params)
         file.attrs.update(command_line_string=cmd_line_str)
     return netcdf_path
-
 
 
 def package_gunw_product(*,
