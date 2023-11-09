@@ -20,7 +20,14 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - .4 value in the Goldstein filter for InSAR phase
   - No ESD or dense offsets
   - Additional layers: ionosophere, SET, and unfiltered coherence.
-* If parameters are not standard makes filename `S1-GUNW_CUSTOM-...`
+  - uses pydantic to record relevant topsapp parameters for "standard" GUNW
+* Records parameters in the product including the CLI command to regenerate said product
+* If parameters are not standard uses prefix `S1-GUNW_CUSTOM-...`
+* Pydantic dependency for parameter accounting
+
+### Changed
+* The CLI now *requires* `frame_id` (use `frame_id = -1` for old API and what is now considered a "non"-standard product)
+
 
 ## [0.2.5]
 

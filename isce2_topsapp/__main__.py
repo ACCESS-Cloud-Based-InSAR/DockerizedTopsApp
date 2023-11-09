@@ -236,25 +236,28 @@ def gunw_slc():
     sec_properties = loc_data["secondary_properties"]
     extent = loc_data["extent"]
 
-    additional_2d_layers = []
-    additional_attributes = []
+    additional_2d_layers_for_packaging = []
+    additional_attributes_for_packaging = []
     if args.estimate_ionosphere_delay:
-        additional_2d_layers.append("ionosphere")
-        additional_attributes.append(iono_attr['ionosphere'])
-        additional_2d_layers.append("ionosphereBurstRamps")
-        additional_attributes.append(iono_attr['ionosphereBurstRamps'])
+        additional_2d_layers_for_packaging.append("ionosphere")
+        additional_attributes_for_packaging.append(iono_attr['ionosphere'])
+        additional_2d_layers_for_packaging.append("ionosphereBurstRamps")
+        additional_attributes_for_packaging.append(iono_attr['ionosphereBurstRamps'])
+    if args.dense_offsets:
+        additional_2d_layers_for_packaging.append('rangePixelOffsets')
+        additional_2d_layers_for_packaging.append('azimuthPixelOffsets')
     if args.unfiltered_coherence:
-        additional_2d_layers.append('unfilteredCoherence')
+        additional_2d_layers_for_packaging.append('unfilteredCoherence')
 
-    additional_2d_layers = additional_2d_layers or None
+    additional_2d_layers_for_packaging = additional_2d_layers_for_packaging or None
 
     nc_path = package_gunw_product(
         isce_data_directory=Path.cwd(),
         reference_properties=ref_properties,
         secondary_properties=sec_properties,
         extent=extent,
-        additional_2d_layers=additional_2d_layers,
-        additional_attributes=additional_attributes,
+        additional_2d_layers=additional_2d_layers_for_packaging,
+        additional_attributes=additional_attributes_for_packaging,
         standard_product=params.is_standard_gunw_product(),
         cmd_line_str=cmd_line_str,
         topaspp_params=topsapp_params.dict()
