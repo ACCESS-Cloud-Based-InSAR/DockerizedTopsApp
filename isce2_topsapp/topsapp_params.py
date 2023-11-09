@@ -1,5 +1,6 @@
-from pydantic import BaseModel
 from typing import List
+
+from pydantic import BaseModel
 
 
 class topsappParams(BaseModel):
@@ -18,13 +19,13 @@ class topsappParams(BaseModel):
     def is_standard_gunw_product(self) -> bool:
         """Version 3+"""
         checks = [
-            self.estimate_ionosphere_delay == True,
+            self.estimate_ionosphere_delay,
             self.frame_id != -1,
-            self.compute_solid_earth_tide == True,
-            self.dense_offsets == True,
-            self.unfiltered_coherence == True,
+            self.compute_solid_earth_tide,
+            not self.dense_offsets,
+            self.unfiltered_coherence,
             self.esd_coherence_threshold == -1,
-            self.wrapped_phase_layer == False,
+            not self.wrapped_phase_layer,
             self.goldstein_filter_power == .4,
             self.output_resolution == 90,
         ]
