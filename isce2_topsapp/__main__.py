@@ -45,7 +45,6 @@ def localize_data(
     Fixed frames are found here: s3://s1-gunw-frames/s1_frames.geojson
     And discussed in the readme.
     """
-    breakpoint()
     out_slc = download_slcs(
         reference_scenes, secondary_scenes, frame_id=frame_id, dry_run=dry_run
     )
