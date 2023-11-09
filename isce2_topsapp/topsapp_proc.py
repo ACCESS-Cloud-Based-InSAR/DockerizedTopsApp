@@ -50,7 +50,7 @@ def topsapp_processing(*,
                        output_resolution: int = 90,
                        do_dense_offsets: bool = False,
                        wrapped_phase_layer: bool = False,
-                       goldstein_filter_power: float = .4,
+                       goldstein_filter_power: float = .5,
                        ampcor_window_size: int = 64):
     swaths = swaths or [1, 2, 3]
     # for [ymin, ymax, xmin, xmax]

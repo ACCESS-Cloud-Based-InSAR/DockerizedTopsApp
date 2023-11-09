@@ -153,7 +153,7 @@ def get_slc_parser():
     parser.add_argument('--unfiltered-coherence', type=true_false_string_argument, default=True)
     parser.add_argument('--dense-offsets', type=true_false_string_argument, default=False)
     parser.add_argument('--wrapped-phase-layer', type=true_false_string_argument, default=False)
-    parser.add_argument('--goldstein-filter-power', type=float, default=.4)
+    parser.add_argument('--goldstein-filter-power', type=float, default=.5)
     return parser
 
 
