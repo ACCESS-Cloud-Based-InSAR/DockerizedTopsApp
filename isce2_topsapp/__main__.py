@@ -150,7 +150,7 @@ def get_slc_parser():
     parser.add_argument('--frame-id', type=int, default=-1, required=True)
     parser.add_argument('--compute-solid-earth-tide', type=true_false_string_argument, default=True)
     parser.add_argument('--esd-coherence-threshold', type=float, default=-1.)
-    parser.add_argument('--output-resolution', type=int, default=30, required=False)
+    parser.add_argument('--output-resolution', type=int, default=90, required=False)
     parser.add_argument('--unfiltered-coherence', type=true_false_string_argument, default=True)
     parser.add_argument('--dense-offsets', type=true_false_string_argument, default=False)
     parser.add_argument('--wrapped-phase-layer', type=true_false_string_argument, default=False)
@@ -170,7 +170,7 @@ def update_slc_namespace(args: Namespace) -> Namespace:
 
 
 def gunw_slc():
-    cmd_line_str = 'isce2_topsapp ++' + sys.argv
+    cmd_line_str = 'isce2_topsapp ++' + ' '.join(sys.argv)
 
     parser = get_slc_parser()
     args = parser.parse_args()
@@ -179,9 +179,14 @@ def gunw_slc():
     # Validation
     ensure_earthdata_credentials(args.username, args.password)
 
-    topsapp_params = vars(args)
-    [topsapp_params.pop(key) for key in ['username', 'password', 'bucket', 'bucket_prefix', 'dry_run']]
-    params = topsappParams(**topsapp_params)
+    cli_params = vars(args)
+    [cli_params.pop(key) for key in ['username', 'password', 'bucket', 'bucket_prefix', 'dry_run']]
+    topsapp_params_obj = topsappParams(**cli_params)
+
+    # serialize input
+    json.dump(topsapp_params_obj.model_dump(),
+              open('topsapp_input_params.json', 'w'),
+              indent=2)
 
     # Region of interest becomes 'extent' in loc_data
     loc_data = localize_data(
@@ -260,7 +265,7 @@ def gunw_slc():
         additional_attributes=additional_attributes_for_packaging,
         standard_product=params.is_standard_gunw_product(),
         cmd_line_str=cmd_line_str,
-        topaspp_params=topsapp_params.dict()
+        topaspp_params=topsapp_params_obj.model_dump()
     )
 
     if args.compute_solid_earth_tide:
