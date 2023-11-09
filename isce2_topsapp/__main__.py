@@ -178,8 +178,7 @@ def gunw_slc():
 
     # Validation
     ensure_earthdata_credentials(args.username, args.password)
-
-    cli_params = vars(args)
+    cli_params = vars(args).copy()
     [cli_params.pop(key) for key in ['username', 'password', 'bucket', 'bucket_prefix', 'dry_run']]
     topsapp_params_obj = topsappParams(**cli_params)
 
