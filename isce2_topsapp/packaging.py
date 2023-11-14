@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Union
 
 import h5py
+import numpy as np
+import rasterio
 from dateparser import parse
 
 import isce2_topsapp
@@ -264,10 +266,41 @@ def package_additional_layers_into_gunw(gunw_path: Path,
     return gunw_path
 
 
+def get_layer_mean(netcdf_path: Path,
+                   groups: list,
+                   layers: list) -> dict:
+    if len(groups) != len(layers):
+        raise ValueError('groups and layers must have same length')
+    data = {}
+    for group, layer in zip(groups, layers):
+        with rasterio.open(f'netcdf:{netcdf_path}:{group}/{layer}') as ds:
+            X = ds.read()
+            if np.isnan(ds.nodata):
+                mask = np.isnan(X)
+            else:
+                mask = ds.nodata == X
+            raster_data = X[~mask]
+        data[f'mean_{layer}'] = np.mean(raster_data)
+    return data
+
+
+def record_stats(*,
+                 netcdf_path: Path) -> Path:
+    groups = ['science/grids/imagingGeometry'] * 2 + ['science/grids/data']
+    layers = ['perpendicularBaseline', 'parallelBaseline', 'coherence']
+    mean_attrs = get_layer_mean(netcdf_path,
+                                groups,
+                                layers)
+    with h5py.File(netcdf_path, mode='a') as file:
+        file.attrs.update(**mean_attrs)
+    return netcdf_path
+
+
 def record_params(*,
-                  netcdf_path: Path,
-                  cmd_line_str: str,
-                  topsapp_params: dict) -> Path:
+                            netcdf_path: Path,
+                            cmd_line_str: str,
+                            topsapp_params: dict) -> Path:
+
 
     with h5py.File(netcdf_path, mode='a') as file:
         file.attrs.update(**topsapp_params)
@@ -333,4 +366,5 @@ def package_gunw_product(*,
     out_nc_file = record_params(netcdf_path=out_nc_file,
                                 topsapp_params=topaspp_params,
                                 cmd_line_str=cmd_line_str)
+    out_nc_file = record_stats(netcdf_path=out_nc_file)
     return out_nc_file
