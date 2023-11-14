@@ -230,11 +230,17 @@ def perform_netcdf_packaging(*,
 def package_additional_layers_into_gunw(gunw_path: Path,
                                         isce_data_directory: Path,
                                         additional_2d_layers: list,
-                                        additional_attributes: list):
+                                        additional_attributes: dict):
     # Current workflow of additional layers
     # 1. Do any additional processing/formatting outside of GUNW
     # 2. Add layer into GUNW
     # 3. Update Version
+
+    # in case additional attributes is None
+    additional_attributes = additional_attributes or {}
+    if not set(additional_attributes.keys()).issubset(additional_2d_layers):
+        raise ValueError('Additional attributes dict must be within additional_2d_layers')
+
     if 'ionosphere' in additional_2d_layers:
         # current working directory is ISCE directory
         _ = format_ionosphere_for_gunw(isce_data_directory, gunw_path)
@@ -242,9 +248,15 @@ def package_additional_layers_into_gunw(gunw_path: Path,
         # current working directory is ISCE directory
         _ = format_iono_burst_ramps(isce_data_directory, gunw_path)
 
+
     # Assumes ionosphere raster is written to specific path
-    additional_dataset = zip(additional_2d_layers, additional_attributes)
-    [add_2d_layer(layer, gunw_path, attributes) for layer, attributes in additional_dataset]
+    additional_attributes_lst = [additional_attributes.get(layer_name, None)
+                                 for layer_name in additional_2d_layers]
+    zipped_data = zip(additional_2d_layers, additional_attributes_lst)
+    [add_2d_layer(layer,
+                  gunw_path,
+                  additional_attrs=add_attrs)
+     for (layer, add_attrs) in zipped_data]
 
     # Update
     with h5py.File(gunw_path, mode='a') as file:
@@ -272,7 +284,7 @@ def package_gunw_product(*,
                          cmd_line_str: str,
                          additional_2d_layers: list = None,
                          standard_product: bool = True,
-                         additional_attributes: list = None,
+                         additional_attributes: dict = None,
                          ) -> Path:
     """Creates a GUNW standard product netcdf from the ISCE outputs and some
     initial metadata.
@@ -289,7 +301,7 @@ def package_gunw_product(*,
         List of extents ([xmin, ymin, xmax, ymax])
     additional_2d_layers: list
         List of 2d layers to add. Currently, supported is ionosphere.
-    additional_attributes: list
+    additional_attributes: dict
         List of attributs dicts for additional layers o add.
         Currently, supported only for ionosphere.
     standard_product: bool

@@ -240,19 +240,18 @@ def gunw_slc():
     extent = loc_data["extent"]
 
     additional_2d_layers_for_packaging = []
-    additional_attributes_for_packaging = []
+    additional_attributes_for_packaging = {}
     if args.estimate_ionosphere_delay:
-        additional_2d_layers_for_packaging.append("ionosphere")
-        additional_attributes_for_packaging.append(iono_attr['ionosphere'])
-        additional_2d_layers_for_packaging.append("ionosphereBurstRamps")
-        additional_attributes_for_packaging.append(iono_attr['ionosphereBurstRamps'])
+        additional_2d_layers_for_packaging.append('ionosphere')
+        additional_2d_layers_for_packaging.append('ionosphereBurstRamps')
+        # Keys need to be the same as layer names;
+        # specifically ionosphere and ionosphereBurstRamps are keys
+        additional_attributes_for_packaging.update(**iono_attr)
     if args.dense_offsets:
         additional_2d_layers_for_packaging.append('rangePixelOffsets')
         additional_2d_layers_for_packaging.append('azimuthPixelOffsets')
     if args.unfiltered_coherence:
         additional_2d_layers_for_packaging.append('unfilteredCoherence')
-
-    additional_2d_layers_for_packaging = additional_2d_layers_for_packaging or None
 
     nc_path = package_gunw_product(
         isce_data_directory=Path.cwd(),

@@ -24,6 +24,7 @@ def add_2d_layer(layer_name: str,
     dst_group = layer_data['dst_group']
     dst_variable = layer_data['dst_variable']
     band_number = layer_data['src_band_number']
+    nodata_val = layer_data.get('nodata')
     possible_layers = list(ADDITIONAL_LAYERS_DATA.keys())
 
     if layer_name not in possible_layers:
@@ -57,6 +58,7 @@ def add_2d_layer(layer_name: str,
     ds = ds.drop_vars('spatial_ref')
     ds.rio.write_crs(4326, inplace=True, grid_mapping_name='crs')
 
+
     # Renaming ensures correct geo-referencing with grid mapping
     ds = ds.rename({
                     # x, y are the coordinate names
@@ -72,6 +74,9 @@ def add_2d_layer(layer_name: str,
                                   'standard_name': 'longitude'})
 
     ds[layer_name].attrs.update(layer_data['attrs'])
+
+    if nodata_val is not None:
+        ds[layer_name] = ds[layer_name].rio.write_nodata(nodata_val)
 
     ds.to_netcdf(gunw_netcdf_path,
                  group=layer_data['dst_group'],

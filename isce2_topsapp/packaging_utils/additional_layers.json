@@ -25,7 +25,8 @@
         "unfilteredCoherence": {
                 "dst_group": "/science/grids/data",
                 "dst_variable": "unfilteredCoherence",
-                "src_band_number": 1,
+                "src_band_number": 2,
+                "nodata": 0,
                 "input_relative_path": "merged/topophase.cor.geo",
                 "attrs": {
                         "standard_name": "unfilteredCoherence",
