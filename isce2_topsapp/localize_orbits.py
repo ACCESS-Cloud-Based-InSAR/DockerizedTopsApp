@@ -1,9 +1,11 @@
+import os
 from pathlib import Path
 
 import requests
 from hyp3lib import get_orb
 
 
+# TODO update to accept `esa_credentials`; does the function body need to be updated as well?
 def _spoof_orbit_download(scene, _, providers=('ESA', 'ASF'), orbit_types=('AUX_POEORB', 'AUX_RESORB')):
     for orbit_type in orbit_types:
         for provider in providers:
@@ -21,6 +23,8 @@ def download_orbits(reference_scenes: list,
                     secondary_scenes: list,
                     orbit_directory: str = None,
                     dry_run: bool = False) -> dict:
+    esa_credentials = (os.environ['ESA_USERNAME'], os.environ['ESA_PASSWORD'])
+
     orbit_directory = orbit_directory or 'orbits'
     orbit_dir = Path(orbit_directory)
     orbit_dir.mkdir(exist_ok=True)
@@ -29,12 +33,12 @@ def download_orbits(reference_scenes: list,
 
     reference_orbits = []
     for scene in reference_scenes:
-        orbit_file, _ = orbit_fetcher(scene, str(orbit_dir))
+        orbit_file, _ = orbit_fetcher(scene, str(orbit_dir), esa_credentials=esa_credentials)
         reference_orbits.append(orbit_file)
 
     secondary_orbits = []
     for scene in secondary_scenes:
-        orbit_file, _ = orbit_fetcher(scene, str(orbit_dir))
+        orbit_file, _ = orbit_fetcher(scene, str(orbit_dir), esa_credentials=esa_credentials)
         secondary_orbits.append(orbit_file)
 
     reference_orbits = list(set(reference_orbits))

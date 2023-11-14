@@ -109,6 +109,24 @@ def ensure_earthdata_credentials(
         )
 
 
+def check_esa_credentials(username: Optional[str], password: Optional[str]) -> None:
+    if username is not None:
+        os.environ['ESA_USERNAME'] = username
+    elif 'ESA_USERNAME' not in os.environ:
+        raise ValueError(
+            'Please provide Copernicus Data Space Ecosystem (CDSE) username via the --esa-username option '
+            'or the ESA_USERNAME environment variable.'
+        )
+
+    if password is not None:
+        os.environ['ESA_PASSWORD'] = password
+    elif 'ESA_PASSWORD' not in os.environ:
+        raise ValueError(
+            'Please provide Copernicus Data Space Ecosystem (CDSE) password via the --esa-password option '
+            'or the ESA_PASSWORD environment variable.'
+        )
+
+
 def true_false_string_argument(s: str) -> bool:
     s = s.lower()
     if s not in ("true", "false"):
@@ -136,6 +154,8 @@ def gunw_slc():
     parser = ArgumentParser()
     parser.add_argument("--username")
     parser.add_argument("--password")
+    parser.add_argument('--esa-username')
+    parser.add_argument('--esa-password')
     parser.add_argument("--bucket")
     parser.add_argument("--bucket-prefix", default="")
     parser.add_argument("--dry-run", action="store_true")
@@ -154,6 +174,7 @@ def gunw_slc():
     args = parser.parse_args()
 
     ensure_earthdata_credentials(args.username, args.password)
+    check_esa_credentials(args.esa_username, args.esa_password)
 
     args.reference_scenes = [
         item for sublist in args.reference_scenes for item in sublist
@@ -247,6 +268,8 @@ def gunw_burst():
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument("--username")
     parser.add_argument("--password")
+    parser.add_argument('--esa-username')
+    parser.add_argument('--esa-password')
     parser.add_argument("--bucket")
     parser.add_argument("--bucket-prefix", default="")
     parser.add_argument("--dry-run", action="store_true")
@@ -262,6 +285,7 @@ def gunw_burst():
     args = parser.parse_args()
 
     ensure_earthdata_credentials(args.username, args.password)
+    check_esa_credentials(args.esa_username, args.esa_password)
 
     ref_obj, sec_obj = get_asf_slc_objects(
         [args.reference_scene, args.secondary_scene])
