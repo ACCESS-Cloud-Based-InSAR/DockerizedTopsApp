@@ -207,8 +207,8 @@ def gunw_slc():
     #       esd is calculated with iono only when
     #       considerBurstProperties is on which off
     #       by default
-    if args.estimate_ionosphere_delay:
-        args.esd_coherence_threshold = -1
+    # if args.estimate_ionosphere_delay:
+    #     args.esd_coherence_threshold = -1
 
     topsapp_processing(
         reference_slc_zips=loc_data["ref_paths"],
