@@ -250,7 +250,6 @@ def package_additional_layers_into_gunw(gunw_path: Path,
         # current working directory is ISCE directory
         _ = format_iono_burst_ramps(isce_data_directory, gunw_path)
 
-
     # Assumes ionosphere raster is written to specific path
     additional_attributes_lst = [additional_attributes.get(layer_name, None)
                                  for layer_name in additional_2d_layers]
@@ -297,10 +296,9 @@ def record_stats(*,
 
 
 def record_params(*,
-                            netcdf_path: Path,
-                            cmd_line_str: str,
-                            topsapp_params: dict) -> Path:
-
+                  netcdf_path: Path,
+                  cmd_line_str: str,
+                  topsapp_params: dict) -> Path:
 
     with h5py.File(netcdf_path, mode='a') as file:
         file.attrs.update(**topsapp_params)

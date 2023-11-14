@@ -58,7 +58,6 @@ def add_2d_layer(layer_name: str,
     ds = ds.drop_vars('spatial_ref')
     ds.rio.write_crs(4326, inplace=True, grid_mapping_name='crs')
 
-
     # Renaming ensures correct geo-referencing with grid mapping
     ds = ds.rename({
                     # x, y are the coordinate names
