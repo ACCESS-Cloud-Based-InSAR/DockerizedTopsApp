@@ -5,8 +5,9 @@ import requests
 from hyp3lib import get_orb
 
 
-# TODO update to accept `esa_credentials`; does the function body need to be updated as well?
-def _spoof_orbit_download(scene, _, providers=('ESA', 'ASF'), orbit_types=('AUX_POEORB', 'AUX_RESORB')):
+def _spoof_orbit_download(
+    scene, _, providers=('ESA', 'ASF'), orbit_types=('AUX_POEORB', 'AUX_RESORB'), esa_credentials=('name', 'password')
+):
     for orbit_type in orbit_types:
         for provider in providers:
             try:
@@ -19,10 +20,9 @@ def _spoof_orbit_download(scene, _, providers=('ESA', 'ASF'), orbit_types=('AUX_
     return None, None
 
 
-def download_orbits(reference_scenes: list,
-                    secondary_scenes: list,
-                    orbit_directory: str = None,
-                    dry_run: bool = False) -> dict:
+def download_orbits(
+    reference_scenes: list, secondary_scenes: list, orbit_directory: str = None, dry_run: bool = False
+) -> dict:
     esa_credentials = (os.environ['ESA_USERNAME'], os.environ['ESA_PASSWORD'])
 
     orbit_directory = orbit_directory or 'orbits'
