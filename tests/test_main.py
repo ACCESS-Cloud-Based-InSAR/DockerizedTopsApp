@@ -135,7 +135,7 @@ def test_check_esa_credentials_missing(tmp_path, monkeypatch):
         m.delenv('ESA_PASSWORD', raising=False)
         m.setenv('HOME', str(tmp_path))
         (tmp_path / '.netrc').write_text('')
-        msg = 'Please provide.* --esa-password .*'
+        msg = 'Please provide.*'
         with pytest.raises(ValueError, match=msg):
             check_esa_credentials(None, None)
 

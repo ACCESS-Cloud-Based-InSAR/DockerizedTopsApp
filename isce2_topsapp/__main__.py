@@ -116,34 +116,30 @@ def ensure_earthdata_credentials(
 def check_esa_credentials(username: Optional[str], password: Optional[str]) -> None:
     netrc_name = '_netrc' if system().lower() == 'windows' else '.netrc'
     netrc_file = Path.home() / netrc_name
-    if not netrc_file.exists():
-        netrc_file.touch()
-        netrc_file.chmod(0o000600)
-    netrc_credentials = netrc.netrc(netrc_file)
+
+    if (username is not None) != (password is not None):
+        raise ValueError('Both username and password arguments must be provided')
 
     if username is not None:
         os.environ["ESA_USERNAME"] = username
-    elif "ESA_USERNAME" in os.environ:
-        pass
-    elif ESA_HOST in netrc_credentials.hosts:
-        os.environ["ESA_USERNAME"] = netrc_credentials.hosts[ESA_HOST][0]
-    else:
-        raise ValueError(
-            "Please provide Copernicus Data Space Ecosystem (CDSE) username via the --esa-username option, "
-            "your netrc file, or the ESA_USERNAME environment variable."
-        )
-
-    if password is not None:
         os.environ["ESA_PASSWORD"] = password
-    elif "ESA_PASSWORD" in os.environ:
-        pass
-    elif ESA_HOST in netrc_credentials.hosts:
-        os.environ["ESA_PASSWORD"] = netrc_credentials.hosts[ESA_HOST][2]
-    else:
-        raise ValueError(
-            "Please provide Copernicus Data Space Ecosystem (CDSE) password via the --esa-password option, "
-            "your netrc file, or the ESA_PASSWORD environment variable."
-        )
+        return
+
+    if "ESA_USERNAME" in os.environ and "ESA_PASSWORD" in os.environ:
+        return
+
+    if netrc_file.exists():
+        netrc_credentials = netrc.netrc(netrc_file)
+        if ESA_HOST in netrc_credentials.hosts:
+            os.environ["ESA_USERNAME"] = netrc_credentials.hosts[ESA_HOST][0]
+            os.environ["ESA_PASSWORD"] = netrc_credentials.hosts[ESA_HOST][2]
+            return
+
+    raise ValueError(
+        "Please provide Copernicus Data Space Ecosystem (CDSE) credentials via the "
+        "--esa-username and --esa-password options, "
+        "the ESA_USERNAME and ESA_PASSWORD environment variables, or your netrc file."
+    )
 
 
 def true_false_string_argument(s: str) -> bool:
