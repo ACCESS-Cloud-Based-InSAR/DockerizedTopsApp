@@ -58,13 +58,13 @@ def localize_data(
         # For ionospheric correction computation
         if water_mask_flag:
             out_water_mask = download_water_mask(
-                out_slc["extent"],  water_name='SWBD')
+                out_slc["extent"],  water_name="SWBD")
 
         out_aux_cal = download_aux_cal()
 
-    out = {'reference_scenes': reference_scenes,
-           'secondary_scenes': secondary_scenes,
-           'frame_id': frame_id,
+    out = {"reference_scenes": reference_scenes,
+           "secondary_scenes": secondary_scenes,
+           "frame_id": frame_id,
            **out_slc,
            **out_dem,
            **out_water_mask,
@@ -111,19 +111,19 @@ def ensure_earthdata_credentials(
 
 def check_esa_credentials(username: Optional[str], password: Optional[str]) -> None:
     if username is not None:
-        os.environ['ESA_USERNAME'] = username
-    elif 'ESA_USERNAME' not in os.environ:
+        os.environ["ESA_USERNAME"] = username
+    elif "ESA_USERNAME" not in os.environ:
         raise ValueError(
-            'Please provide Copernicus Data Space Ecosystem (CDSE) username via the --esa-username option '
-            'or the ESA_USERNAME environment variable.'
+            "Please provide Copernicus Data Space Ecosystem (CDSE) username via the --esa-username option "
+            "or the ESA_USERNAME environment variable."
         )
 
     if password is not None:
-        os.environ['ESA_PASSWORD'] = password
-    elif 'ESA_PASSWORD' not in os.environ:
+        os.environ["ESA_PASSWORD"] = password
+    elif "ESA_PASSWORD" not in os.environ:
         raise ValueError(
-            'Please provide Copernicus Data Space Ecosystem (CDSE) password via the --esa-password option '
-            'or the ESA_PASSWORD environment variable.'
+            "Please provide Copernicus Data Space Ecosystem (CDSE) password via the --esa-password option "
+            "or the ESA_PASSWORD environment variable."
         )
 
 
@@ -154,8 +154,8 @@ def gunw_slc():
     parser = ArgumentParser()
     parser.add_argument("--username")
     parser.add_argument("--password")
-    parser.add_argument('--esa-username')
-    parser.add_argument('--esa-password')
+    parser.add_argument("--esa-username")
+    parser.add_argument("--esa-password")
     parser.add_argument("--bucket")
     parser.add_argument("--bucket-prefix", default="")
     parser.add_argument("--dry-run", action="store_true")
@@ -268,8 +268,8 @@ def gunw_burst():
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument("--username")
     parser.add_argument("--password")
-    parser.add_argument('--esa-username')
-    parser.add_argument('--esa-password')
+    parser.add_argument("--esa-username")
+    parser.add_argument("--esa-password")
     parser.add_argument("--bucket")
     parser.add_argument("--bucket-prefix", default="")
     parser.add_argument("--dry-run", action="store_true")
