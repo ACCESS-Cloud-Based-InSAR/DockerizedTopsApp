@@ -117,11 +117,12 @@ def check_esa_credentials(username: Optional[str], password: Optional[str]) -> N
     netrc_file = Path.home() / netrc_name
     if not netrc_file.exists():
         netrc_file.touch()
+        netrc_file.chmod(0o000600)
     netrc_credentials = netrc.netrc(netrc_file)
 
     if username is not None:
         os.environ["ESA_USERNAME"] = username
-    elif "ESA_USERNAME" not in os.environ:
+    elif "ESA_USERNAME" in os.environ:
         pass
     elif ESA_HOST in netrc_credentials.hosts:
         os.environ["ESA_USERNAME"] = netrc_credentials.hosts[ESA_HOST][0]
@@ -133,7 +134,7 @@ def check_esa_credentials(username: Optional[str], password: Optional[str]) -> N
 
     if password is not None:
         os.environ["ESA_PASSWORD"] = password
-    elif "ESA_USERNAME" not in os.environ:
+    elif "ESA_PASSWORD" in os.environ:
         pass
     elif ESA_HOST in netrc_credentials.hosts:
         os.environ["ESA_PASSWORD"] = netrc_credentials.hosts[ESA_HOST][2]

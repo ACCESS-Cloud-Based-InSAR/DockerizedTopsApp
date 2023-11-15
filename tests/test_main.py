@@ -1,8 +1,11 @@
+import netrc
 import os
+from unittest.mock import PropertyMock
 
 import pytest
 
 from isce2_topsapp.__main__ import (
+    ESA_HOST,
     check_esa_credentials,
     ensure_earthdata_credentials,
     esd_threshold_argument,
@@ -80,25 +83,51 @@ def test_main_check_earthdata_credentials_env_variables(tmp_path, monkeypatch):
     assert netrc.read_text() == 'machine foobar.nasa.gov login fizz password baz'
 
 
-@pytest.mark.parametrize('username, password', [('foo', 'bar'), (None, 'bar'), ('foo', None)])
-def test_check_esa_credentials(monkeypatch, username, password):
+def test_check_esa_credentials_params(tmp_path, monkeypatch):
     with monkeypatch.context() as m:
         m.setenv('ESA_USERNAME', 'env_username')
         m.setenv('ESA_PASSWORD', 'env_password')
+        m.setenv('HOME', str(tmp_path))
+        (tmp_path / '.netrc').write_text(f'machine {ESA_HOST} login netrc_username password netrc_password')
 
-        check_esa_credentials(username, password)
+        check_esa_credentials('foo', 'bar')
 
-        expected_username = username if username is not None else 'env_username'
-        expected_password = password if password is not None else 'env_password'
-
-        assert os.environ['ESA_USERNAME'] == expected_username
-        assert os.environ['ESA_PASSWORD'] == expected_password
+        assert os.environ['ESA_USERNAME'] == 'foo'
+        assert os.environ['ESA_PASSWORD'] == 'bar'
 
 
-def test_check_esa_credentials_missing(monkeypatch):
+def test_check_esa_credentials_env(tmp_path, monkeypatch):
+    with monkeypatch.context() as m:
+        m.setenv('ESA_USERNAME', 'foo')
+        m.setenv('ESA_PASSWORD', 'bar')
+        m.setenv('HOME', str(tmp_path))
+        (tmp_path / '.netrc').write_text(f'machine {ESA_HOST} login netrc_username password netrc_password')
+
+        check_esa_credentials(None, None)
+
+        assert os.environ['ESA_USERNAME'] == 'foo'
+        assert os.environ['ESA_PASSWORD'] == 'bar'
+
+
+def test_check_esa_credentials_netrc(tmp_path, monkeypatch):
+    with monkeypatch.context() as m:
+        m.delenv('ESA_USERNAME', raising=False)
+        m.delenv('ESA_PASSWORD', raising=False)
+        m.setenv('HOME', str(tmp_path))
+        (tmp_path / '.netrc').write_text(f'machine {ESA_HOST} login foo password bar')
+
+        check_esa_credentials(None, None)
+
+        assert os.environ['ESA_USERNAME'] == 'foo'
+        assert os.environ['ESA_PASSWORD'] == 'bar'
+
+
+def test_check_esa_credentials_missing(tmp_path, monkeypatch):
     with monkeypatch.context() as m:
         m.delenv('ESA_USERNAME', raising=False)
         m.setenv('ESA_PASSWORD', 'env_password')
+        m.setenv('HOME', str(tmp_path))
+        (tmp_path / '.netrc').write_text('')
         msg = 'Please provide.* --esa-username .*'
         with pytest.raises(ValueError, match=msg):
             check_esa_credentials(None, None)
@@ -106,6 +135,8 @@ def test_check_esa_credentials_missing(monkeypatch):
     with monkeypatch.context() as m:
         m.setenv('ESA_USERNAME', 'env_username')
         m.delenv('ESA_PASSWORD', raising=False)
+        m.setenv('HOME', str(tmp_path))
+        (tmp_path / '.netrc').write_text('')
         msg = 'Please provide.* --esa-password .*'
         with pytest.raises(ValueError, match=msg):
             check_esa_credentials(None, None)
