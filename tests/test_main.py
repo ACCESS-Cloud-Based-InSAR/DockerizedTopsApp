@@ -1,6 +1,4 @@
-import netrc
 import os
-from unittest.mock import PropertyMock
 
 import pytest
 

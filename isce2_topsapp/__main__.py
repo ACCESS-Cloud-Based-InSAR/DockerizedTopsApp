@@ -32,6 +32,7 @@ from isce2_topsapp.solid_earth_tides import update_gunw_with_solid_earth_tide
 
 ESA_HOST = 'dataspace.copernicus.eu'
 
+
 def localize_data(
     reference_scenes: list,
     secondary_scenes: list,
