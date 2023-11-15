@@ -6,6 +6,7 @@ import sys
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from importlib.metadata import entry_points
 from pathlib import Path
+from platform import system
 from typing import Optional
 
 from isce2_topsapp import (
@@ -28,6 +29,8 @@ from isce2_topsapp.json_encoder import MetadataEncoder
 from isce2_topsapp.packaging import update_gunw_internal_version_attribute
 from isce2_topsapp.solid_earth_tides import update_gunw_with_solid_earth_tide
 
+
+ESA_HOST = 'dataspace.copernicus.eu'
 
 def localize_data(
     reference_scenes: list,
@@ -110,20 +113,34 @@ def ensure_earthdata_credentials(
 
 
 def check_esa_credentials(username: Optional[str], password: Optional[str]) -> None:
+    netrc_name = '_netrc' if system().lower() == 'windows' else '.netrc'
+    netrc_file = Path.home() / netrc_name
+    if not netrc_file.exists():
+        netrc_file.touch()
+    netrc_credentials = netrc.netrc(netrc_file)
+
     if username is not None:
         os.environ["ESA_USERNAME"] = username
     elif "ESA_USERNAME" not in os.environ:
+        pass
+    elif ESA_HOST in netrc_credentials.hosts:
+        os.environ["ESA_USERNAME"] = netrc_credentials.hosts[ESA_HOST][0]
+    else:
         raise ValueError(
-            "Please provide Copernicus Data Space Ecosystem (CDSE) username via the --esa-username option "
-            "or the ESA_USERNAME environment variable."
+            "Please provide Copernicus Data Space Ecosystem (CDSE) username via the --esa-username option, "
+            "your netrc file, or the ESA_USERNAME environment variable."
         )
 
     if password is not None:
         os.environ["ESA_PASSWORD"] = password
-    elif "ESA_PASSWORD" not in os.environ:
+    elif "ESA_USERNAME" not in os.environ:
+        pass
+    elif ESA_HOST in netrc_credentials.hosts:
+        os.environ["ESA_PASSWORD"] = netrc_credentials.hosts[ESA_HOST][2]
+    else:
         raise ValueError(
-            "Please provide Copernicus Data Space Ecosystem (CDSE) password via the --esa-password option "
-            "or the ESA_PASSWORD environment variable."
+            "Please provide Copernicus Data Space Ecosystem (CDSE) password via the --esa-password option, "
+            "your netrc file, or the ESA_PASSWORD environment variable."
         )
 
 
