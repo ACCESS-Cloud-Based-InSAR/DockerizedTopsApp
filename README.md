@@ -30,16 +30,12 @@ We note all the input datasets are publicly available using a NASA Earthdata acc
     machine urs.earthdata.nasa.gov
         login <username>
         password <password>
-    ```
-    The `username`/`password` are the appropriate Earthdata Login credentials that are used to access NASA data. This file is necessary for downloading the Sentinel-1 orbit files from the ASF DAAC. Additionally, the [`requests`](https://docs.python-requests.org/en/latest/) library automatically uses credentials stored in the `~/.netrc` for authentification when none are supplied.
 
-2. Ensure that your ESA Dataspace credentials are available as environmental variables. In your terminal run:
+    machine dataspace.copernicus.eu
+        login <username>
+        password <password>
     ```
-    export ESA_USERNAME=<esa-username>
-    export ESA_PASSWORD=<esa-password>
-    ```
-    If you don't have an ESA Dataspace account, you can sign up for one [here](https://dataspace.copernicus.eu)
-
+    The first `username`/`password` pair are the appropriate Earthdata Login credentials that are used to access NASA data. The second pair are your credentials for the [Copernicus Data Space Ecosystem](https://dataspace.copernicus.eu). This file is necessary for downloading the Sentinel-1 files, and auxiliary data. Additionally, the [`requests`](https://docs.python-requests.org/en/latest/) library automatically uses credentials stored in the `~/.netrc` for authentification when none are supplied.
 
 ## Generate a GUNW
 
