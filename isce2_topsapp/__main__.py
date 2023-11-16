@@ -6,6 +6,7 @@ import sys
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from importlib.metadata import entry_points
 from pathlib import Path
+from platform import system
 from typing import Optional
 
 from isce2_topsapp import (
@@ -27,6 +28,9 @@ from isce2_topsapp.iono_proc import iono_processing
 from isce2_topsapp.json_encoder import MetadataEncoder
 from isce2_topsapp.packaging import update_gunw_internal_version_attribute
 from isce2_topsapp.solid_earth_tides import update_gunw_with_solid_earth_tide
+
+
+ESA_HOST = 'dataspace.copernicus.eu'
 
 
 def localize_data(
@@ -58,13 +62,13 @@ def localize_data(
         # For ionospheric correction computation
         if water_mask_flag:
             out_water_mask = download_water_mask(
-                out_slc["extent"],  water_name='SWBD')
+                out_slc["extent"],  water_name="SWBD")
 
         out_aux_cal = download_aux_cal()
 
-    out = {'reference_scenes': reference_scenes,
-           'secondary_scenes': secondary_scenes,
-           'frame_id': frame_id,
+    out = {"reference_scenes": reference_scenes,
+           "secondary_scenes": secondary_scenes,
+           "frame_id": frame_id,
            **out_slc,
            **out_dem,
            **out_water_mask,
@@ -109,6 +113,35 @@ def ensure_earthdata_credentials(
         )
 
 
+def check_esa_credentials(username: Optional[str], password: Optional[str]) -> None:
+    netrc_name = '_netrc' if system().lower() == 'windows' else '.netrc'
+    netrc_file = Path.home() / netrc_name
+
+    if (username is not None) != (password is not None):
+        raise ValueError('Both username and password arguments must be provided')
+
+    if username is not None:
+        os.environ["ESA_USERNAME"] = username
+        os.environ["ESA_PASSWORD"] = password
+        return
+
+    if "ESA_USERNAME" in os.environ and "ESA_PASSWORD" in os.environ:
+        return
+
+    if netrc_file.exists():
+        netrc_credentials = netrc.netrc(netrc_file)
+        if ESA_HOST in netrc_credentials.hosts:
+            os.environ["ESA_USERNAME"] = netrc_credentials.hosts[ESA_HOST][0]
+            os.environ["ESA_PASSWORD"] = netrc_credentials.hosts[ESA_HOST][2]
+            return
+
+    raise ValueError(
+        "Please provide Copernicus Data Space Ecosystem (CDSE) credentials via the "
+        "--esa-username and --esa-password options, "
+        "the ESA_USERNAME and ESA_PASSWORD environment variables, or your netrc file."
+    )
+
+
 def true_false_string_argument(s: str) -> bool:
     s = s.lower()
     if s not in ("true", "false"):
@@ -136,6 +169,8 @@ def gunw_slc():
     parser = ArgumentParser()
     parser.add_argument("--username")
     parser.add_argument("--password")
+    parser.add_argument("--esa-username")
+    parser.add_argument("--esa-password")
     parser.add_argument("--bucket")
     parser.add_argument("--bucket-prefix", default="")
     parser.add_argument("--dry-run", action="store_true")
@@ -154,6 +189,7 @@ def gunw_slc():
     args = parser.parse_args()
 
     ensure_earthdata_credentials(args.username, args.password)
+    check_esa_credentials(args.esa_username, args.esa_password)
 
     args.reference_scenes = [
         item for sublist in args.reference_scenes for item in sublist
@@ -247,6 +283,8 @@ def gunw_burst():
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument("--username")
     parser.add_argument("--password")
+    parser.add_argument("--esa-username")
+    parser.add_argument("--esa-password")
     parser.add_argument("--bucket")
     parser.add_argument("--bucket-prefix", default="")
     parser.add_argument("--dry-run", action="store_true")
@@ -262,6 +300,7 @@ def gunw_burst():
     args = parser.parse_args()
 
     ensure_earthdata_credentials(args.username, args.password)
+    check_esa_credentials(args.esa_username, args.esa_password)
 
     ref_obj, sec_obj = get_asf_slc_objects(
         [args.reference_scene, args.secondary_scene])

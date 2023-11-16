@@ -117,7 +117,6 @@ def gen_browse_imagery(nc_path: Path,
 def format_metadata(nc_path: Path,
                     all_metadata: dict) -> dict:
 
-    now = datetime.datetime.now()
     label = nc_path.name[:-3]  # removes suffix .nc
     geojson = all_metadata['gunw_geo'].__geo_interface__
 
@@ -140,6 +139,7 @@ def format_metadata(nc_path: Path,
     # The %f is miliseconds zero-padded with 6 decimals - just as we need!
     ref_start_time_formatted = ref_start_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     ref_stop_time_formatted = ref_stop_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    creation_timestamp = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
     # We want the nearest day (dt.days takes a floor) so we use total seconds and then round
     temporal_baseline_seconds = (ref_start_time - sec_start_time).total_seconds()
@@ -171,7 +171,7 @@ def format_metadata(nc_path: Path,
 
     data = {"label": label,
             "location": geojson,
-            "creation_timestamp": f'{now.isoformat()}Z',
+            "creation_timestamp": creation_timestamp,
             "version": DATASET_VERSION,
             "metadata": metadata}
 
