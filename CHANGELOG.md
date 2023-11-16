@@ -29,14 +29,15 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * The CLI now *requires* `frame_id` (use `frame_id = -1` for old API and what is now considered a "non"-standard product)
 
 
-## [0.2.5]
 
-### Update
-* Updated workflows to hyp3lib v2.0.2, which uses the new Copernicus Dataspace Ecosystem API got download orbit files.
-* Calls to `downloadSentinelOrbitFile` to specify the `esa_credentials` argument.
+## [0.3.0]
 
 ### Added
 * `check_esa_credentials` function to `__main__.py` to check for the existence of Dataspace credentials before processing begins.
+
+### Changed
+* Updated `hyp3lib` to  v2.0.2+, which uses the new Copernicus Dataspace Ecosystem API to download orbit files.
+* Calls to `downloadSentinelOrbitFile` now specify the `esa_credentials` argument.
 
 ## [0.2.5]
 
