@@ -30,9 +30,12 @@ We note all the input datasets are publicly available using a NASA Earthdata acc
     machine urs.earthdata.nasa.gov
         login <username>
         password <password>
-    ```
-    The `username`/`password` are the appropriate Earthdata Login credentials that are used to access NASA data. This file is necessary for downloading the Sentinel-1 orbit files from the ASF DAAC. Additionally, the [`requests`](https://docs.python-requests.org/en/latest/) library automatically uses credentials stored in the `~/.netrc` for authentification when none are supplied.
 
+    machine dataspace.copernicus.eu
+        login <username>
+        password <password>
+    ```
+    The first `username`/`password` pair are the appropriate Earthdata Login credentials that are used to access NASA data. The second pair are your credentials for the [Copernicus Data Space Ecosystem](https://dataspace.copernicus.eu). This file is necessary for downloading the Sentinel-1 files, and auxiliary data. Additionally, the [`requests`](https://docs.python-requests.org/en/latest/) library automatically uses credentials stored in the `~/.netrc` for authentification when none are supplied.
 
 ## Generate a GUNW
 
@@ -112,6 +115,8 @@ isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20230125T140019_20230125T14004
     ```
     isce2_topsapp --username <username> \
                   --password <password> \
+                  --esa-username <esa-username> \
+                  --esa-password <esa-password> \
                   --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9 \
                   --secondary-scenes S1B_IW_SLC__1SDV_20210711T014922_20210711T014949_027740_034F80_859D \
                                      S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404 \
@@ -141,6 +146,8 @@ docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img \
                                     S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C \
                --username <username>
                --password <password>
+               --esa-username <esa-username> \
+               --esa-password <esa-password> \
 ```
 where the `username`/`password` are the Earthdata credentials for accessing NASA data. We note the command line magic of the above is taken care of the `isce2_topsapp/etc/entrypoint.sh` (written by Joe Kennedy) which automatically runs certain bash commands on startup of the container, i.e. the run commands also calls the `isce2_topsapp` command line function as can be seen [here](isce2_topsapp/etc/entrypoint.sh).
 

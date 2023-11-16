@@ -159,7 +159,7 @@ def test_magnitude_of_set_with_variable_timing(acq_type: str, orbit_files_for_se
     with xr.open_dataset(gunw_path_for_set_2, group=group) as ds:
         slc_id = ds['L1InputGranules'].values[0]
 
-    orb_file, _ = get_orb.downloadSentinelOrbitFile(slc_id)
+    orb_file, _ = get_orb.downloadSentinelOrbitFile(slc_id, esa_credentials=('username', 'password'))
     ```
     """
     for gunw_path_for_set, orbit_dict in zip(gunw_paths_for_set, orbit_files_for_set):

@@ -31,6 +31,15 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.2.5]
 
+### Update
+* Updated workflows to hyp3lib v2.0.2, which uses the new Copernicus Dataspace Ecosystem API got download orbit files.
+* Calls to `downloadSentinelOrbitFile` to specify the `esa_credentials` argument.
+
+### Added
+* `check_esa_credentials` function to `__main__.py` to check for the existence of Dataspace credentials before processing begins.
+
+## [0.2.5]
+
 ### Fixed
 * For SET azimuth time interpolation, overlapping orbits produces errors with prepping state vectors for azimuth time grid. We now ensure state-vecotors are both unique and in order before creating a orbit object in ISCE2.
 
