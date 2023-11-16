@@ -187,6 +187,8 @@ def get_slc_parser():
     parser.add_argument('--dense-offsets', type=true_false_string_argument, default=False)
     parser.add_argument('--wrapped-phase-layer', type=true_false_string_argument, default=False)
     parser.add_argument('--goldstein-filter-power', type=float, default=.5)
+    parser.add_argument("--esa-username")
+    parser.add_argument("--esa-password")
     return parser
 
 
