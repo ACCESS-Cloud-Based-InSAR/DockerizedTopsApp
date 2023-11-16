@@ -231,7 +231,9 @@ def gunw_slc():
         frame_id=args.frame_id,
         water_mask_flag=args.estimate_ionosphere_delay,
     )
-    loc_data["frame_id"] = args.frame_id
+    loc_data['frame_id'] = args.frame_id
+    loc_data['cmd_line_str'] = cmd_line_str
+    loc_data['tops_app_params'] = topsapp_params_obj.model_dump()
 
     # Allows for easier re-inspection of processing, packaging, and delivery
     # after job completes
