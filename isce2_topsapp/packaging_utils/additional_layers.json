@@ -55,7 +55,7 @@
                         "standard_name": "azimuthPixelOffsets",
                         "long_name": "azimuthPixelOffsets",
                         "units": "azimuth radar pixel",
-                        "description": "Azimuth pixel offsets measured through patch correlation. To translate into meters, multiply by 2.3 as indicated here: https://sentinels.copernicus.eu/web/sentinel/technical-guides/sentinel-1-sar/products-algorithms/level-1/single-look-complex/interferometric-wide-swath"
+                        "description": "Azimuth pixel offsets measured through patch correlation. To translate into meters, multiply by 14.1 as indicated here: https://sentinels.copernicus.eu/web/sentinel/technical-guides/sentinel-1-sar/products-algorithms/level-1/single-look-complex/interferometric-wide-swath"
                 }
         }
 }
