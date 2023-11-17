@@ -64,12 +64,12 @@ All standard products have the following layers:
   + Unwrapped phase
   + Coherence
   + Connected compenents
-  + Unfiltered coherence - ❗*new* in v3❗
+  + Unfiltered coherence - *new* in version 3❗
   + InSAR amplitude
 + Correction Layers
-   + Ionosphere (0.00916 deg or ~1 km at the equator) - ❗*new* in v3+❗
-   + Solid earth tide (.1 deg or ~11 km at the equator) - ❗*new* in v3+❗
-   + Tropo correction layers if HRRR available (see [RAiDER](https://github.com/dbekaert/RAiDER/tree/dev))
+   + Ionosphere (0.00916 deg or ~1 km at the equator) - *new* in version 3❗
+   + Solid earth tide (.1 deg or ~11 km at the equator) - *new* in version 3❗
+   + Tropo correction layers if HRRR available (see [RAiDER](https://github.com/dbekaert/RAiDER))
 + Geometry Layers (.1 deg or ~11 km)
    + Incidence angle
    + Azimuth angle
@@ -77,7 +77,7 @@ All standard products have the following layers:
    + Perpendicular baseline
    + Lat/lon grids
 
-Again, tropo corrections are controlled via a separate step-function so is not included above. The repository is [here](https://github.com/dbekaert/RAiDER/tree/dev). Turning off certain layers or adding available layers using the CLI arguments are permissible but will produce *custom* products (indicated with a prefix `S1-GUNW_CUSTOM...`). The parameters are often simply exposing certain topsApp parameters discussed [here](https://github.com/isce-framework/isce2/blob/main/applications/topsApp.py). Our template for topsapp that is utilized for ISCE is found [here](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/blob/dev/isce2_topsapp/templates/topsapp_template.xml).
+Again, tropo corrections are controlled via a separate step-function so is not included above. The repository is [here](https://github.com/dbekaert/RAiDER). Turning off certain layers or adding available layers using the CLI arguments are permissible but will produce *custom* products (indicated with a prefix `S1-GUNW_CUSTOM...`). The parameters are often simply exposing certain topsApp parameters discussed [here](https://github.com/isce-framework/isce2/blob/main/applications/topsApp.py). Our template for topsapp that is utilized for ISCE is found [here](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/blob/dev/isce2_topsapp/templates/topsapp_template.xml).
 
 The command line string and relevant plugin version used to generate every product is included in the product itself and can be used to reproduce a product. These are attributes in the top level netcdf group.
 
