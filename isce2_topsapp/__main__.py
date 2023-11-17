@@ -171,7 +171,7 @@ def esd_threshold_argument(threshold: str) -> float:
 
 def get_slc_parser():
     parser = ArgumentParser()
-    parser.add_argument('--username')
+    parser.add_argument('--username', )
     parser.add_argument('--password')
     parser.add_argument('--bucket')
     parser.add_argument('--bucket-prefix', default='')
@@ -179,16 +179,19 @@ def get_slc_parser():
     parser.add_argument('--reference-scenes', type=str.split, nargs='+', required=True)
     parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
     parser.add_argument('--estimate-ionosphere-delay', type=true_false_string_argument, default=True)
-    parser.add_argument('--frame-id', type=int, default=-1, required=True)
+    parser.add_argument('--frame-id', type=int, default=-1, required=True,
+                        help=('If -1 is specified, no frame is used and a non-standard product generated. '
+                              'See examples in repository. For generating SLC pairs and a fixed frame, see:'
+                              'https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator'))
     parser.add_argument('--compute-solid-earth-tide', type=true_false_string_argument, default=True)
     parser.add_argument('--esd-coherence-threshold', type=float, default=-1.)
     parser.add_argument('--output-resolution', type=int, default=90, required=False)
     parser.add_argument('--unfiltered-coherence', type=true_false_string_argument, default=True)
     parser.add_argument('--dense-offsets', type=true_false_string_argument, default=False)
-    parser.add_argument('--wrapped-phase-layer', type=true_false_string_argument, default=False)
-    parser.add_argument('--goldstein-filter-power', type=float, default=.5)
-    parser.add_argument("--esa-username")
-    parser.add_argument("--esa-password")
+    parser.add_argument('--goldstein-filter-power', type=float, default=.5,
+                        help="The power applied to the patch FFT of the phase filter")
+    parser.add_argument("--esa-username", help='Username (i.e. email) for "https://dataspace.copernicus.eu/"')
+    parser.add_argument("--esa-password", help='Password for "https://dataspace.copernicus.eu/"')
     return parser
 
 
@@ -253,7 +256,6 @@ def gunw_slc():
         dem_for_geoc=loc_data["low_res_dem_path"],
         dry_run=args.dry_run,
         do_dense_offsets=args.dense_offsets,
-        wrapped_phase_layer=args.wrapped_phase_layer,
         goldstein_filter_power=args.goldstein_filter_power,
         output_resolution=args.output_resolution
     )
