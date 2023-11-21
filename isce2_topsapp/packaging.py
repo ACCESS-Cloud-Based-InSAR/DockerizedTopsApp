@@ -301,8 +301,19 @@ def record_params(*,
                   topsapp_params: dict) -> Path:
 
     with h5py.File(netcdf_path, mode='a') as file:
-        file.attrs.update(**topsapp_params)
-        file.attrs.update(command_line_string=cmd_line_str)
+        file.attrs.update(aria_frame_id=topsapp_params['frame_id'])
+        file.attrs.update(topsapp_command_line_string=cmd_line_str)
+        file.attrs.update(isce2_topsapp_version=f'{isce2_topsapp.__version__}')
+        file['science/grids'].attrs.update(**topsapp_params)
+    return netcdf_path
+
+def record_wkt_geometry(*,
+                  netcdf_path: Path,
+                  product_geometry_wkt: str
+                  ) -> Path:
+
+    with h5py.File(netcdf_path, mode='a') as file:
+        file.attrs.update(product_geometry_wkt=product_geometry_wkt)
     return netcdf_path
 
 
@@ -313,6 +324,7 @@ def package_gunw_product(*,
                          extent: list,
                          topaspp_params: dict,
                          cmd_line_str: str,
+                         product_geometry_wkt: str,
                          additional_2d_layers: list = None,
                          standard_product: bool = True,
                          additional_attributes: dict = None,
@@ -365,4 +377,6 @@ def package_gunw_product(*,
                                 topsapp_params=topaspp_params,
                                 cmd_line_str=cmd_line_str)
     out_nc_file = record_stats(netcdf_path=out_nc_file)
+    out_nc_file = record_wkt_geometry(netcdf_path=out_nc_file,
+                                      product_geometry_wkt=product_geometry_wkt)
     return out_nc_file
