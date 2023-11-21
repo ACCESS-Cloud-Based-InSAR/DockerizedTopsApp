@@ -285,6 +285,7 @@ def gunw_slc():
     if args.unfiltered_coherence:
         additional_2d_layers_for_packaging.append('unfilteredCoherence')
 
+    # Serialize additional layer data to replicate packaging
     with open('additional_2d_layers.txt', 'w') as file:
         file.write('\n'.join(additional_2d_layers_for_packaging))
     json.dump(additional_attributes_for_packaging,
