@@ -270,6 +270,7 @@ def gunw_slc():
     ref_properties = loc_data["reference_properties"]
     sec_properties = loc_data["secondary_properties"]
     extent = loc_data["extent"]
+    product_geometry_wkt = loc_data['gunw_geo'].wkt
 
     additional_2d_layers_for_packaging = []
     additional_attributes_for_packaging = {}
@@ -301,6 +302,7 @@ def gunw_slc():
         additional_attributes=additional_attributes_for_packaging,
         standard_product=topsapp_params_obj.is_standard_gunw_product(),
         cmd_line_str=cmd_line_str,
+        product_geometry_wkt=product_geometry_wkt,
         topaspp_params=topsapp_params_obj.model_dump()
     )
 
