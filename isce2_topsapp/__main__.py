@@ -288,7 +288,6 @@ def gunw_slc():
               open("additional_attributes_for_packaging.json", "w"),
               indent=2)
 
-
     ref_properties = loc_data["reference_properties"]
     sec_properties = loc_data["secondary_properties"]
     extent = loc_data["extent"]
