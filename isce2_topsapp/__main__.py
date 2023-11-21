@@ -203,6 +203,12 @@ def update_slc_namespace(args: Namespace) -> Namespace:
     args.secondary_scenes = [
         item for sublist in args.secondary_scenes for item in sublist
     ]
+
+    args.esd_coherence_threshold = esd_threshold_argument(args.esd_coherence_threshold)
+
+    if args.goldstein_filter_power < 0:
+        raise ValueError('Goldstein filter power must be non-negative')
+
     return args
 
 
