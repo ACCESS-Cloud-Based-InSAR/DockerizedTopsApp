@@ -285,6 +285,12 @@ def gunw_slc():
     if args.unfiltered_coherence:
         additional_2d_layers_for_packaging.append('unfilteredCoherence')
 
+    with open('additional_2d_layers.txt', 'w') as file:
+        file.write('\n'.join(additional_2d_layers_for_packaging))
+    json.dump(additional_attributes_for_packaging,
+              open("additional_attributes_for_packaging.json", "w"),
+              indent=2)
+
     nc_path = package_gunw_product(
         isce_data_directory=Path.cwd(),
         reference_properties=ref_properties,
