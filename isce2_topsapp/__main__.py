@@ -267,11 +267,6 @@ def gunw_slc():
             correct_burst_ramps=True,
         )
 
-    ref_properties = loc_data["reference_properties"]
-    sec_properties = loc_data["secondary_properties"]
-    extent = loc_data["extent"]
-    product_geometry_wkt = loc_data['gunw_geo'].wkt
-
     additional_2d_layers_for_packaging = []
     additional_attributes_for_packaging = {}
     if args.estimate_ionosphere_delay:
@@ -292,6 +287,12 @@ def gunw_slc():
     json.dump(additional_attributes_for_packaging,
               open("additional_attributes_for_packaging.json", "w"),
               indent=2)
+
+
+    ref_properties = loc_data["reference_properties"]
+    sec_properties = loc_data["secondary_properties"]
+    extent = loc_data["extent"]
+    product_geometry_wkt = loc_data['gunw_geo'].wkt
 
     nc_path = package_gunw_product(
         isce_data_directory=Path.cwd(),
