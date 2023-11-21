@@ -307,10 +307,11 @@ def record_params(*,
         file['science/grids'].attrs.update(**topsapp_params)
     return netcdf_path
 
+
 def record_wkt_geometry(*,
-                  netcdf_path: Path,
-                  product_geometry_wkt: str
-                  ) -> Path:
+                        netcdf_path: Path,
+                        product_geometry_wkt: str
+                        ) -> Path:
 
     with h5py.File(netcdf_path, mode='a') as file:
         file.attrs.update(product_geometry_wkt=product_geometry_wkt)
