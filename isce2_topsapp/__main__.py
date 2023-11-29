@@ -3,27 +3,27 @@ import math
 import netrc
 import os
 import sys
-from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from importlib.metadata import entry_points
 from pathlib import Path
 from platform import system
 from typing import Optional
 
-from isce2_topsapp import (
-    BurstParams,
-    aws,
-    download_aux_cal,
-    download_bursts,
-    download_dem_for_isce2,
-    download_orbits,
-    download_slcs,
-    download_water_mask,
-    get_asf_slc_objects,
-    get_region_of_interest,
-    package_gunw_product,
-    prepare_for_delivery,
-    topsapp_processing,
-)
+from isce2_topsapp import (BurstParams,
+                           aws,
+                           download_aux_cal,
+                           download_bursts,
+                           download_dem_for_isce2,
+                           download_orbits,
+                           download_slcs,
+                           download_water_mask,
+                           get_asf_slc_objects,
+                           get_region_of_interest,
+                           package_gunw_product,
+                           prepare_for_delivery,
+                           topsappParams,
+                           topsapp_processing,
+                           )
 from isce2_topsapp.iono_proc import iono_processing
 from isce2_topsapp.json_encoder import MetadataEncoder
 from isce2_topsapp.packaging import update_gunw_internal_version_attribute
@@ -39,6 +39,8 @@ def localize_data(
     frame_id: int = -1,
     dry_run: bool = False,
     water_mask_flag: bool = True,
+    geocode_resolution: int = 90
+
 ) -> dict:
     """The dry-run prevents gets necessary metadata from SLCs and orbits.
 
@@ -57,7 +59,9 @@ def localize_data(
     out_dem = {}
     out_aux_cal = {}
     if not dry_run:
-        out_dem = download_dem_for_isce2(out_slc["extent"])
+        out_dem = download_dem_for_isce2(out_slc['extent'],
+                                         geocode_resolution=geocode_resolution)
+
         out_water_mask = {"water_mask": None}
         # For ionospheric correction computation
         if water_mask_flag:
@@ -152,44 +156,46 @@ def true_false_string_argument(s: str) -> bool:
 
 
 def esd_threshold_argument(threshold: str) -> float:
-    threshold = float(threshold)
+    threshold_float = float(threshold)
 
-    if math.isclose(threshold, -1.0):
-        return threshold
+    if math.isclose(threshold_float, -1.0):
+        return threshold_float
 
-    if (0.0 > threshold) or (threshold > 1.0):
+    if (0.0 > threshold_float) or (threshold_float > 1.0):
         raise ValueError(
             "ESD coherence threshold should be a value between 0 and 1,"
             " or -1 for no ESD correction"
         )
-    return threshold
+    return threshold_float
 
 
-def gunw_slc():
+def get_slc_parser():
     parser = ArgumentParser()
-    parser.add_argument("--username")
-    parser.add_argument("--password")
-    parser.add_argument("--esa-username")
-    parser.add_argument("--esa-password")
-    parser.add_argument("--bucket")
-    parser.add_argument("--bucket-prefix", default="")
-    parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--reference-scenes",
-                        type=str.split, nargs="+", required=True)
-    parser.add_argument("--secondary-scenes",
-                        type=str.split, nargs="+", required=True)
-    parser.add_argument(
-        "--estimate-ionosphere-delay", type=true_false_string_argument, default=False
-    )
-    parser.add_argument("--frame-id", type=int, default=-1)
-    parser.add_argument(
-        "--compute-solid-earth-tide", type=true_false_string_argument, default=False
-    )
-    parser.add_argument("--esd-coherence-threshold", type=float, default=-1.0)
-    args = parser.parse_args()
+    parser.add_argument('--username', )
+    parser.add_argument('--password')
+    parser.add_argument('--bucket')
+    parser.add_argument('--bucket-prefix', default='')
+    parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--reference-scenes', type=str.split, nargs='+', required=True)
+    parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
+    parser.add_argument('--estimate-ionosphere-delay', type=true_false_string_argument, default=True)
+    parser.add_argument('--frame-id', type=int, default=-1, required=True,
+                        help=('If -1 is specified, no frame is used and a non-standard product generated. '
+                              'See examples in repository. For generating SLC pairs and a fixed frame, see:'
+                              'https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator'))
+    parser.add_argument('--compute-solid-earth-tide', type=true_false_string_argument, default=True)
+    parser.add_argument('--esd-coherence-threshold', type=float, default=-1.)
+    parser.add_argument('--output-resolution', type=int, default=90, required=False)
+    parser.add_argument('--unfiltered-coherence', type=true_false_string_argument, default=True)
+    parser.add_argument('--dense-offsets', type=true_false_string_argument, default=False)
+    parser.add_argument('--goldstein-filter-power', type=float, default=.5,
+                        help="The power applied to the patch FFT of the phase filter")
+    parser.add_argument("--esa-username", help='Username (i.e. email) for "https://dataspace.copernicus.eu/"')
+    parser.add_argument("--esa-password", help='Password for "https://dataspace.copernicus.eu/"')
+    return parser
 
-    ensure_earthdata_credentials(args.username, args.password)
-    check_esa_credentials(args.esa_username, args.esa_password)
+
+def update_slc_namespace(args: Namespace) -> Namespace:
 
     args.reference_scenes = [
         item for sublist in args.reference_scenes for item in sublist
@@ -198,28 +204,50 @@ def gunw_slc():
         item for sublist in args.secondary_scenes for item in sublist
     ]
 
+    args.esd_coherence_threshold = esd_threshold_argument(args.esd_coherence_threshold)
+
+    if args.goldstein_filter_power < 0:
+        raise ValueError('Goldstein filter power must be non-negative')
+
+    return args
+
+
+def gunw_slc():
+    cmd_line_str = 'isce2_topsapp ++' + ' '.join(sys.argv)
+
+    parser = get_slc_parser()
+    args = parser.parse_args()
+    args = update_slc_namespace(args)
+
+    # Validation
+    ensure_earthdata_credentials(args.username, args.password)
+    check_esa_credentials(args.esa_username, args.esa_password)
+    cli_params = vars(args).copy()
+    [cli_params.pop(key) for key in ['username', 'password', 'bucket', 'bucket_prefix', 'dry_run']]
+    topsapp_params_obj = topsappParams(**cli_params)
+
+    # serialize input
+    json.dump(topsapp_params_obj.model_dump(),
+              open('topsapp_input_params.json', 'w'),
+              indent=2)
+
     # Region of interest becomes 'extent' in loc_data
     loc_data = localize_data(
         args.reference_scenes,
         args.secondary_scenes,
         dry_run=args.dry_run,
+        geocode_resolution=args.output_resolution,
         frame_id=args.frame_id,
         water_mask_flag=args.estimate_ionosphere_delay,
     )
-    loc_data["frame_id"] = args.frame_id
+    loc_data['frame_id'] = args.frame_id
+    loc_data['cmd_line_str'] = cmd_line_str
+    loc_data['tops_app_params'] = topsapp_params_obj.model_dump()
 
     # Allows for easier re-inspection of processing, packaging, and delivery
     # after job completes
     json.dump(loc_data, open("loc_data.json", "w"),
               indent=2, cls=MetadataEncoder)
-
-    # Turn-off ESD when using ionospheric computation
-    # NOTE: note sure if this needs to be off
-    #       esd is calculated with iono only when
-    #       considerBurstProperties is on which off
-    #       by default
-    if args.estimate_ionosphere_delay:
-        args.esd_coherence_threshold = -1
 
     topsapp_processing(
         reference_slc_zips=loc_data["ref_paths"],
@@ -233,6 +261,9 @@ def gunw_slc():
         dem_for_proc=loc_data["full_res_dem_path"],
         dem_for_geoc=loc_data["low_res_dem_path"],
         dry_run=args.dry_run,
+        do_dense_offsets=args.dense_offsets,
+        goldstein_filter_power=args.goldstein_filter_power,
+        output_resolution=args.output_resolution
     )
 
     # Run ionospheric correction
@@ -242,26 +273,43 @@ def gunw_slc():
             correct_burst_ramps=True,
         )
 
+    additional_2d_layers_for_packaging = []
+    additional_attributes_for_packaging = {}
+    if args.estimate_ionosphere_delay:
+        additional_2d_layers_for_packaging.append('ionosphere')
+        additional_2d_layers_for_packaging.append('ionosphereBurstRamps')
+        # Keys need to be the same as layer names;
+        # specifically ionosphere and ionosphereBurstRamps are keys
+        additional_attributes_for_packaging.update(**iono_attr)
+    if args.dense_offsets:
+        additional_2d_layers_for_packaging.append('rangePixelOffsets')
+        additional_2d_layers_for_packaging.append('azimuthPixelOffsets')
+    if args.unfiltered_coherence:
+        additional_2d_layers_for_packaging.append('unfilteredCoherence')
+
+    # Serialize additional layer data to replicate packaging
+    with open('additional_2d_layers.txt', 'w') as file:
+        file.write('\n'.join(additional_2d_layers_for_packaging))
+    json.dump(additional_attributes_for_packaging,
+              open("additional_attributes_for_packaging.json", "w"),
+              indent=2)
+
     ref_properties = loc_data["reference_properties"]
     sec_properties = loc_data["secondary_properties"]
     extent = loc_data["extent"]
+    product_geometry_wkt = loc_data['gunw_geo'].wkt
 
-    additional_2d_layers = []
-    additional_attributes = []
-    if args.estimate_ionosphere_delay:
-        additional_2d_layers.append("ionosphere")
-        additional_attributes.append(iono_attr['ionosphere'])
-        additional_2d_layers.append("ionosphereBurstRamps")
-        additional_attributes.append(iono_attr['ionosphereBurstRamps'])
-
-    additional_2d_layers = additional_2d_layers or None
     nc_path = package_gunw_product(
         isce_data_directory=Path.cwd(),
         reference_properties=ref_properties,
         secondary_properties=sec_properties,
         extent=extent,
-        additional_2d_layers=additional_2d_layers,
-        additional_attributes=additional_attributes
+        additional_2d_layers=additional_2d_layers_for_packaging,
+        additional_attributes=additional_attributes_for_packaging,
+        standard_product=topsapp_params_obj.is_standard_gunw_product(),
+        cmd_line_str=cmd_line_str,
+        product_geometry_wkt=product_geometry_wkt,
+        topaspp_params=topsapp_params_obj.model_dump()
     )
 
     if args.compute_solid_earth_tide:

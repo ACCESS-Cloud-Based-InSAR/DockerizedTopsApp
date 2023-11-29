@@ -7,17 +7,19 @@ from pathlib import Path
 from typing import Union
 
 import h5py
+import numpy as np
+import rasterio
 from dateparser import parse
 
 import isce2_topsapp
 from isce2_topsapp.packaging_utils.additional_layers import add_2d_layer
-from isce2_topsapp.packaging_utils.ionosphere import format_iono_burst_ramps, format_ionosphere_for_gunw
+from isce2_topsapp.packaging_utils.ionosphere import (
+    format_iono_burst_ramps, format_ionosphere_for_gunw)
 from isce2_topsapp.templates import read_netcdf_packaging_template
 
 DATASET_VERSION = '3.0.0'
-
-
-PERMISSIBLE_2D_LAYERS = ['ionosphere', 'ionosphereBurstRamps']
+STANDARD_PROD_PREFIX = 'S1-GUNW'
+CUSTOM_PROD_PREFIX = 'S1-GUNW_CUSTOM'
 
 
 """Warning: the packaging scripts were written as command line scripts and
@@ -79,6 +81,7 @@ def get_center_time(properties: list) -> datetime.datetime:
 def get_gunw_id(reference_properties: list,
                 secondary_properties: list,
                 extent: list,
+                standard_product: bool = True,
                 ) -> str:
 
     # asc_or_desc: will be "A" or "D"
@@ -116,7 +119,8 @@ def get_gunw_id(reference_properties: list,
     version = DATASET_VERSION.replace('.', '_')
     version = f'v{version}'
 
-    ids = ['S1-GUNW',
+    gunw_prefix = STANDARD_PROD_PREFIX if standard_product else CUSTOM_PROD_PREFIX
+    ids = [gunw_prefix,
            asc_or_desc,
            # right looking
            'R',
@@ -218,7 +222,7 @@ def perform_netcdf_packaging(*,
     subprocess.check_call(cmd, shell=True)
     os.chdir(cwd)
 
-    out_nc_file = merged_dir/f'{gunw_id}.nc'
+    out_nc_file = merged_dir / f'{gunw_id}.nc'
 
     # Check if the netcdf file was created
     assert out_nc_file.exists()
@@ -228,14 +232,16 @@ def perform_netcdf_packaging(*,
 def package_additional_layers_into_gunw(gunw_path: Path,
                                         isce_data_directory: Path,
                                         additional_2d_layers: list,
-                                        additional_attributes: list):
+                                        additional_attributes: dict):
     # Current workflow of additional layers
     # 1. Do any additional processing/formatting outside of GUNW
     # 2. Add layer into GUNW
     # 3. Update Version
-    if not set(additional_2d_layers).issubset(set(PERMISSIBLE_2D_LAYERS)):
-        raise RuntimeError('Additional 2d layers must be subset of '
-                           f'{PERMISSIBLE_2D_LAYERS}')
+
+    # in case additional attributes is None
+    additional_attributes = additional_attributes or {}
+    if not set(additional_attributes.keys()).issubset(additional_2d_layers):
+        raise ValueError('Additional attributes dict must be within additional_2d_layers')
 
     if 'ionosphere' in additional_2d_layers:
         # current working directory is ISCE directory
@@ -245,8 +251,13 @@ def package_additional_layers_into_gunw(gunw_path: Path,
         _ = format_iono_burst_ramps(isce_data_directory, gunw_path)
 
     # Assumes ionosphere raster is written to specific path
-    additional_dataset = zip(additional_2d_layers, additional_attributes)
-    [add_2d_layer(layer, gunw_path, attributes) for layer, attributes in additional_dataset]
+    additional_attributes_lst = [additional_attributes.get(layer_name, None)
+                                 for layer_name in additional_2d_layers]
+    zipped_data = zip(additional_2d_layers, additional_attributes_lst)
+    [add_2d_layer(layer,
+                  gunw_path,
+                  additional_attrs=add_attrs)
+     for (layer, add_attrs) in zipped_data]
 
     # Update
     with h5py.File(gunw_path, mode='a') as file:
@@ -254,13 +265,71 @@ def package_additional_layers_into_gunw(gunw_path: Path,
     return gunw_path
 
 
+def get_layer_mean(netcdf_path: Path,
+                   groups: list,
+                   layers: list) -> dict:
+    if len(groups) != len(layers):
+        raise ValueError('groups and layers must have same length')
+    data = {}
+    for group, layer in zip(groups, layers):
+        with rasterio.open(f'netcdf:{netcdf_path}:{group}/{layer}') as ds:
+            X = ds.read()
+            if np.isnan(ds.nodata):
+                mask = np.isnan(X)
+            else:
+                mask = ds.nodata == X
+            raster_data = X[~mask]
+        data[f'mean_{layer}'] = np.mean(raster_data)
+    return data
+
+
+def record_stats(*,
+                 netcdf_path: Path) -> Path:
+    groups = ['science/grids/imagingGeometry'] * 2 + ['science/grids/data']
+    layers = ['perpendicularBaseline', 'parallelBaseline', 'coherence']
+    mean_attrs = get_layer_mean(netcdf_path,
+                                groups,
+                                layers)
+    with h5py.File(netcdf_path, mode='a') as file:
+        file.attrs.update(**mean_attrs)
+    return netcdf_path
+
+
+def record_params(*,
+                  netcdf_path: Path,
+                  cmd_line_str: str,
+                  topsapp_params: dict) -> Path:
+
+    with h5py.File(netcdf_path, mode='a') as file:
+        file.attrs.update(aria_frame_id=topsapp_params['frame_id'])
+        file.attrs.update(topsapp_command_line_string=cmd_line_str)
+        file.attrs.update(isce2_topsapp_version=f'{isce2_topsapp.__version__}')
+        file['science/grids'].attrs.update(**topsapp_params)
+    return netcdf_path
+
+
+def record_wkt_geometry(*,
+                        netcdf_path: Path,
+                        product_geometry_wkt: str
+                        ) -> Path:
+
+    with h5py.File(netcdf_path, mode='a') as file:
+        file.attrs.update(product_geometry_wkt=product_geometry_wkt)
+    return netcdf_path
+
+
 def package_gunw_product(*,
                          isce_data_directory: Union[str, Path],
                          reference_properties: list,
                          secondary_properties: list,
                          extent: list,
+                         topaspp_params: dict,
+                         cmd_line_str: str,
+                         product_geometry_wkt: str,
                          additional_2d_layers: list = None,
-                         additional_attributes: list = None) -> Path:
+                         standard_product: bool = True,
+                         additional_attributes: dict = None,
+                         ) -> Path:
     """Creates a GUNW standard product netcdf from the ISCE outputs and some
     initial metadata.
 
@@ -276,9 +345,13 @@ def package_gunw_product(*,
         List of extents ([xmin, ymin, xmax, ymax])
     additional_2d_layers: list
         List of 2d layers to add. Currently, supported is ionosphere.
-    additional_attributes: list
+    additional_attributes: dict
         List of attributs dicts for additional layers o add.
         Currently, supported only for ionosphere.
+    standard_product: bool
+        Whether the package is a GUNW standard product or not. Will use the
+        the prefix `S1-GUNW` for standard products and `S1-GUNW_CUSTOM`
+        otherwise
 
     Returns
     -------
@@ -289,14 +362,22 @@ def package_gunw_product(*,
 
     gunw_id = get_gunw_id(reference_properties=reference_properties,
                           secondary_properties=secondary_properties,
-                          extent=extent)
+                          extent=extent,
+                          standard_product=standard_product)
 
     out_nc_file = perform_netcdf_packaging(isce_data_dir=isce_data_directory,
                                            gunw_id=gunw_id)
 
     if additional_2d_layers is not None:
+        isce_data_directory = Path(isce_data_directory)
         package_additional_layers_into_gunw(out_nc_file,
                                             isce_data_directory,
                                             additional_2d_layers,
                                             additional_attributes)
+    out_nc_file = record_params(netcdf_path=out_nc_file,
+                                topsapp_params=topaspp_params,
+                                cmd_line_str=cmd_line_str)
+    out_nc_file = record_stats(netcdf_path=out_nc_file)
+    out_nc_file = record_wkt_geometry(netcdf_path=out_nc_file,
+                                      product_geometry_wkt=product_geometry_wkt)
     return out_nc_file

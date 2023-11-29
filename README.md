@@ -1,6 +1,6 @@
 # DockerizedTopsApp (aka ISCE2 TopsApp Hyp3-Plugin)
 
-This repository represents a dockerized science processor for generating an ARIA Sentinel-1 [Geocoded Unwrapped Interferogram](https://aria.jpl.nasa.gov/products/standard-displacement-products.html) (GUNW) product from a collection of valid Sentinel-1 IW-mode Single Look Complex (SLC) IDs across a date pair using [ISCE2](https://github.com/isce-framework/isce2). The GUNW is a NISAR beta-product. The initial development of the GUNW was done under the Getting Ready for NISAR initiative and a collection of related ARIA-funded projects. This work has continued under the Project Enabling Cloud-Based InSAR Science for an Exploding NASA InSAR Data Archive (ACCESS19-0023) funded under the ACCESS program.
+This repository represents a dockerized science processor for generating an ARIA Sentinel-1 [Geocoded Unwrapped Interferogram](https://asf.alaska.edu/data-sets/derived-data-sets/sentinel-1-interferograms/) (ARIA-S1-GUNW) product from a collection of valid Sentinel-1 IW-mode Single Look Complex (SLC) IDs across a date pair using [ISCE2](https://github.com/isce-framework/isce2). The ARIA-S1-GUNW (or simply a GUNW) is an official NASA product. The initial development of the GUNW was done under the Getting Ready for NISAR initiative and a collection of related ARIA-funded projects. This work has continued under the Project Enabling Cloud-Based InSAR Science for an Exploding NASA InSAR Data Archive (ACCESS19-0023) funded under the ACCESS program. A description of the product can be found here: https://aria.jpl.nasa.gov/products/standard-displacement-products.html
 
 This processor plugs into the [HyP3](https://hyp3-docs.asf.alaska.edu/v2-transition/) platform and therefore can spawn processing at scale from an API. All of the necessary datasets required for processing are determined from the input SLC IDS and then downloaded from public APIs. Thus, this repository accomplishes two goals:
 
@@ -37,67 +37,91 @@ We note all the input datasets are publicly available using a NASA Earthdata acc
     ```
     The first `username`/`password` pair are the appropriate Earthdata Login credentials that are used to access NASA data. The second pair are your credentials for the [Copernicus Data Space Ecosystem](https://dataspace.copernicus.eu). This file is necessary for downloading the Sentinel-1 files, and auxiliary data. Additionally, the [`requests`](https://docs.python-requests.org/en/latest/) library automatically uses credentials stored in the `~/.netrc` for authentification when none are supplied.
 
-## Generate a GUNW
+## Generate an ARIA-S1-GUNW
 
-Make sure you have `~/.netrc`. Run the following command:
+Make sure you have `~/.netrc` as described above. Run the following command:
 
 ```
-isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9 \
-              --secondary-scenes S1B_IW_SLC__1SDV_20210711T014922_20210711T014949_027740_034F80_859D \
-                                 S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404 \
-                                 S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C
+isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T222830_041886_04FCA3_2B3E \
+                                 S1A_IW_SLC__1SDV_20220212T222828_20220212T222855_041886_04FCA3_A3E2  \
+              --secondary-scenes S1A_IW_SLC__1SDV_20220131T222803_20220131T222830_041711_04F690_8F5F \
+                                 S1A_IW_SLC__1SDV_20220131T222828_20220131T222855_041711_04F690_28D7  \
+              --frame-id 25502
 ```
 Add `> topsapp_img.out 2> topsapp_img.err` to avoid unnecessary output to your terminal and record the stdout and stderr as files.
 This is reflected in the [`sample_run.sh`](sample_run.sh).
 
 To be even more explicity, you can use [`tee`](https://en.wikipedia.org/wiki/Tee_(command)) to record output to both including `> >(tee -a topsapp_img.out) 2> >(tee -a topsapp_img.err >&2)`.
 
-## Customizations
+## What makes an ARIA-S1-GUNW Product *standard*?
 
-### Estimating Ionospheric Phase Delay and ESD
+Each ARIA-S1-GUNW at the ASF that ensures that down-stream analysis by [ARIA-Tools](https://github.com/aria-tools/ARIA-tools) and [Mintpy](https://github.com/insarlab/MintPy) is done consistently and reproducibly. There are a number of exposed parameters in this plugin that we require to be set in a certain manner for a product to be considered "standard". We now discuss the standard parameters with respect to this plugin.
 
-This example shows how to obtain a layer with ionsopheric phase delay. The SLCs are over the Arabian peninusula where the ionosphere can be seen:
+Since v3+, in addition to reference and secondary scenes, a `frame-id` must be supplied for a *standard* product to be generated. This effectively restricts processing and the resulting product to be within this frame (technically, all bursts within the frame are included in the standard product). The geojson of spatially-fixed frames with their ids can be downloaded [here](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/blob/dev/isce2_topsapp/data/s1_frames_latitude_aligned.geojson.zip). These are derived from ESA's burst [map](https://sar-mpc.eu/test-data-sets/). More information about finding SLC pairs and their corresponding pairs can be found [here](https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator) and the generation of our spatially fixed-frames is discussed [here](https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-generation).
+
+All standard products have the following layers:
++ Data Layers (0.00083333333 deg or ~90 m at the equator)
+  + Unwrapped phase
+  + Coherence
+  + Connected compenents
+  + Unfiltered coherence - *new* in version 3❗
+  + InSAR amplitude
++ Correction Layers
+   + Ionosphere (0.00916 deg or ~1 km at the equator) - *new* in version 3❗
+   + Solid earth tide (.1 deg or ~11 km at the equator) - *new* in version 3❗
+   + Tropo correction layers if HRRR available (see [RAiDER](https://github.com/dbekaert/RAiDER))
++ Geometry Layers (.1 deg or ~11 km)
+   + Incidence angle
+   + Azimuth angle
+   + Parallel baseline
+   + Perpendicular baseline
+   + Lat/lon grids
+
+Again, tropo corrections are controlled via a separate step-function so is not included above. The repository is [here](https://github.com/dbekaert/RAiDER). Turning off certain layers or adding available layers using the CLI arguments are permissible but will produce *custom* products (indicated with a prefix `S1-GUNW_CUSTOM...`). The parameters are often simply exposing certain topsApp parameters discussed [here](https://github.com/isce-framework/isce2/blob/main/applications/topsApp.py). Our template for topsapp that is utilized for ISCE is found [here](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/blob/dev/isce2_topsapp/templates/topsapp_template.xml).
+
+The command line string and relevant plugin version used to generate every product is included in the product itself and can be used to reproduce a product. These are attributes in the top level netcdf group.
+
+We note that the ionosphere correction layer is the (hard) work of [Marin Govorcin](https://github.com/mgovorcin) and David Bekaert, which utilizes ISCE2 in a creative fashion. Users should refer to [this file](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/blob/dev/isce2_topsapp/iono_proc.py) for the process. 
+
+Below indicates all available arguments for product generation and parameters required for *standard product* generation (again, for a given pairing and frame, one must use the enumeration of pairs described [here](https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator)). Use `isce2_topsapp --help` for more information of available arguments.
 
 ```
-isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20171117T145926_20171117T145953_008323_00EBAB_AFB8 \
-              --secondary-scenes S1A_IW_SLC__1SDV_20171111T150004_20171111T150032_019219_0208AF_EE89 \
-              --estimate-ionosphere-delay True \
-              --esd-coherence-threshold .5 \
-              > topsapp_img.out 2> topsapp_img.err
+isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T222830_041886_04FCA3_2B3E \
+                                 S1A_IW_SLC__1SDV_20220212T222828_20220212T222855_041886_04FCA3_A3E2  \
+              --secondary-scenes S1A_IW_SLC__1SDV_20220131T222803_20220131T222830_041711_04F690_8F5F \
+                                 S1A_IW_SLC__1SDV_20220131T222828_20220131T222855_041711_04F690_28D7  \
+              --frame-id 25502 # latitude aligned ARIA spatially fixed frame\
+              --estimate-ionosphere-delay True # ionosphere correction layers\
+              --esd-coherence-threshold -1. # if -1, ESD is not used; else should be a value in (0, 1)\
+              --compute_solid_earth_tide True \
+              --goldstein-filter-power 0.5 # the power of the patch FFT filter used in the Goldstein filter\
+              --output-resolution 90 # either 30 or 90 meters\
+              --unfiltered-coherence True # this adds an unfiltered coherence layer\
+              --dense-offsets False # adds layers that compute patch wise correlation measurement done in range and azimuth which are helpful after significant surface changes\
 ```
-Not including `--esd-coherence-threshold` means no ESD correction will be applied. The ESD threshold refers to a coherence value and therefore must be in $[0, 1]$.
+or as a json:
+```
+{
+  "reference_scenes": [
+    "S1A_IW_SLC__1SDV_20220212T222803_20220212T222830_041886_04FCA3_2B3E",
+    "S1A_IW_SLC__1SDV_20220212T222828_20220212T222855_041886_04FCA3_A3E2"
+  ],
+  "secondary_scenes": [
+    "S1A_IW_SLC__1SDV_20220131T222803_20220131T222830_041711_04F690_8F5F",
+    "S1A_IW_SLC__1SDV_20220131T222828_20220131T222855_041711_04F690_28D7"
+  ],
+  "frame_id": 25502,
+  "estimate_ionosphere_delay": true,
+  "compute_solid_earth_tide": true,
+  "output_resolution": 90,
+  "unfiltered_coherence": true,
+  "goldstein_filter_power": 0.5,
+  "dense_offsets": false,
+  "wrapped_phase_layer": false,
+  "esd_coherence_threshold": -1.0
+}
+```
 
-### Apply Solid Earth Tide Correction
-
-```
-isce2_topsapp --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9 \
-              --secondary-scenes S1B_IW_SLC__1SDV_20210711T014922_20210711T014949_027740_034F80_859D \
-                                 S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404 \
-                                 S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C \
-              --compute-solid-earth-tide True \
-              > topsapp_img_set.out 2> topsapp_img_set.err
-```
-
-### Using "fixed frames" (experimental)
-
-Sentinel-1 Frames are not constant over passes. We generate fixed frames [here](https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-generation) and enumerate interferograms using this [repo](https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator). This is highly experimental. We then ensure ISCE processes only over the frame. The key is overlap. We provide some examples of the additional options (you will need to run this in *two* separate directories because ISCE2 outputs are organized with respect to the working directory of the processing). For one frame over CA:
-```
-isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20230125T135954_20230125T140021_046941_05A132_D35C \
-                                 S1A_IW_SLC__1SDV_20230125T140019_20230125T140046_046941_05A132_82DF \
-              --secondary-scenes S1A_IW_SLC__1SDV_20221220T135956_20221220T140023_046416_058F77_B248 \
-                                 S1A_IW_SLC__1SDV_20221220T140020_20221220T140047_046416_058F77_5213 \
-              --frame-id 22438 \
-              > topsapp_img_f22438.out 2> topsapp_img_f22438.err
-```
-and an overlapping frame:
-```
-isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20230125T140019_20230125T140046_046941_05A132_82DF \
-                                 S1A_IW_SLC__1SDV_20230125T140044_20230125T140111_046941_05A132_59E7 \
-              --secondary-scenes S1A_IW_SLC__1SDV_20221220T140020_20221220T140047_046416_058F77_5213 \
-                                 S1A_IW_SLC__1SDV_20221220T140045_20221220T140112_046416_058F77_7692 \
-              --frame-id 22439 \
-              > topsapp_img_f22439.out 2> topsapp_img_f22439.err
-```
 
 # Running with Docker (locally or on a server)
 
@@ -113,14 +137,11 @@ isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20230125T140019_20230125T14004
 3. Create a directory to mount the data files so you can inspect them outside of your docker container. Call it `topsapp_data`. Navigate to it. Copy the `sample_run.sh` in this directory, modifying it to add your Earthdata username and password e.g.
 
     ```
-    isce2_topsapp --username <username> \
-                  --password <password> \
-                  --esa-username <esa-username> \
-                  --esa-password <esa-password> \
-                  --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9 \
-                  --secondary-scenes S1B_IW_SLC__1SDV_20210711T014922_20210711T014949_027740_034F80_859D \
-                                     S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404 \
-                                     S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C \
+    isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T222830_041886_04FCA3_2B3E \
+                                 S1A_IW_SLC__1SDV_20220212T222828_20220212T222855_041886_04FCA3_A3E2  \
+                  --secondary-scenes S1A_IW_SLC__1SDV_20220131T222803_20220131T222830_041711_04F690_8F5F \
+                                 S1A_IW_SLC__1SDV_20220131T222828_20220131T222855_041711_04F690_28D7  \
+                  --frame-id 25502 \
                   > topsapp_img.out 2> topsapp_img.err
    ```
 
@@ -140,10 +161,11 @@ Create a new directory (for all the intermediate files) and navigate to it.
 
 ```
 docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img \
-               --reference-scenes S1B_IW_SLC__1SDV_20210723T014947_20210723T015014_027915_0354B4_B3A9 \
-               --secondary-scenes S1B_IW_SLC__1SDV_20210711T014922_20210711T014949_027740_034F80_859D \
-                                    S1B_IW_SLC__1SDV_20210711T014947_20210711T015013_027740_034F80_D404 \
-                                    S1B_IW_SLC__1SDV_20210711T015011_20210711T015038_027740_034F80_376C \
+               --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T222830_041886_04FCA3_2B3E \
+                                 S1A_IW_SLC__1SDV_20220212T222828_20220212T222855_041886_04FCA3_A3E2  \
+               --secondary-scenes S1A_IW_SLC__1SDV_20220131T222803_20220131T222830_041711_04F690_8F5F \
+                                 S1A_IW_SLC__1SDV_20220131T222828_20220131T222855_041711_04F690_28D7  \
+               --frame-id 25502 \
                --username <username>
                --password <password>
                --esa-username <esa-username> \

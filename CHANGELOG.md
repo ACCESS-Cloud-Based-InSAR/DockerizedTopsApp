@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1]
+
+### Added
+* Provides CLI options for:
+  - output resolution: 30 meters or 90 meters (the latter is default and the standardized GUNW resolution)
+  - unfiltered coherence layer (True/False)
+  - Goldstein filtering power - power that phase is raised to in patch FFT - default .5 (can be any number >= 0)
+  - Dense offsets layers (True/false)
+* Codifies (in documentation and in plugin) what is meant by "standard" GUNW with respect to exposed parameters including:
+  - 90 m resolution
+  - .5 value in the Goldstein filter for InSAR phase
+  - No ESD or dense offsets
+  - Additional layers: ionosophere, SET, and unfiltered coherence.
+  - uses pydantic to record relevant topsapp parameters for "standard" GUNW
+* Records parameters in the product including the CLI command to regenerate said product
+* If parameters are not standard uses prefix `S1-GUNW_CUSTOM-...`
+* Pydantic dependency for parameter accounting
+
+### Changed
+* The CLI now *requires* `frame_id` (use `frame_id = -1` for old API and what is now considered a "non"-standard product)
+
+
+
 ## [0.3.0]
 
 ### Added
@@ -81,7 +104,6 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 * Fixes write of start/stop sensing times due to changes in ASF Search v5.0.0 (see #79)
 
-
 ## [0.2.0]
 
 ### Added
@@ -95,6 +117,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 * Uses dem-stitcher>=v2.3.0, which by default, fills in `glo-30` tiles that are missing over Armenia and Azerbaijan with the available `glo-90` tiles (upsampled).
 * Uses dem-stitcher>=v2.3.1 to fix URLs for `glo-30` and `srtm_v3`
+
 ## [0.1.2]
 
 ### Fixed

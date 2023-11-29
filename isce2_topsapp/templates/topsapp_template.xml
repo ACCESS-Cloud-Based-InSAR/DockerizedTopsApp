@@ -16,7 +16,6 @@
     <property name="swaths">{{ swaths }}</property>
     <property name="range looks">{{ range_looks }}</property>
     <property name="azimuth looks">{{ azimuth_looks }}</property>
-    <property name="filter strength">{{ filter_strength }}</property>
     <property name="region of interest">{{ region_of_interest }}</property>
     <property name="demFilename">{{ demFilename }}</property>
     <property name="geocodeDemFilename">{{ geocodeDemFilename }}</property>
@@ -26,7 +25,11 @@
     <property name="apply ionosphere correction">False</property>
     <property name="do ESD">{{ do_esd }}</property>
     <property name="ESD coherence threshold">{{ esd_coherence_threshold }}</property>
+    <property name="do dense offsets">{{ do_dense_offsets }}</property>
+    <property name="Ampcor window width">{{ ampcor_width }}</property>
+    <property name="Ampcor window height">{{ ampcor_height }}</property>
     <property name="use virtual files">{{ use_virtual_files }}</property>
+    <property name="filter strength">{{ goldstein_filter_power }}</property>
     <property name="geocode list">{{ geocode_list }}</property>
   </component>
 </topsApp>
