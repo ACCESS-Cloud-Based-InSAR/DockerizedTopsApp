@@ -69,7 +69,7 @@ All standard products have the following layers:
 + Correction Layers
    + Ionosphere (0.00916 deg or ~1 km at the equator) - *new* in version 3❗
    + Solid earth tide (.1 deg or ~11 km at the equator) - *new* in version 3❗
-   + Tropo correction layers if HRRR available (see [RAiDER](https://github.com/dbekaert/RAiDER))
+   + Tropo correction layers if HRRR available (see [RAiDER](https://github.com/dbekaert/RAiDER)) - new in version 3❗
 + Geometry Layers (.1 deg or ~11 km)
    + Incidence angle
    + Azimuth angle
