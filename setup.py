@@ -36,7 +36,7 @@ setup(
         'dateparser',
         'dem_stitcher>=2.1',
         'geopandas',
-        'hyp3lib>=2,<3',
+        'hyp3lib>=3,<4',
         'jinja2',
         'lxml',
         'matplotlib',
