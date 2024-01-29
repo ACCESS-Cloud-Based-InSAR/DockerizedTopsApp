@@ -40,8 +40,9 @@ dependencies:
  - scipy<1.10
  - setuptools
  - setuptools_scm
- - tile_mate
  - shapely
  - tqdm
  - dem_stitcher>=2.4.0
  - aiohttp  # only needed for manifest and swath download
+ - pip:
+   - tile-mate
