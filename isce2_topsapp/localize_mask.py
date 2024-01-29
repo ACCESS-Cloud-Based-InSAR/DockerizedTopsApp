@@ -1,12 +1,14 @@
 from pathlib import Path
 
 import numpy as np
+import rasterio
 from isce.components.isceobj.Alos2Proc.runDownloadDem import download_wbd
 from shapely.geometry import box
+from tile_mate import get_raster_from_tiles
 
 
 def download_water_mask(
-    extent: list, water_name: str = "SWBD", buffer: float = 0.1
+    extent: list, water_mask_name: str = "esa_world_cover_2021_10m", buffer: float = 0.1
 ) -> dict:
     output_dir = Path(".").absolute()
 
@@ -19,7 +21,15 @@ def download_water_mask(
         np.ceil(extent_buffered[3]),
     ]
 
-    if water_name == "SWBD":
+    if water_mask_name == 'esa_world_cover_2021_10m':
+        X, p = get_raster_from_tiles(extent_buffered, tile_shortname='esa_world_cover_2021')
+        mask = (X == 80).astype(np.uint8)
+        mask[mask.astype(bool)] = 255
+        mask_filename = 'water_mask_derived_from_esa_world_cover_2021_10m'
+        with rasterio.open(mask_filename, 'w', **p) as ds:
+            ds.write(X)
+
+    elif water_mask_name == "SWBD":
         # Download SRTM-SWDB water mask
         # Water mask dataset extent
         # Latitude S55 - N60
@@ -38,8 +48,7 @@ def download_water_mask(
                   'Skip downloading water mask!!')
             mask_filename = ''
 
-    elif water_name == "GSHHS":
-        # from water_mask import get_water_mask_raster
-        raise NotImplementedError("TODO, GSHHS not yet available")
+    else:
+        raise NotImplementedError("Water mask not available")
 
     return {"water_mask": mask_filename}
