@@ -10,6 +10,7 @@ import h5py
 import numpy as np
 import rasterio
 from dateparser import parse
+from lxml import etree
 
 import isce2_topsapp
 from isce2_topsapp.packaging_utils.additional_layers import add_2d_layer
@@ -34,6 +35,25 @@ routine that takes `cwd`. If `F(cwd)` fails, then `F(cwd)` may fail
 simply because the actual current working directory is different because this
 was changed during runtime of `F`.
 """
+
+
+def read_baselines(tops_proc_xml: str) -> dict:
+    with open(tops_proc_xml) as f:
+        xml_str = f.read()
+    # :_ are not properly formatted tags
+    xml_str = xml_str.replace(':_', '')
+    root = etree.fromstring(xml_str)
+
+    element_path = ".//baseline/"
+    elements = root.findall(element_path)
+
+    tags = [e.tag for e in elements]
+    vals = [float(e.text) for e in elements]
+    parallel_baselines = [vals[k] for (k, val) in enumerate(vals) if 'Bpar' in tags[k]]
+    perpendicular_baselines = [vals[k] for (k, val) in enumerate(vals) if 'Bperp' in tags[k]]
+
+    return {'parallel_baselines': parallel_baselines,
+            'perpendicular_baselines': perpendicular_baselines}
 
 
 def update_gunw_internal_version_attribute(nc_path: Path, new_version='1c'):

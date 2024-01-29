@@ -41,3 +41,9 @@ def get_overlapping_orbits_for_set_test() -> list[Path]:
     p2 = test_dir / 'set_test_data' / 'S1A_OPER_AUX_POEORB_OPOD_20230706T080750_V20230615T225942_20230617T005942.EOF'
     data = [p1, p2]
     return data
+
+
+@pytest.fixture(scope='session')
+def tops_proc_xml_path() -> list[Path]:
+    """Is alignd with orbit_files_for_set"""
+    return test_dir / 'test_data' / 'topsProc.xml'
