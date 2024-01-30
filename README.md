@@ -204,9 +204,28 @@ EARTHDATA_USERNAME=...
 EARTHDATA_PASSWORD=...
 ```
 
+## Developing portions of the workflow
+
+The main entrypoint is in the `__main__.py` file [here](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/blob/dev/isce2_topsapp/__main__.py).
+The whole standard `++slc` workflow that generates the `ARIA-S1-GUNW` product is summarized in this file.
+The workflow takes 1.5 - 3 hours to complete. 
+For developing a new feature, we need to modify a very small parts of this long running workflow e.g. the packaging of ISCE2 outputs into a netcdf file, staging/preparation of auxiliary data, etc.
+Thus, for development it is not necessary to rerun the workflow each time to test a new feature, but utilize the intermediate ISCE data files and fix relevant parts of the code.
+We have some sample [notebooks](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsapp-Debugging-NBs) to load the relevant metadata to make this "jumping" into the code slightly easier.
+We note that `ISCE2` generates *a lot* of interemdiate files.
+For our workflow, this can be between 100-150 GBs of disk required.
+So be warned!
+
 ## Tests
 
-There are some integration tests. They are to make sure the wrapping part of the plugin, e.g. downloading metadata, a simulated CMR handshake, and packaging, occur as expected. However, the plugin takes about 1.5 to 3 hours (depending on the number of corrections requested) to generate a final GUNW. Therefore, these integration are *not* sufficient to permit merging into main. Until we have a complete end-to-end test of the workflow, any new feature cannot be integrated. As a first step, it is imperative to share the output of a new feature (i.e. the GUNW netcdf file). This is important because the integration tests do not check that ISCE2 successfully ran nor did the complex processing scripts. There are a lot of large libraries that need to be built and run successfully before this can be integrated. The CI/CD below ensures correct building of the python enviroment and Docker image. However, there can be subsequent errors in say ISCE2 even if the environment was built correctly.
+We have a test suite, but it is far from complete.
+The passing of the test suite *do not guarantee successful generation of a GUNW!*. 
+The test suite helps make sure portions of the cloud workflow, e.g. downloading metadata, a simulated CMR handshake, and packaging, occur as expected. 
+However, the plugin takes about 1.5 to 3 hours (depending on the number of corrections requested) to generate a final GUNW. 
+Therefore, these integration are *not* sufficient to permit a new release (see more instructions below). 
+Until we have a complete end-to-end test of the workflow (via Hyp3), any new feature cannot be integrated into official production (i.e. the `main` branch). 
+As a first step, it is imperative to share the output of a new feature (i.e. the GUNW file and the command to generate it). 
+
 
 ## Hyp3 and Cloud Submission
 
