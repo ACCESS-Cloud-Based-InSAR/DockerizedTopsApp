@@ -12,9 +12,10 @@ dependencies:
  - flake8-blind-except
  - flake8-builtins
  - flake8-import-order
+ - fsspec
  - gdal
  - geopandas
- - hyp3lib>=1.7
+ - hyp3lib>=3,<4
  - ipykernel
  - isce2==2.6.1
  - jinja2
@@ -30,6 +31,7 @@ dependencies:
  - pysolid
  - papermill
  - pytest
+ - pydantic
  - pytest-cov
  - pytest-mock
  - rasterio

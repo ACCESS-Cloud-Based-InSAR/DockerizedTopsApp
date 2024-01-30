@@ -40,24 +40,28 @@ def fix_image_xml(isce_raster_path: str) -> str:
 
 def download_dem_for_isce2(extent: list,
                            dem_name: str = 'glo_30',
+                           geocode_resolution: int = 90,
                            full_res_dem_dir: Path = None,
                            low_res_dem_dir: Path = None,
-                           buffer: float = .1) -> dict:
+                           buffer: float = .4) -> dict:
     """
     Parameters
     ----------
     extent : list
-        [xmin, ymin, xmax, ymin] for epsg:4326 (i.e. (x, y) = (lon, lat))
+        [xmin, ymin, xmax, ymax] for epsg:4326 (i.e. (x, y) = (lon, lat))
     dem_name : str, optional
         See names in `dem_stitcher`
     full_res_dem_dir : Path, optional
     low_res_dem_dir : Path, optional
     buffer : float, optional
-        In degrees, by default .1, which is about 11 km at equator
+        In degrees, by default .4, which is about 44 km at equator (or about 2.5 bursts at the equator)
     Returns
     -------
     dict
     """
+    if geocode_resolution not in [30, 90]:
+        raise ValueError('Geocode resolution must be "30" or "90"')
+
     full_res_dem_dir = full_res_dem_dir or Path('.')
     low_res_dem_dir = low_res_dem_dir or Path('.')
 
@@ -91,14 +95,23 @@ def download_dem_for_isce2(extent: list,
     with rasterio.open(full_res_dem_path, 'w', **dem_profile_isce) as ds:
         ds.write(dem_array, 1)
 
-    geocode_res = dem_res * 3
-    dst_profile = update_profile_resolution(dem_profile_isce, geocode_res)
-    dem_geocode_arr, dem_geocode_profile = reproject_arr_to_match_profile(dem_array,
-                                                                          dem_profile_isce,
-                                                                          dst_profile,
-                                                                          num_threads=5,
-                                                                          resampling='bilinear')
-    dem_geocode_arr = dem_geocode_arr[0, ...]
+    # Standard GUNW
+    if geocode_resolution == 90:
+        geocode_res = dem_res * 3
+
+        dst_profile = update_profile_resolution(dem_profile_isce, geocode_res)
+        dem_geocode_arr, dem_geocode_profile = reproject_arr_to_match_profile(dem_array,
+                                                                              dem_profile_isce,
+                                                                              dst_profile,
+                                                                              num_threads=5,
+                                                                              resampling='bilinear')
+        dem_geocode_arr = dem_geocode_arr[0, ...]
+
+    else:
+        # if 30 meters the array and geometadata should be the same
+        dem_geocode_arr = dem_array
+        dem_geocode_profile = dem_profile.copy()
+
     low_res_dem_path = low_res_dem_dir / 'low_res.dem.wgs84'
 
     dem_geocode_profile['driver'] = 'ISCE'

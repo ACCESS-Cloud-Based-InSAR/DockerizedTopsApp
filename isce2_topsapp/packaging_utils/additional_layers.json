@@ -1,11 +1,61 @@
-{"ionosphere": {"dst_group": "/science/grids/corrections/derived/ionosphere",
+{
+        "ionosphere": {
+                "dst_group": "/science/grids/corrections/derived/ionosphere",
                 "dst_variable": "ionosphere",
-                             "input_relative_path": "merged/ionosphere_for_gunw.geo",
-                             "attrs": {
-                                       "standard_name": "ionospherePhaseCorrection",
-                                       "long_name": "ionospherePhaseCorrection",
-                                       "description": "Estimated ionosphere phase correction"
-                                       }
-                             }
-
+                "src_band_number": 1,
+                "input_relative_path": "merged/ionosphere_for_gunw.geo",
+                "attrs": {
+                        "standard_name": "ionospherePhaseCorrection",
+                        "long_name": "ionospherePhaseCorrection",
+                        "units": "rad",
+                        "description": "Estimated ionosphere phase correction"
+                }
+        },
+        "ionosphereBurstRamps": {
+                "dst_group": "/science/grids/corrections/derived/ionosphereBurstRamps",
+                "dst_variable": "ionosphereBurstRamps",
+                "src_band_number": 1,
+                "input_relative_path": "merged/ionosphereBurstRamps_for_gunw.geo",
+                "attrs": {
+                        "standard_name": "ionosphereBurstRamps",
+                        "long_name": "ionosphereBurstRamps",
+                        "description": "Estimated burst ramps correction due to ionosphere"
+                }
+        },
+        "unfilteredCoherence": {
+                "dst_group": "/science/grids/data",
+                "dst_variable": "unfilteredCoherence",
+                "src_band_number": 2,
+                "nodata": 0,
+                "input_relative_path": "merged/topophase.cor.geo",
+                "attrs": {
+                        "standard_name": "unfilteredCoherence",
+                        "long_name": "unfilteredCoherence",
+                        "description": "Coherence without filters applied"
+                }
+        },
+        "rangePixelOffsets": {
+                "dst_group": "/science/grids/data",
+                "dst_variable": "rangePixelOffsets",
+                "input_relative_path": "merged/dense_offsets.bil.geo",
+                "src_band_number": 2,
+                "attrs": {
+                        "standard_name": "rangePixelOffsets",
+                        "long_name": "rangePixelOffsets",
+                        "units": "range radar pixel",
+                        "description": "Range pixel offsets measured through patch correlation. To translate into meters, multiply by 2.3 as indicated here: https://sentinels.copernicus.eu/web/sentinel/technical-guides/sentinel-1-sar/products-algorithms/level-1/single-look-complex/interferometric-wide-swath"
+                }
+        },
+        "azimuthPixelOffsets": {
+                "dst_group": "/science/grids/data",
+                "dst_variable": "azimuthPixelOffsets",
+                "input_relative_path": "merged/dense_offsets.bil.geo",
+                "src_band_number": 1,
+                "attrs": {
+                        "standard_name": "azimuthPixelOffsets",
+                        "long_name": "azimuthPixelOffsets",
+                        "units": "azimuth radar pixel",
+                        "description": "Azimuth pixel offsets measured through patch correlation. To translate into meters, multiply by 14.1 as indicated here: https://sentinels.copernicus.eu/web/sentinel/technical-guides/sentinel-1-sar/products-algorithms/level-1/single-look-complex/interferometric-wide-swath"
+                }
+        }
 }
