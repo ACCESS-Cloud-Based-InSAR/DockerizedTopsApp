@@ -6,7 +6,7 @@ from numpy.testing import assert_almost_equal
 from isce2_topsapp.packaging import (
     DATASET_VERSION,
     get_gunw_id,
-    get_layer_stats,
+    get_geocoded_layer_means,
     read_baselines,
 )
 
@@ -55,7 +55,7 @@ def test_extract_baselines(tops_proc_xml_path):
 
 def test_mean_of_geocoded_isce_outputs():
     """This uses the data in the public bucket to demonstrate and verify that the layer means are correct"""
-    out = get_layer_stats(
+    out = get_geocoded_layer_means(
         merged_dir="https://gunw-development-testing.s3.us-west-2.amazonaws.com/sample_merged_data"
     )
     expected_out = {

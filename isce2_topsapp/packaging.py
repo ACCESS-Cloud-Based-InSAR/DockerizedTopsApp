@@ -72,7 +72,7 @@ def read_baselines(tops_proc_xml: str) -> dict:
 
 def get_mean_baseline_data(tops_proc_xml: str) -> dict:
     baseline_data = read_baselines(tops_proc_xml)
-    mean_baseline_data = {key: np.mean(val) for (key, val) in baseline_data.items()}
+    mean_baseline_data = {f'mean_{key[:-1]}': np.mean(val) for (key, val) in baseline_data.items()}
     return mean_baseline_data
 
 
@@ -330,7 +330,7 @@ def get_layer_mean(
     return mean_val
 
 
-def get_layer_stats(*, merged_dir: Union[Path, str] = None) -> Path:
+def get_geocoded_layer_means(*, merged_dir: Union[Path, str] = None) -> Path:
     if merged_dir is None:
         cwd = Path.cwd()
         merged_dir = f"{cwd}/merged"
@@ -351,7 +351,7 @@ def get_layer_stats(*, merged_dir: Union[Path, str] = None) -> Path:
     return mean_vals
 
 
-def record_params(
+def record_params_as_global_attrs(
     *, netcdf_path: Path, cmd_line_str: str, topsapp_params: dict
 ) -> Path:
     with h5py.File(netcdf_path, mode="a") as file:
@@ -362,14 +362,24 @@ def record_params(
     return netcdf_path
 
 
-def record_wkt_geometry(*, netcdf_path: Path, product_geometry_wkt: str) -> Path:
+def record_wkt_geometry_as_global_attrs(*, netcdf_path: Path, product_geometry_wkt: str) -> Path:
     with h5py.File(netcdf_path, mode="a") as file:
         file.attrs.update(product_geometry_wkt=product_geometry_wkt)
     return netcdf_path
 
 
-def record_stats(*, netcdf_path: Union[Path, str]) -> Path:
-    return Path()
+def record_stats_as_global_attrs(*, netcdf_path: Union[Path, str], isce_data_dir: Union[Path, str]) -> Path:
+    """Records the mean coherence (with and without water mask), mean incidence angle, mean azimuth angle, and
+    mean baselines (parallel and perp)"""
+    merged_dir = Path(isce_data_dir) / 'merged'
+    layer_means_from_geocoded_isce_files = get_geocoded_layer_means(merged_dir=merged_dir)
+
+    tops_proc_xml = Path(isce_data_dir) / 'topsProc.xml'
+    mean_baseline_data = get_mean_baseline_data(tops_proc_xml)
+    with h5py.File(netcdf_path, mode='a') as file:
+        file.attrs.update(**layer_means_from_geocoded_isce_files)
+        file.attrs.update(**mean_baseline_data)
+    return netcdf_path
 
 
 def package_gunw_product(
@@ -434,13 +444,13 @@ def package_gunw_product(
             additional_2d_layers,
             additional_attributes,
         )
-    out_nc_file = record_params(
+    out_nc_file = record_params_as_global_attrs(
         netcdf_path=out_nc_file,
         topsapp_params=topaspp_params,
         cmd_line_str=cmd_line_str,
     )
-    out_nc_file = record_stats(netcdf_path=out_nc_file)
-    out_nc_file = record_wkt_geometry(
+    out_nc_file = record_stats_as_global_attrs(netcdf_path=out_nc_file, isce_data_dir=isce_data_directory)
+    out_nc_file = record_wkt_geometry_as_global_attrs(
         netcdf_path=out_nc_file, product_geometry_wkt=product_geometry_wkt
     )
     return out_nc_file
