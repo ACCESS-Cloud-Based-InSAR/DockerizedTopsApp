@@ -190,12 +190,19 @@ This is an open-source plugin and we welcome contributions. Because we use this 
 ## Installation for Development
 
 
-1. Clone or fork this repo. If you are a member of ACCESS or working on new features of this plugin, ask to become a member of this Github organization. The integration tests will be easier to run if you are pushing to branches of this repository as opposed to a fork (require organization secrets). This will ensure new features are more quickly integrated particularly into hyp3.
+1. Clone or fork this repo. If you are a member of ACCESS or working on new features of this plugin, ask to become a member of this Github organization. The integration tests will be easier to run if you are pushing to branches of this repository as opposed to a fork (require organization secrets). This will ensure new features are more quickly integrated particularly into hyp3. Otherwise, please add secrets to your repository as indicate below.
 2. Navigate with your terminal to the repo.
 3. Create a new environment and install requirements using `conda env update --file environment.yml`
 4. Activate the environment: `conda activate topsapp_env`
 5. Install the package from cloned repo using `python -m pip install -e .`
 6. Create a new branch with your feature.
+
+**Note**: because forked repositories do not have access to the repositories secrets, you will have to add secrets to your repository. You will need to add your Earthdata username and password to the secrets as:
+
+```
+EARTHDATA_USERNAME=...
+EARTHDATA_PASSWORD=...
+```
 
 ## Tests
 
@@ -214,24 +221,22 @@ There are several versions to keep track of:
 3. *Container Version*: Automatically tracked and incremented in CI/D on merges to `dev` (with `test` tag) and to `main` (with `latest` tag). The various images can be downloaded fromt he Packages sidebar ([link](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/pkgs/container/dockerizedtopsapp)).
 
 
-## CI/CD
+## Releases (Docker containers and software)
 
-The CI/CD allows us to be more efficient both in terms of tracking the releases and pushing container images to the cloud for actual processing. Each merge to `main` or `dev` creates a new docker image that is published through the github registry. The `test` tag is the latest image built to `dev`. The `latest` tag is the most up-to-date `main` release for production.
+The release workflows within the (ASF) CI/CD allows us to be more efficient both in terms of tracking the releases and pushing container images for cloud processing. Each merge to `main` or `dev` creates a new docker image that is published through the github registry. The `test` tag is the latest image built to `dev`. The `latest` tag is the most up-to-date `main` release for production. We can view various containers [here](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/pkgs/container/dockerizedtopsapp/versions).
 
-The plugin's *software* version is governed by `main`. Any merge into `dev` is seen as a test release so until `dev` is merged into `main`, the release number will not increment. ASF CI/CD requires any merge into `dev` and `main` to update the changelog. The changelog version is described via (Semantic Versioning)[https://semver.org/] (i.e. Major.Minor.Patch). Our CI/CD uses labels to automatically detect whether changelog needs to be updated. If you use `bumpless` and only CI/CD workflows or documentation has been changed, the software version remains the same. Otherwise, use `major`, `minor`, or `patch`
+The plugin's *software* version is governed by git tags and semantic versioning. The software version is incremented by merges to `main` (according to `major`/`minor`/`patch` labels). Any merge into `dev` is a (patch) test release so until `dev` is merged into `main`, the release number will correctly not increment. Software version can be seen via `import isce2_topsapp; isce2_topsapp.__version__`. 
+
+When releasing a new version i.e. merging `dev` into `main`, ASF CI/CD requires an update the changelog with correct version that will be captured by the `major`/`minor`/`patch` bump. If you use the label `bumpless` and only CI/CD workflows or documentation has been changed, the software version remains the same. Otherwise, use `major`, `minor`, or `patch`. For many more details see these [notes](https://github.com/ACCESS-Cloud-Based-InSAR/CICD-notes).
 
 ## PR Requirements
 
-1. If the software changes, you must use: `major`, `minor`, or `patch` labels on a PR. For PRs to `dev` this is not strictly necessary. However, for PRs to `main`, this is **required** and determines how the software is incremented. For example, if the current release is `0.1.0`, a tag of `patch` will increment the next release to `0.1.1` and a tag of `major` will increment the release to `1.0.0`. The fact that the changelog is updated is checked, but has to be manually checked upon PRs to main to ensure proper versioning.
+All new features will first be merged into `dev` before being released (and merged into `main`).
 
-2. Any PR to `main` requires the consistent `vXX.XX.XX` in the PR title. Using regular expressions in the github actions, the release number in the title is extracted and tagged to the relevant branch for the software release.
+1. If the software changes, please use: `major`, `minor`, or `patch` labels on a PR for maintainers to track the type of changes you are making
+2. Update the changelog so that the bump (depending on `major`/`minor`/`patch`) is consistent with what the next release will hold (you may be including your changes in a larger release)
 
-In summary, for PRs to main, the PR label (`major`/`minor`/`patch`), the changelog, and the PR title should all reflect the upcoming release version correctly. If not, there are some manual fixes.
-
-### Possible Fixes
-
-1. Forget to correct the changelog? Go through the PR process to update it correctly
-2. Forget to title a PR to main with the release version? See this [comment](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/pull/114#issuecomment-1478362852). The comment is in a PR to `main` without the release title.
+Here are more detailed [notes](https://github.com/ACCESS-Cloud-Based-InSAR/CICD-notes).
 
 
 # FAQ
@@ -240,7 +245,7 @@ In summary, for PRs to main, the PR label (`major`/`minor`/`patch`), the changel
 
     *Answer*: Make sure the time is spent with `conda/mamba` not copying data files. The `.dockerignore` file should ignore ISCE2 data files (if you are running some examples within this repo directory, there will be GBs of intermediate files). It's crucial you don't include unnecessary ISCE2 intermediate files into the Docker image as this will bloat it.
 
-2. Need to install additional packages such as vim?
+2. Need to install additional packages such as vim in your container?
 
    *Answer*: Login as root user to the container and install the additional packages.
 
