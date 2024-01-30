@@ -5,8 +5,8 @@ from numpy.testing import assert_almost_equal
 
 from isce2_topsapp.packaging import (
     DATASET_VERSION,
-    get_gunw_id,
     get_geocoded_layer_means,
+    get_gunw_id,
     read_baselines,
 )
 
