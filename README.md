@@ -229,15 +229,25 @@ The plugin's *software* version is governed by git tags and semantic versioning.
 
 When releasing a new version i.e. merging `dev` into `main`, ASF CI/CD requires an update the changelog with correct version that will be captured by the `major`/`minor`/`patch` bump. If you use the label `bumpless` and only CI/CD workflows or documentation has been changed, the software version remains the same. Otherwise, use `major`, `minor`, or `patch`. For many more details see these [notes](https://github.com/ACCESS-Cloud-Based-InSAR/CICD-notes).
 
+
 ## PR Requirements
 
 All new features will first be merged into `dev` before being released (and merged into `main`).
 
 1. If the software changes, please use: `major`, `minor`, or `patch` labels on a PR for maintainers to track the type of changes you are making
 2. Update the changelog so that the bump (depending on `major`/`minor`/`patch`) is consistent with what the next release will hold (you may be including your changes in a larger release)
+3. Please share a sample GUNW (and the command to generate it) so that the team can understand how the final product has been changed - unfortunately the test suite does not ensure the workflow will complete end-to-end.
 
 Here are more detailed [notes](https://github.com/ACCESS-Cloud-Based-InSAR/CICD-notes).
 
+### Additional (manual) checks
+
+Even though there are some integration tests and unit tests in our test suites, this CPU intensive workflow cannot be tested end-to-end using github actions (there is simply not enough memory and CPU on a github runner).
+Therefore, even if all the tests pass, there is still a nontrivial chance a GUNW is not successfully generated (e.g. the `topo` step of topsapp fizzles out because `numpy` API was not successfully tracked in the latest ISCE2 release).
+We request a sample GUNW be shared in a PR.
+Even if we go through careful accounting, once a PR is merged into `dev`, we will use `hyp3` to further inspect the new plugin e.g. through this [notebook](https://github.com/ACCESS-Cloud-Based-InSAR/s1_frame_enumerator/blob/dev/notebooks/Submitting_to_Hyp3.ipynb) using a few sites.
+It is important to use `INSAR_ISCE_TEST` job to ensure the features from the `dev` branch are used.
+Only after these **manual** checks, will we continue with a release of the plugin.
 
 # FAQ
 
