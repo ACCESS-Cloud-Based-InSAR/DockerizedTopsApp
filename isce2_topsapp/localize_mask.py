@@ -6,6 +6,8 @@ from isce.components.isceobj.Alos2Proc.runDownloadDem import download_wbd
 from shapely.geometry import box
 from tile_mate import get_raster_from_tiles
 
+from .localize_dem import fix_image_xml
+
 
 def download_water_mask(
     extent: list, water_mask_name: str = "esa_world_cover_2021_10m", buffer: float = 0.1
@@ -25,9 +27,17 @@ def download_water_mask(
         X, p = get_raster_from_tiles(extent_buffered, tile_shortname='esa_world_cover_2021')
         mask = (X == 80).astype(np.uint8)
         mask[mask.astype(bool)] = 255
-        mask_filename = 'water_mask_derived_from_esa_world_cover_2021_10m.tif'
-        with rasterio.open(mask_filename, 'w', **p) as ds:
+        mask_filename = 'water_mask_derived_from_esa_world_cover_2021_10m.geo'
+
+        # Remove esa nodata, change gdal driver to ISCE, and generate VRT as in localize DEM
+        p_isce = p.copy()
+        p_isce['nodata'] = None
+        p_isce['driver'] = 'ISCE'
+
+        with rasterio.open(mask_filename, 'w', **p_isce) as ds:
             ds.write(mask)
+
+        mask_filename = fix_image_xml(mask_filename)
 
     elif water_mask_name == "SWBD":
         # Download SRTM-SWDB water mask
