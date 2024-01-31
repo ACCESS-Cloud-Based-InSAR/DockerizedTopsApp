@@ -183,13 +183,98 @@ The easiest way to see what was the *last* working build, check out the docker [
 2. Load the image and get into interactive mode e.g. `docker run --entrypoint /usr/bin/bash  -it --rm ghcr.io/access-cloud-based-insar/dockerizedtopsapp:0.2.2.dev136_ga2d5389 -l`
 3. Check the packages `conda list | grep xarray`
 
-## FAQ
+# Contribution Instructions
+
+This is an open-source plugin and we welcome contributions. Because we use this plugin for producing publicly available datasets, there is some additional tests and requirements for any new features to be integrated.
+
+## Installation for Development
+
+
+1. Clone or fork this repo. If you are a member of ACCESS or working on new features of this plugin, ask to become a member of this Github organization. The integration tests will be easier to run if you are pushing to branches of this repository as opposed to a fork (require organization secrets). This will ensure new features are more quickly integrated particularly into hyp3. Otherwise, please add secrets to your repository as indicate below.
+2. Navigate with your terminal to the repo.
+3. Create a new environment and install requirements using `conda env update --file environment.yml`
+4. Activate the environment: `conda activate topsapp_env`
+5. Install the package from cloned repo using `python -m pip install -e .`
+6. Create a new branch with your feature.
+
+**Note**: because forked repositories do not have access to the repositories secrets, you will have to add secrets to your repository. You will need to add your Earthdata username and password to the secrets as:
+
+```
+EARTHDATA_USERNAME=...
+EARTHDATA_PASSWORD=...
+```
+
+## Developing portions of the workflow
+
+The main entrypoint is in the `__main__.py` file [here](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/blob/dev/isce2_topsapp/__main__.py).
+The whole standard `++slc` workflow that generates the `ARIA-S1-GUNW` product is summarized in this file.
+The workflow takes 1.5 - 3 hours to complete. 
+For developing a new feature, we need to modify a very small parts of this long running workflow e.g. the packaging of ISCE2 outputs into a netcdf file, staging/preparation of auxiliary data, etc.
+Thus, for development it is not necessary to rerun the workflow each time to test a new feature, but utilize the intermediate ISCE data files and fix relevant parts of the code.
+We have some sample [notebooks](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsapp-Debugging-NBs) to load the relevant metadata to make this "jumping" into the code slightly easier.
+We note that `ISCE2` generates *a lot* of interemdiate files.
+For our workflow, this can be between 100-150 GBs of disk required.
+So be warned!
+
+## Tests
+
+We have a test suite, but it is far from complete.
+The passing of the test suite *do not guarantee successful generation of a GUNW!*. 
+The test suite helps make sure portions of the cloud workflow, e.g. downloading metadata, a simulated CMR handshake, and packaging, occur as expected. 
+However, the plugin takes about 1.5 to 3 hours (depending on the number of corrections requested) to generate a final GUNW. 
+Therefore, these integration are *not* sufficient to permit a new release (see more instructions below). 
+Until we have a complete end-to-end test of the workflow (via Hyp3), any new feature cannot be integrated into official production (i.e. the `main` branch). 
+As a first step, it is imperative to share the output of a new feature (i.e. the GUNW file and the command to generate it). 
+
+
+## Hyp3 and Cloud Submission
+
+There are two branches: `dev` and `main`. The former is the "test" branch and the later is the "production" branch. When submitting jobs to Hyp3 there are two job types related to `INSAR_ISCE_TEST` and `INSAR_ISCE`. The former corresponds to the `dev` branch and the latter to `main`. This allows us to test the plugin *in the cloud* incrementally before transitioning new features to production. This is a design feature of Hyp3 (thanks, Joseph Kennedy!). Since end-to-end tests are required as noted above, this ensures that our production branch is always well tested.
+
+## Versions
+
+There are several versions to keep track of:
+
+1. *Dataset Version*: this is the GUNW version and incremented manually only when the GUNW has changed with relation to the end-user. This is in the GUNW name, i.e. `S1-GUNW-D-R-042-tops-20220429_20210528-140902-00123W_00034N-PP-e677-v2_0_5` has version 2.0.5. It is manually set [here](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/blob/0b219faac0c4e8c11ef610d3b35e7a8cb9a30511/isce2_topsapp/packaging.py#L17)
+2. *Software Version*: Automatically tracked and incremented in CI/CD on merges to the production branch (`main`)
+3. *Container Version*: Automatically tracked and incremented in CI/D on merges to `dev` (with `test` tag) and to `main` (with `latest` tag). The various images can be downloaded fromt he Packages sidebar ([link](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/pkgs/container/dockerizedtopsapp)).
+
+
+## Releases (Docker containers and software)
+
+The release workflows within the (ASF) CI/CD allows us to be more efficient both in terms of tracking the releases and pushing container images for cloud processing. Each merge to `main` or `dev` creates a new docker image that is published through the github registry. The `test` tag is the latest image built to `dev`. The `latest` tag is the most up-to-date `main` release for production. We can view various containers [here](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/pkgs/container/dockerizedtopsapp/versions).
+
+The plugin's *software* version is governed by git tags and semantic versioning. The software version is incremented by merges to `main` (according to `major`/`minor`/`patch` labels). Any merge into `dev` is a (patch) test release so until `dev` is merged into `main`, the release number will correctly not increment. Software version can be seen via `import isce2_topsapp; isce2_topsapp.__version__`. 
+
+When releasing a new version i.e. merging `dev` into `main`, ASF CI/CD requires an update the changelog with correct version that will be captured by the `major`/`minor`/`patch` bump. If you use the label `bumpless` and only CI/CD workflows or documentation has been changed, the software version remains the same. Otherwise, use `major`, `minor`, or `patch`. For many more details see these [notes](https://github.com/ACCESS-Cloud-Based-InSAR/CICD-notes).
+
+
+## PR Requirements
+
+All new features will first be merged into `dev` before being released (and merged into `main`).
+
+1. If the software changes, please use: `major`, `minor`, or `patch` labels on a PR for maintainers to track the type of changes you are making
+2. Update the changelog so that the bump (depending on `major`/`minor`/`patch`) is consistent with what the next release will hold (you may be including your changes in a larger release)
+3. Please share a sample GUNW (and the command to generate it) so that the team can understand how the final product has been changed - unfortunately the test suite does not ensure the workflow will complete end-to-end.
+
+Here are more detailed [notes](https://github.com/ACCESS-Cloud-Based-InSAR/CICD-notes).
+
+### Additional (manual) checks
+
+Even though there are some integration tests and unit tests in our test suites, this CPU intensive workflow cannot be tested end-to-end using github actions (there is simply not enough memory and CPU on a github runner).
+Therefore, even if all the tests pass, there is still a nontrivial chance a GUNW is not successfully generated (e.g. the `topo` step of topsapp fizzles out because `numpy` API was not successfully tracked in the latest ISCE2 release).
+We request a sample GUNW be shared in a PR.
+Even if we go through careful accounting, once a PR is merged into `dev`, we will use `hyp3` to further inspect the new plugin e.g. through this [notebook](https://github.com/ACCESS-Cloud-Based-InSAR/s1_frame_enumerator/blob/dev/notebooks/Submitting_to_Hyp3.ipynb) using a few sites.
+It is important to use `INSAR_ISCE_TEST` job to ensure the features from the `dev` branch are used.
+Only after these **manual** checks, will we continue with a release of the plugin.
+
+# FAQ
 
 1. The docker build is taking a long time.
 
     *Answer*: Make sure the time is spent with `conda/mamba` not copying data files. The `.dockerignore` file should ignore ISCE2 data files (if you are running some examples within this repo directory, there will be GBs of intermediate files). It's crucial you don't include unnecessary ISCE2 intermediate files into the Docker image as this will bloat it.
 
-2. Need to install additional packages such as vim?
+2. Need to install additional packages such as vim in your container?
 
    *Answer*: Login as root user to the container and install the additional packages.
 
