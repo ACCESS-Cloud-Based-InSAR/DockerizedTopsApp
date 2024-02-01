@@ -119,6 +119,7 @@ tests/**/*.json
 !tests/test_data/ref_metadata.xml
 !tests/test_data/sec_manifest.xml
 !tests/test_data/sec_metadata.xml
+!tests/test_data/topsProc.xml
 
 # Test for overlapping orbits
 !tests/set_test_data/S1A_OPER_AUX_POEORB_OPOD_20230705T080713_V20230614T225942_20230616T005942.EOF
