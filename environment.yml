@@ -2,7 +2,7 @@ name: topsapp_env
 channels:
  - conda-forge
 dependencies:
- - python>=3.9,<3.10
+ - python>=3.9
  - pip
  - affine
  - asf_search>=5.0.0
@@ -17,7 +17,7 @@ dependencies:
  - geopandas
  - hyp3lib>=3,<4
  - ipykernel
- - isce2==2.6.1
+ - isce2=>2.6.3
  - jinja2
  - joblib
  - jsonschema==3.2.0
