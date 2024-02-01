@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -57,6 +58,7 @@ def test_extract_baselines(tops_proc_xml_path):
 
 def test_mean_of_geocoded_isce_outputs():
     """This uses the data in the public bucket to demonstrate and verify that the layer means are correct"""
+    os.environ['AWS_NO_SIGN_REQUEST'] = 'YES'
     out = get_geocoded_layer_means(
         merged_dir="https://gunw-development-testing.s3.us-west-2.amazonaws.com/sample_merged_data"
     )
