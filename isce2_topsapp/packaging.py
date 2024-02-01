@@ -44,6 +44,7 @@ LAYER2PATH = {
     "incidence_angle": {"file_name": "los.rdr.geo", "band": 1},
     "azimuth_angle": {"file_name": "los.rdr.geo", "band": 2},
     "filtered_coherence": {"file_name": "phsig.cor.geo", "band": 1},
+    "unfiltered_coherence": {"file_name": "topophase.cor.geo", "band": 2}
 }
 
 
@@ -308,7 +309,7 @@ def package_additional_layers_into_gunw(
 
 
 def get_layer_mean(
-    merged_dir: Union[Path, str], layer_name: str, apply_water_mask: bool = False
+    merged_dir: Union[Path, str], layer_name: str, apply_water_mask: bool = False, default_isce_nodata: float = 0.,
 ) -> float:
     log = f"Extracting mean value from {layer_name}"
     if apply_water_mask:
@@ -320,7 +321,7 @@ def get_layer_mean(
 
     with rasterio.open(layer_path) as ds:
         X = ds.read(band_num)
-        X_nodata = ~(ds.read_masks(band_num).astype(bool))
+        X_nodata = (X == default_isce_nodata)
         if apply_water_mask:
             p = ds.profile
             water_mask = get_water_mask_raster_for_browse_image(p)
@@ -344,6 +345,12 @@ def get_geocoded_layer_means(*, merged_dir: Union[Path, str] = None) -> Path:
         ),
         "mean_filtered_coherence_with_water_mask": get_layer_mean_p(
             "filtered_coherence", apply_water_mask=True
+        ),
+        "mean_unfiltered_coherence_without_water_mask": get_layer_mean_p(
+            "unfiltered_coherence", apply_water_mask=False
+        ),
+        "mean_unfiltered_coherence_with_water_mask": get_layer_mean_p(
+            "unfiltered_coherence", apply_water_mask=True
         ),
         "mean_incidence_angle": get_layer_mean_p("incidence_angle"),
         "mean_azimuth_angle": get_layer_mean_p("azimuth_angle") + 90,
