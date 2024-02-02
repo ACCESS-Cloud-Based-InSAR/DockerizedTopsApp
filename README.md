@@ -239,6 +239,7 @@ However, the plugin takes about 1.5 to 3 hours (depending on the number of corre
 Therefore, these integration are *not* sufficient to permit a new release (see more instructions below). 
 Until we have a complete end-to-end test of the workflow (via Hyp3), any new feature cannot be integrated into official production (i.e. the `main` branch). 
 As a first step, it is imperative to share the output of a new feature (i.e. the GUNW file and the command to generate it). 
+Here is a notebook that demonstrates how to compare GUNWs that will be very helpful: https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsapp-Debugging-NBs/blob/dev/2_Compare_GUNWs.ipynb
 
 
 ## Hyp3 and Cloud Submission
@@ -275,9 +276,10 @@ Here are more detailed [notes](https://github.com/ACCESS-Cloud-Based-InSAR/CICD-
 
 ### Additional (manual) checks
 
-Even though there are some integration tests and unit tests in our test suites, this CPU intensive workflow cannot be tested end-to-end using github actions (there is simply not enough memory and CPU on a github runner).
+Even though there are some integration tests and unit tests in our test suites, this CPU intensive workflow cannot be tested end-to-end using github actions (there is simply not enough memory and CPU for these workflows).
 Therefore, even if all the tests pass, there is still a nontrivial chance a GUNW is not successfully generated (e.g. the `topo` step of topsapp fizzles out because `numpy` API was not successfully tracked in the latest ISCE2 release).
 We request a sample GUNW be shared in a PR.
+Ideally, a comparison of the GUNW created with a new branch and an existing one (as done in this [notebook](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsapp-Debugging-NBs/blob/dev/2_Compare_GUNWs.ipynb)) is ideal.
 Even if we go through careful accounting, once a PR is merged into `dev`, we will use `hyp3` to further inspect the new plugin e.g. through this [notebook](https://github.com/ACCESS-Cloud-Based-InSAR/s1_frame_enumerator/blob/dev/notebooks/Submitting_to_Hyp3.ipynb) using a few sites.
 It is important to use `INSAR_ISCE_TEST` job to ensure the features from the `dev` branch are used.
 Only after these **manual** checks, will we continue with a release of the plugin.
