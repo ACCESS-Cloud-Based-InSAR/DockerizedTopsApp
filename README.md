@@ -23,6 +23,21 @@ We note all the input datasets are publicly available using a NASA Earthdata acc
 3. Create a new environment and install requirements using `conda env update --file environment.yml` (or use [`mamba`](https://github.com/mamba-org/mamba) to speed install up)
 4. Install the package from cloned repo using `python -m pip install -e .`
 
+### For Mac M1 Silicon Users
+
+`ISCE2` requires Intel `x86_64` complied, conda-forge packages. Please follow the directions [here](https://conda-forge.org/docs/user/tipsandtricks.html#installing-apple-intel-packages-on-apple-silicon) i.e.
+
+```
+CONDA_SUBDIR=osx-64 conda create -n topsapp_env python
+conda activate topsapp_env
+conda config --env --set subdir osx-64 
+```
+Then check
+```
+python -c "import platform;print(platform.machine())"  # Should print "x86_64"
+echo "CONDA_SUBDIR: $CONDA_SUBDIR"  # Should print "CONDA_SUBDIR: osx-64"
+```
+
 ## Additional setup
 
 1. Ensure that your `~/.netrc` file has:
@@ -158,7 +173,6 @@ or as a json:
 ## Expedient Docker Test for GUNW Generation
 
 Create a new directory (for all the intermediate files) and navigate to it.
-
 ```
 docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img \
                --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T222830_041886_04FCA3_2B3E \
@@ -209,8 +223,8 @@ EARTHDATA_PASSWORD=...
 The main entrypoint is in the `__main__.py` file [here](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/blob/dev/isce2_topsapp/__main__.py).
 The whole standard `++slc` workflow that generates the `ARIA-S1-GUNW` product is summarized in this file.
 The workflow takes 1.5 - 3 hours to complete. 
-For developing a new feature, we need to modify a very small parts of this long running workflow e.g. the packaging of ISCE2 outputs into a netcdf file, staging/preparation of auxiliary data, etc.
-Thus, for development it is not necessary to rerun the workflow each time to test a new feature, but utilize the intermediate ISCE data files and fix relevant parts of the code.
+Likely, when developing a small new feature, we need to modify only of this long running workflow e.g. the packaging of ISCE2 outputs into a netcdf file, staging/preparation of auxiliary data, etc.
+Thus, for development, it is recommended to not rerun the workflow each time, but utilize the intermediate ISCE data files and the metadata stored as json by this plugin.
 We have some sample [notebooks](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsapp-Debugging-NBs) to load the relevant metadata to make this "jumping" into the code slightly easier.
 We note that `ISCE2` generates *a lot* of interemdiate files.
 For our workflow, this can be between 100-150 GBs of disk required.
