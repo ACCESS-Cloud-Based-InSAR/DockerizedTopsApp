@@ -26,11 +26,11 @@ jobs:
           username: ${{ secrets.EARTHDATA_USERNAME }}
           password: ${{ secrets.EARTHDATA_PASSWORD }}
 
-      - uses: mamba-org/provision-with-micromamba@v15
+      - uses: mamba-org/setup-micromamba@v1.8
         with:
-          environment-name: topsapp_env
+          init-shell: bash
           environment-file: environment.yml
-          extra-specs: |
+          extra-specs: >-
             python=${{ matrix.python-version }}
 
       - name: Pytest in conda environment
