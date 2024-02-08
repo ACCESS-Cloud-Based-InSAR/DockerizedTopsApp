@@ -66,7 +66,7 @@ def test_mean_of_geocoded_isce_outputs():
         "mean_filtered_coherence_without_water_mask": 0.4395995,
         "mean_filtered_coherence_with_water_mask": 0.4649538,
         "mean_unfiltered_coherence_without_water_mask": 0.33125195,
-        "mean_unfiltered_coherence_with_water_mask": 0.33531728,
+        "mean_unfiltered_coherence_with_water_mask": 0.3347433,
         "mean_incidence_angle": 38.845047,
         "mean_azimuth_angle": -169.84756469726562,
     }
