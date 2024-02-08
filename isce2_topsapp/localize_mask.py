@@ -41,7 +41,7 @@ def download_water_mask(
 
     elif water_mask_name == 'pekel_water_occurrence_2021':
         X, p = get_raster_from_tiles(extent_buffered, tile_shortname='pekel_water_occurrence_2021')
-        mask = (X >= 95)
+        mask = (X >= 95).astype(np.uint8)
         mask[mask.astype(bool)] = 255
         mask_filename = 'water_mask_derived_from_pekel_water_occurrence_2021_with_at_least_95_perc_water.geo'
 
