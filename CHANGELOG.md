@@ -26,7 +26,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 * The CLI now *requires* `frame_id` (use `frame_id = -1` for old API and what is now considered a "non"-standard product)
-* Water mask now uses `tile-mate` to download and merge ESA World cover tiles on 
+* Water mask now uses `tile-mate>=0.0.8` to download and merge water mask tiles (Pekel Occurence data >= 95 is the default) 
 * All water masks applied to processing/packaging use Pekel Occurence (>= 95 percent occurence): ionosphere processing, browse imagery, and global attributes associate with mean coherence
 * Some function names associated to writing global attributes in the netcdf file were renamed to be more descriptive e.g. `record_stats` became `record_stats_as_global_attrs`
 
