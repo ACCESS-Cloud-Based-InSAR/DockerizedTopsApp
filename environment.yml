@@ -44,4 +44,4 @@ dependencies:
  - tqdm
  - dem_stitcher>=2.5.5
  - aiohttp  # only needed for manifest and swath download
- - tile_mate>=0.0.7
+ - tile_mate>=0.0.8

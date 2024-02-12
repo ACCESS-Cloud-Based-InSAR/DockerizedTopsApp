@@ -21,8 +21,8 @@ def get_water_mask_raster_for_browse_image(profile: dict) -> np.ndarray:
     """
     extent = array_bounds(profile["height"], profile["width"], profile["transform"])
 
-    X_esa, p_esa = get_raster_from_tiles(extent, tile_shortname="esa_world_cover_2021")
-    X_esa_r, _ = reproject_arr_to_match_profile(X_esa, p_esa, profile, resampling='nearest')
-    mask = (X_esa_r == 80).astype(bool)
+    X_occ, p_occ = get_raster_from_tiles(extent, tile_shortname="pekel_water_occ_2021")
+    X_occ_r, _ = reproject_arr_to_match_profile(X_occ, p_occ, profile, resampling='bilinear')
+    mask = (X_occ_r >= 95).astype(bool)
     mask = mask[0, ...]
     return mask
