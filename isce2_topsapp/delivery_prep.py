@@ -9,7 +9,7 @@ from dateparser import parse
 from matplotlib import cm
 
 from isce2_topsapp.packaging import DATASET_VERSION
-from isce2_topsapp.water_mask import get_water_mask_raster
+from isce2_topsapp.water_mask import get_water_mask_raster_for_browse_image
 
 TEMPLATE_DIR = (Path(__file__).parent/'templates').absolute()
 SCHEMA_PATH = TEMPLATE_DIR/'daac_ingest_schema.json'
@@ -94,7 +94,7 @@ def get_wrapped_ifg(nc_path: Path) -> np.ndarray:
     unw, _ = open_science_grid(nc_path, 'unwrappedPhase')
 
     mask_cc = get_connected_component_mask(cc)
-    mask_water = get_water_mask_raster(profile)
+    mask_water = get_water_mask_raster_for_browse_image(profile)
     mask = mask_cc | mask_water
 
     wrapped = np.zeros(mask.shape)

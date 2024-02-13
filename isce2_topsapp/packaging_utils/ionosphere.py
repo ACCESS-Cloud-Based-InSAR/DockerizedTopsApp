@@ -8,6 +8,19 @@ from dem_stitcher.rio_tools import (reproject_arr_to_match_profile,
 
 def format_ionosphere_for_gunw(isce_directory: Path,
                                gunw_netcdf_path: Path) -> Path:
+    """Resamples the ionosphere to approximately 1 km using origin of product
+
+    Parameters
+    ----------
+    isce_directory : Path
+        The so-called "scratch" directory
+    gunw_netcdf_path : Path
+
+    Returns
+    -------
+    Path
+        gunw_path
+    """
     with rasterio.open(isce_directory / "merged/topophase.ion.geo") as ds:
         X_ion = ds.read(1)
         p_ion = ds.profile

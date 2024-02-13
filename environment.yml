@@ -15,7 +15,7 @@ dependencies:
  - fsspec
  - gdal
  - geopandas
- - hyp3lib>=2,<3
+ - hyp3lib>=3,<4
  - ipykernel
  - isce2==2.6.1
  - jinja2
@@ -31,6 +31,7 @@ dependencies:
  - pysolid
  - papermill
  - pytest
+ - pydantic
  - pytest-cov
  - pytest-mock
  - rasterio
@@ -41,5 +42,6 @@ dependencies:
  - setuptools_scm
  - shapely
  - tqdm
- - dem_stitcher>=2.4.0
+ - dem_stitcher>=2.5.5
  - aiohttp  # only needed for manifest and swath download
+ - tile_mate>=0.0.8
