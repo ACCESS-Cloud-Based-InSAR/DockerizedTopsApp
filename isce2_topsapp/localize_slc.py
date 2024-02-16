@@ -1,4 +1,3 @@
-import io
 import netrc
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
@@ -7,7 +6,6 @@ from warnings import warn
 
 import asf_search as asf
 import geopandas as gpd
-import requests
 from dateparser import parse
 from shapely.geometry import GeometryCollection, Polygon, shape
 from shapely.ops import unary_union
@@ -125,10 +123,8 @@ def check_track_numbers(slc_properties: list):
 
 @lru_cache(maxsize=None)
 def get_world_df() -> gpd.GeoDataFrame:
-    natural_earth_url = ('https://www.naturalearthdata.com/'
-                         'http//www.naturalearthdata.com/download/10m/physical/ne_10m_land.zip')
-    resp = requests.get(natural_earth_url, headers={"User-Agent": "XY"})
-    df_world = gpd.read_file(io.BytesIO(resp.content))
+    data_dir = Path(__file__).parent / 'data'
+    df_world = gpd.read_file(data_dir / 'ne_10m_land.zip')
     return df_world
 
 
