@@ -1,4 +1,3 @@
-import io
 import netrc
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
@@ -7,7 +6,6 @@ from warnings import warn
 
 import asf_search as asf
 import geopandas as gpd
-import requests
 from dateparser import parse
 from shapely.geometry import GeometryCollection, Polygon, shape
 from shapely.ops import unary_union
