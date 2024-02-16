@@ -125,10 +125,8 @@ def check_track_numbers(slc_properties: list):
 
 @lru_cache(maxsize=None)
 def get_world_df() -> gpd.GeoDataFrame:
-    natural_earth_url = ('https://www.naturalearthdata.com/'
-                         'http//www.naturalearthdata.com/download/10m/physical/ne_10m_land.zip')
-    resp = requests.get(natural_earth_url, headers={"User-Agent": "XY"})
-    df_world = gpd.read_file(io.BytesIO(resp.content))
+    data_dir = Path(__file__).parent / 'data'
+    df_world = gpd.read_file(data_dir / 'ne_10m_land.zip')
     return df_world
 
 

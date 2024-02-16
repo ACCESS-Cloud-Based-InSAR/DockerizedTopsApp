@@ -29,7 +29,10 @@ def download_orbits(
     orbit_dir = Path(orbit_directory)
     orbit_dir.mkdir(exist_ok=True)
 
-    orbit_fetcher = _spoof_orbit_download if dry_run else get_orb.downloadSentinelOrbitFile
+    # This importantly looks at ASF first
+    def downloadSentinelOrbitFile_partial(scene: str, esa_credentials=None) -> tuple:
+        return get_orb.downloadSentinelOrbitFile(scene, esa_credentials=esa_credentials, providers=('ASF', 'ESA'))
+    orbit_fetcher = _spoof_orbit_download if dry_run else downloadSentinelOrbitFile_partial
 
     reference_orbits = []
     for scene in reference_scenes:

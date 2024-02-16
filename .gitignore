@@ -128,3 +128,6 @@ tests/**/*.json
 # Use geojson zip file for ARIA s1 frame data
 !isce2_topsapp/data/s1_gunw_frame_footprints.geojson.zip
 !isce2_topsapp/data/s1_frames_latitude_aligned.geojson.zip
+
+# Include Natural Earth data inside plugin
+!isce2_topsapp/data/ne_10m_land.zip
