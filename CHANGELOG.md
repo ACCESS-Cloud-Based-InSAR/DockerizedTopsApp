@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2]
+
+### Changed
+* We ensured that ASF is checked for orbits before ESA to improve reliability. Aims to resolve orbit download issues seen [here](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/issues/169) seen in large processing campaigns and possible errors associated with ESA downloading. 
+* We include natural earth data in the plugin to exclude hitting the natural earth server and aims to resolve such issues identified [here](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/issues/170) in large processing campaigns.
+
 ## [0.3.1]
 
 ### Added
