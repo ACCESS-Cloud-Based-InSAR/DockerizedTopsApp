@@ -9,7 +9,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.3.3]
 
 ### Fixed
-* Orbit downloading
+* Orbit downloading cleanup - ensures no circular references seen in partial function
 
 ## [0.3.2]
 
