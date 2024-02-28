@@ -1,4 +1,3 @@
-import site
 import subprocess
 from pathlib import Path
 
@@ -28,7 +27,7 @@ def tag_dem_xml_as_ellipsoidal(dem_path: Path) -> str:
 
 
 def fix_image_xml(isce_raster_path: str) -> str:
-    fix_cmd = [f'fixImageXml.py',
+    fix_cmd = ['fixImageXml.py',
                '-i',
                str(isce_raster_path),
                '--full']

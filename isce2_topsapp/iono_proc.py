@@ -5,7 +5,6 @@
 import datetime
 import os
 import shutil
-import site
 from pathlib import Path
 from typing import Type, Union
 
