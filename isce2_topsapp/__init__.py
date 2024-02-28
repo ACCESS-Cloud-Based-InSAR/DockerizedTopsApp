@@ -7,9 +7,9 @@ from pathlib import Path
 # ----------------------------------------------------------------------------------------------------------------------
 # Handling ISCE2 idiosyncrasies; At least the logging fix should be done BEFORE most other imports
 # ----------------------------------------------------------------------------------------------------------------------
-import isce   # noqa: F401
 # This ensures all ISCE2 paths and environment variables are set when using this module, see:
 # https://github.com/isce-framework/isce2/blob/main/__init__.py#L41-L50
+import isce   # noqa: F401
 
 # ISCE2 sets the root logger to DEBUG resulting in excessively verbose logging, see:
 # https://github.com/isce-framework/isce2/issues/258
