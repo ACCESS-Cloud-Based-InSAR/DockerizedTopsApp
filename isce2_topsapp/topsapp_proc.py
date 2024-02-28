@@ -64,11 +64,6 @@ def topsapp_processing(*,
     else:
         raise ValueError('Output resolution must be "30" or "90"')
 
-    # Update PATH with ISCE2 applications
-    isce_application_path = Path(f'{site.getsitepackages()[0]}'
-                                 '/isce/applications/')
-    os.environ['PATH'] += (':' + str(isce_application_path))
-
     with open(TEMPLATE_DIR/'topsapp_template.xml', 'r') as file:
         template = Template(file.read())
 

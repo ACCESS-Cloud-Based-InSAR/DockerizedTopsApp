@@ -47,12 +47,6 @@ def iono_processing(
         Outlier removal and masking using connected component 0 will
         be skipped
     '''
-
-    # Update PATH with ISCE2 applications
-    # Need for isce2/bin/imageMath.py in runIon.unwrap function
-    isce_app_path = Path(f"{site.getsitepackages()[0]}" "/isce/applications/")
-    os.environ["PATH"] += ":" + str(isce_app_path)
-
     # Use Connected component 0 to mask unwrapped interferogram
     # to improve masking after using water mask, e.g. remove noisy
     # pixels along the coastline
