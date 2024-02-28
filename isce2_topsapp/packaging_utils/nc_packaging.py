@@ -133,7 +133,7 @@ def write_dataset(fid,data,properties_data):
     else:
 
         if isinstance(data,str):
-            dset = fid.createVariable(properties_data.name, str, ('matchup',), zlib=True)
+            dset = fid.createVariable(properties_data.name, str, ('matchup',))
             dset[0]=data
         elif isinstance(data,np.ndarray):
             # make sure the _fillvalue is formatted the same as the data_type
@@ -156,7 +156,7 @@ def write_dataset(fid,data,properties_data):
             dset[:] = data
         elif isinstance(data, collections.abc.Iterable):
             if isinstance(data[0],str):
-                dset = fid.createVariable(properties_data.name, str, ('matchup',), zlib=True)
+                dset = fid.createVariable(properties_data.name, str, ('matchup',))
                 count = 0
                 for data_line in data:
                     dset[count]=data_line
