@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4]
+
+### Changed
+* ISCE2 shenanigans (PYTHON_PATH, PATH, and logging changes) are now handled in the `isce2_topsapp.__init__` ensuring we only have to do it once, no matter where we are in the package.
+
+### Fixed
+* The root logger is no longer set to DEBUG by ISCE2 preventing excessive logging from all packages in the environment
+
+
 ## [0.3.3]
 
 ### Fixed

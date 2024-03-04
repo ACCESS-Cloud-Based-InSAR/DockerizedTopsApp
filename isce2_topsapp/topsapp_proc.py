@@ -1,5 +1,3 @@
-import os
-import site
 import subprocess
 from pathlib import Path
 
@@ -64,11 +62,6 @@ def topsapp_processing(*,
     else:
         raise ValueError('Output resolution must be "30" or "90"')
 
-    # Update PATH with ISCE2 applications
-    isce_application_path = Path(f'{site.getsitepackages()[0]}'
-                                 '/isce/applications/')
-    os.environ['PATH'] += (':' + str(isce_application_path))
-
     with open(TEMPLATE_DIR/'topsapp_template.xml', 'r') as file:
         template = Template(file.read())
 
@@ -104,9 +97,8 @@ def topsapp_processing(*,
     with open('topsApp.xml', "w") as file:
         file.write(topsApp_xml)
 
-    tops_app_cmd = f'{isce_application_path}/topsApp.py'
     for step in tqdm(TOPSAPP_STEPS, desc='TopsApp Steps'):
-        step_cmd = f'{tops_app_cmd} --dostep={step}'
+        step_cmd = f'topsApp.py --dostep={step}'
         result = subprocess.run(step_cmd,
                                 shell=True)
         if result.returncode != 0:
