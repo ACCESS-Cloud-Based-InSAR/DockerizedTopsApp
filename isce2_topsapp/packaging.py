@@ -21,7 +21,7 @@ from isce2_topsapp.packaging_utils.ionosphere import (
 from isce2_topsapp.templates import read_netcdf_packaging_template
 from isce2_topsapp.water_mask import get_water_mask_raster_for_browse_image
 
-DATASET_VERSION = "3.0.0"
+DATASET_VERSION = "3.0.1"
 STANDARD_PROD_PREFIX = "S1-GUNW"
 CUSTOM_PROD_PREFIX = "S1-GUNW_CUSTOM"
 
