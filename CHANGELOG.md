@@ -10,6 +10,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 * ISCE2 shenanigans (PYTHON_PATH, PATH, and logging changes) are now handled in the `isce2_topsapp.__init__` ensuring we only have to do it once, no matter where we are in the package.
+* Update dataset version from `3.0.0` -> `3.0.1` to track products over areas processed during development of v3 product. In other words, large scale processing was done during v3 development but not all v3 products will be delivered to DAAC - we have standardized numerous attributes and layers. Utlimately, 3.0.0 and 3.0.1 at the DAAC will represent the v3 products created by this repository.
 
 ### Fixed
 * The root logger is no longer set to DEBUG by ISCE2 preventing excessive logging from all packages in the environment
