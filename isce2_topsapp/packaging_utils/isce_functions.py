@@ -5,7 +5,9 @@
 from __future__ import division
 from builtins import str
 from builtins import range
-from osgeo import gdal, ogr, osr
+from osgeo import gdal, ogr
+
+import isce
 
 
 def data_loading(filename,out_data_type=None,data_band=None):
@@ -209,11 +211,8 @@ def get_topsApp_data(topsapp_xml='topsApp'):
     '''
         loading the topsapp xml file
     '''
-
-    import isce
     from topsApp import TopsInSAR
     import os
-    import pdb
     # prvide the full path and strip off any .xml if pressent
     topsapp_xml = os.path.splitext(os.path.abspath(topsapp_xml))[0]
     curdir = os.getcwd()
@@ -228,7 +227,6 @@ def get_topsApp_data(topsapp_xml='topsApp'):
     return insar
 
 def get_isce_version_info(args):
-    import isce
     isce_version = isce.release_version
     if isce.release_svn_revision:
         isce_version = "ISCE version = " + isce_version + ", " + "SVN revision = " + isce.release_svn_revision
@@ -442,8 +440,6 @@ def check_file_exist(infile):
         raise Exception(infile + " does not exist")
 
 def read_isce_product(xmlfile):
-    import os
-    import isce
     from iscesys.Component.ProductManager import ProductManager as PM
 
     # check if the file does exist
@@ -622,6 +618,3 @@ def get_bbox(args):
     # return the polygon as a list of strings, which each poly a list argument
     geom_union_str = ["%s"%geom_union]
     return geom_union_str
-
-
-

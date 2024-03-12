@@ -5,7 +5,6 @@ from builtins import str
 from builtins import range
 from builtins import object
 import argparse
-import sys
 import json
 import logging
 import traceback
@@ -13,12 +12,9 @@ from collections import OrderedDict
 import os
 from netCDF4 import Dataset
 import numpy as np
-import isce
-import osgeo
 from osgeo import gdal
 from osgeo import osr
 import collections.abc
-import pdb
 
 log_format = "[%(asctime)s: %(levelname)s/%(funcName)s] %(message)s"
 logging.basicConfig(format=log_format, level=logging.INFO)
