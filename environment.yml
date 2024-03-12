@@ -7,6 +7,7 @@ dependencies:
  - affine
  - asf_search>=5.0.0
  - boto3
+ - dask  # see https://github.com/unionai-oss/pandera/issues/1525
  - dateparser
  - flake8
  - flake8-blind-except
