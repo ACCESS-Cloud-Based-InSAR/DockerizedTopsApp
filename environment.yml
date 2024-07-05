@@ -43,6 +43,6 @@ dependencies:
  - setuptools_scm
  - shapely
  - tqdm
- - dem_stitcher>=2.5.5
+ - dem_stitcher>=2.5.6
  - aiohttp  # only needed for manifest and swath download
  - tile_mate>=0.0.8
