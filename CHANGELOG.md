@@ -10,7 +10,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.3.6]
 
-* Updates dem-stitcher to 2.5.6 to which updated to a new url for reading the Geoid EGM 2008.
+* Updates dem-stitcher to 2.5.6 to which updated to a new url for reading the Geoid EGM 2008. See this [issue](https://github.com/ACCESS-Cloud-Based-InSAR/dem-stitcher/issues/96).
 
 ## [0.3.5]
 
