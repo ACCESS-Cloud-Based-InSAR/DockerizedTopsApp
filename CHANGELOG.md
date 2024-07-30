@@ -7,6 +7,7 @@ and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.3.7]
 * Updates dem-stitcher to 2.5.8 to ensure new (ARIA-managed) url for reading the Geoid EGM 2008. See this [issue](https://github.com/ACCESS-Cloud-Based-InSAR/dem-stitcher/issues/96).
+* Ensure version/docker build use python 3 as done here: https://github.com/dbekaert/RAiDER/blob/32697d2e4e6908b8feb3b81a1df30cb5f4e49a24/.github/workflows/build.yml#L16-L17
 
 ## [0.3.6]
 
