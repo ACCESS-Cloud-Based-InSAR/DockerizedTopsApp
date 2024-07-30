@@ -13,9 +13,8 @@ on:
 jobs:
   call-version-info-workflow:
     uses: ASFHyP3/actions/.github/workflows/reusable-version-info.yml@v0.11.2
-    # with:
-    #   python_version: '3.9'
-    #   conda_env_name: 'topsapp_env'
+    with:
+      python_version: '3.9'
 
   call-docker-ghcr-workflow:
     needs: call-version-info-workflow
