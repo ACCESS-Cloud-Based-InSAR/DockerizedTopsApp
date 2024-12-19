@@ -63,7 +63,7 @@
                                 }]
                             },{
                               "name" : "unwrappedPhase",
-                              "src_file" : "filt_topophase.unw.geo.vrt",
+                              "src_file" : "filt_topophase_m.unw.geo.vrt",
                               "type" : "float32",
                               "nodata" : 0,
                               "band" : 2,
@@ -74,7 +74,7 @@
                                   "value" : "Unwrapped phase"
                                 },{
                                   "name" : "units",
-                                  "value" : "rad"
+                                  "value" : "meter"
                                 },{
                                   "name" : "grid_mapping",
                                   "value" : "crs"

@@ -34,28 +34,28 @@
                         "description": "Coherence without filters applied"
                 }
         },
-        "rangePixelOffsets": {
-                "dst_group": "/science/grids/data",
-                "dst_variable": "rangePixelOffsets",
-                "input_relative_path": "merged/dense_offsets.bil.geo",
-                "src_band_number": 2,
-                "attrs": {
-                        "standard_name": "rangePixelOffsets",
-                        "long_name": "rangePixelOffsets",
-                        "units": "range radar pixel",
-                        "description": "Range pixel offsets measured through patch correlation. To translate into meters, multiply by 2.3 as indicated here: https://sentinels.copernicus.eu/web/sentinel/technical-guides/sentinel-1-sar/products-algorithms/level-1/single-look-complex/interferometric-wide-swath"
-                }
-        },
         "azimuthPixelOffsets": {
                 "dst_group": "/science/grids/data",
                 "dst_variable": "azimuthPixelOffsets",
-                "input_relative_path": "merged/dense_offsets.bil.geo",
+                "input_relative_path": "merged/filt_dense_offsets_m.geo",
                 "src_band_number": 1,
                 "attrs": {
                         "standard_name": "azimuthPixelOffsets",
                         "long_name": "azimuthPixelOffsets",
-                        "units": "azimuth radar pixel",
-                        "description": "Azimuth pixel offsets measured through patch correlation. To translate into meters, multiply by 14.1 as indicated here: https://sentinels.copernicus.eu/web/sentinel/technical-guides/sentinel-1-sar/products-algorithms/level-1/single-look-complex/interferometric-wide-swath"
+                        "units": "meter",
+                        "description": "Azimuth pixel offsets measured through patch correlation."
+                }
+        },
+        "rangePixelOffsets": {
+                "dst_group": "/science/grids/data",
+                "dst_variable": "rangePixelOffsets",
+                "input_relative_path": "merged/filt_dense_offsets_m.geo",
+                "src_band_number": 2,
+                "attrs": {
+                        "standard_name": "rangePixelOffsets",
+                        "long_name": "rangePixelOffsets",
+                        "units": "meter",
+                        "description": "Range pixel offsets measured through patch correlation."
                 }
         }
 }

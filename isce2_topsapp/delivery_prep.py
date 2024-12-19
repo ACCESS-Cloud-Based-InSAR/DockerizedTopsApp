@@ -8,7 +8,7 @@ from PIL import Image
 from dateparser import parse  # type: ignore
 from matplotlib import cm
 
-from isce2_topsapp.packaging import DATASET_VERSION
+from isce2_topsapp.packaging import product_naming_scheme
 from isce2_topsapp.water_mask import get_water_mask_raster_for_browse_image
 
 TEMPLATE_DIR = (Path(__file__).parent / "templates").absolute()
@@ -110,7 +110,7 @@ def gen_browse_imagery(nc_path: Path, out_path: Path) -> Path:
     return out_path
 
 
-def format_metadata(nc_path: Path, all_metadata: dict) -> dict:
+def format_metadata(nc_path: Path, all_metadata: dict, product:str) -> dict:
 
     label = nc_path.name[:-3]  # removes suffix .nc
     geojson = all_metadata["gunw_geo"].__geo_interface__
@@ -141,6 +141,9 @@ def format_metadata(nc_path: Path, all_metadata: dict) -> dict:
     # We want the nearest day (dt.days takes a floor) so we use total seconds and then round
     temporal_baseline_seconds = (ref_start_time - sec_start_time).total_seconds()
     temporal_baseline_days = round(temporal_baseline_seconds / 60 / 60 / 24)
+
+    # Define DATASET_VERSION based on product ("GUNW" or "COSEIS_SAR")
+    DATASET_VERSION, _, _ = product_naming_scheme(product)
 
     metadata = {}
     # get 4 corners of bounding box of the geometry; default is 5 returning
@@ -185,7 +188,7 @@ def format_metadata(nc_path: Path, all_metadata: dict) -> dict:
     return data
 
 
-def prepare_for_delivery(nc_path: Path, all_metadata: dict) -> Path:
+def prepare_for_delivery(nc_path: Path, all_metadata: dict, product:str) -> Path:
     gunw_id = nc_path.stem
 
     out_dir = Path(gunw_id)
@@ -194,7 +197,7 @@ def prepare_for_delivery(nc_path: Path, all_metadata: dict) -> Path:
     browse_path = out_dir / f"{gunw_id}.png"
     gen_browse_imagery(nc_path, browse_path)
 
-    metadata = format_metadata(nc_path, all_metadata)
+    metadata = format_metadata(nc_path, all_metadata, product)
 
     metadata_path = out_dir / f"{gunw_id}.json"
     json.dump(metadata, open(metadata_path, "w"), indent=2)

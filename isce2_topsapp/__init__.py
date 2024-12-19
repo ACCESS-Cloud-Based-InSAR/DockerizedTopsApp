@@ -27,6 +27,9 @@ if ISCE_APPLICATIONS not in (PATH := os.environ["PATH"].split(os.pathsep)):
 # Local module imports (must come after ISCE2 setup)
 # ----------------------------------------------------------------------------------
 
+from isce2_topsapp.convert_offsets import convert_offsets  # noqa: E402
+from isce2_topsapp.convert_unwrapped import convert_unwrapped  # noqa: E402
+from isce2_topsapp.create_viz import create_viz_files  # noqa: E402
 from isce2_topsapp.delivery_prep import prepare_for_delivery  # noqa: E402
 from isce2_topsapp.localize_aux_cal import download_aux_cal  # noqa: E402
 from isce2_topsapp.localize_burst import (  # noqa: E402
@@ -79,4 +82,7 @@ __all__ = [
     "package_gunw_product",
     "prepare_for_delivery",
     "__version__",
+    "convert_offsets",
+    "convert_unwrapped",
+    "create_viz_files"
 ]

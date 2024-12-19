@@ -34,6 +34,8 @@ GEOCODE_LIST_ION = ["merged/topophase.ion"]
 
 def iono_processing(
     *,
+    range_looks=19,
+    azimuth_looks=7,
     topsapp_xml_filename: str = 'topsApp.xml',
     mask_filename: str = '',
     correct_burst_ramps: bool = True,
@@ -135,12 +137,16 @@ def iono_processing(
 
         # Iono long wavelength
         merge_bursts(input_file="ion/ion_cal/filt.ion",
-                     output_filename="topophase.ion")
+                     output_filename="topophase.ion",
+                     range_looks=range_looks,
+                     azimuth_looks=azimuth_looks)
 
     else:
         # Create merged/topophase.ion file
         merge_bursts(input_file="ion/ion_cal/filt.ion",
-                     output_filename="topophase.ion")
+                     output_filename="topophase.ion",
+                     range_looks=range_looks,
+                     azimuth_looks=azimuth_looks)
 
     # Geocode ionospheric correction outputs
     topsapp.runGeocode(GEOCODE_LIST_ION, topsapp.do_unwrap,
@@ -205,7 +211,12 @@ def mask_iono_ifg_bursts(tops_dir: Path,
                 f" /{get_burst(str(lat))}"
             )
 
-            lon = str(lat).replace("lat", "lon")
+            # This is workaround for directories with 'lat' in their path
+            dir_path, filename = os.path.split(str(lat))
+            lon_filename = filename.replace("lat", "lon")
+            lon = os.path.join(dir_path, lon_filename)
+            # lon = str(lat).replace("lat", "lon")
+
             # Get the swath and burst number
             swath = get_swath(str(lat))
             burst = get_burst(str(lat))

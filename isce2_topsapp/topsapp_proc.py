@@ -62,7 +62,7 @@ def topsapp_processing(
     output_resolution: int = 90,
     do_dense_offsets: bool = False,
     goldstein_filter_power: float = 0.5,
-    ampcor_window_size: int = 64,
+    ampcor_window_size: int = 32,
 ):
     swaths = swaths or [1, 2, 3]
     # for [ymin, ymax, xmin, xmax]
@@ -108,7 +108,7 @@ def topsapp_processing(
         do_dense_offsets=do_dense_offsets,
         goldstein_filter_power=goldstein_filter_power,
         ampcor_height=ampcor_window_size,
-        ampcor_width=ampcor_window_size,
+        ampcor_width=ampcor_window_size*4,
     )
     with open("topsApp.xml", "w") as file:
         file.write(topsApp_xml)
