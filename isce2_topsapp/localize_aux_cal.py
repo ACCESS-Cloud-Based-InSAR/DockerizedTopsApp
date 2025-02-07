@@ -4,8 +4,8 @@ from typing import Union
 
 import requests
 
-S1A_AUX_URL = 'https://sar-mpc.eu/download/55282da1-679d-4ecf-aeef-d06b024451cf'
-S1B_AUX_URL = 'https://sar-mpc.eu/download/3c8b7c8d-d3de-4381-a19d-7611fb8734b9'
+S1A_AUX_URL = 'https://sar-mpc.eu/files/S1A_AUX_CAL_20241128.zip'
+S1B_AUX_URL = 'https://sar-mpc.eu/files/S1B_AUX_CAL_20241128.zip'
 
 
 def download_aux_cal(aux_cal_dir: Union[str, Path] = None):
