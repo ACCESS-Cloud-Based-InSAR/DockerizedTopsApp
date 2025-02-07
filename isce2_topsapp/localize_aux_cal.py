@@ -1,11 +1,9 @@
 import zipfile
+from io import BytesIO
 from pathlib import Path
 from typing import Union
 
 import requests
-
-from io import BytesIO
-
 
 S1A_AUX_URL = "https://sar-mpc.eu/files/S1A_AUX_CAL_20241128.zip"
 S1B_AUX_URL = "https://sar-mpc.eu/files/S1B_AUX_CAL_20241128.zip"
