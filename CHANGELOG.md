@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0]
+This update provides new functionality for production of an the earthquake-specific, sensor-agnostic `COSEIS_SAR` product, while leaving the standard `GUNW` product generation functionality (`0.6.0`) unchanged.
+
+### Added
+* `coseis_sar` entry point and `coseis_sar` function added in `__main__.py` and `setup.py`, enabling generation of `COSEIS_SAR` products using existing `GUNW` framework.
+* `create_viz.py` added to generate visualization files (single-band geotiffs, multi-band geotiffs,and imgtiffs) for delivery to S3 alongside `COSEIS_SAR` netCDF product (only when `++process coseis_sar` is specified).
+* `convert_offsets.py` added to convert dense pixel offsets (range/azimuth) units from pixels to meters for `COSEIS_SAR` product (only when `++process coseis_sar` is specified).
+* `convert_unwrapped.py` added to convert unwrapped phase from units of radians to meters for `COSEIS_SAR` product (only when `++process coseis_sar` is specified).
+
+### Changed
+* Updated `delivery_prep.py`, `packaging.py`, `__main__.py` to accommodate a variable naming scheme (currently `GUNW` and `COSEIS_SAR` are supported) and corresponding versioning for each product.
+  - `product_naming_scheme` function added to `packaging.py` to return product name/version based `product` specified by user (`GUNW` or `COSEIS_SAR`). `GUNW` remains the default naming/versioning scheme if no `product` is specified.
+  - `product` argument added to `prepare_for_delivery` and `format_metadata` functions in `delivery_prep.py` and to `package_gunw_product`, `get_gunw_id`, `perform_netcdf_packaging`, and `_write_json_config` functions in `packaging.py`. These modifications leverage new `product_naming_scheme` function from `packaging.py` to generate name/version dynamically for metadata and netCDF file naming purposes.
+* Updated tests to accommodate dynamic naming/versioning scheme for `GUNW` and `COSEIS_SAR` products.
+  - Rather than importing `DATASET_VERSION` from `packaging.py`, the `product_naming_scheme` function is imported and run in `GUNW` mode for testing.
+  - `prepare-for-delivery.ipynb` modified to accommodate changes to `prepare_for_delivery` function in `delivery_prep.py`.
+* Renamed `nc_packaging_template.json` to `nc_packaging_template_gunw.json` (no content changes) and added `nc_packaging_template_coseis-sar.json` with modifications replacing `unwrappedPhase` (radians) with `losDisplacement` (meters) for `COSEIS_SAR` product. Updated `read_netcdf_packaging_template` in `templates/__init__.py` to return the template corresponding to the specified `product`.
+* `rangePixelOffsets` and `azimuthPixelOffsets` units changed from `rad` to `meter` and `input_relative_path` changed from `filt_dense_offsets.geo` to `filt_dense_offsets_m.geo` in `additional_layers.json`.
+* Ampcor window size changed from 64x64 to 32x128 pixels in `topsapp_proc.py`. This change was made to account for ground resolution differences in range/azimuth direction (2.3m/14m), making range/azimuth pixel offset outputs approximately square, rather than rectangular.
+* Updated `iono_processing` function in `iono_proc.py` to take and assign `range_looks` and `azimuth_looks` as arguments based on CLI-defined `output-resolution`. This is necessary for iono layer resolution to match 30- and 90-meter products. Corresponding updates were made in `__main__.py` when calling `iono_processing`.
+
+### Fixed 
+* Code formatting updated to comply with Flake8 rules.
+
 ## [0.6.0]
 
 ### Added
@@ -19,7 +43,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * `--min-frame-coverage` parameter to `gunw_slc` entrypoint and `isce2_topsapp.__main__:gunw_slc`. Specifies a minimum
   percent of the ARIA Frame that the intersection of reference/secondary scenes must cover. Jobs not meeting the given
   threshold will raise an error rather than generating a GUNW product.
-* Pushed formatting changes
+* Pushed formatting changes.
 
 ## [0.4.0]
 

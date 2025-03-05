@@ -1,5 +1,4 @@
 import os
-import re
 import shutil
 import subprocess
 
@@ -8,7 +7,6 @@ import numpy as np
 import rasterio
 from matplotlib import colors
 from rasterio.warp import Resampling, reproject
-from shapely import wkt
 
 
 def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster):
