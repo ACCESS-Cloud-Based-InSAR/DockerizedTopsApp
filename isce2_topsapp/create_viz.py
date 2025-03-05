@@ -11,53 +11,6 @@ from rasterio.warp import Resampling, reproject
 from shapely import wkt
 
 
-def extract_footprint(netCDF_path, output_dir):
-    """
-    Extracts the productBoundingBox layer from a NetCDF file and saves it as a GeoJSON,
-    including only the start_time field in datetime format (YYYY-MM-DDTHH:MM:SS) without timezone info.
-    """
-    import geopandas as gpd
-
-    # Remove the output directory if it exists, then recreate it
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Process the productBoundingBox as a GeoJSON
-    bbox_layer = "productBoundingBox"
-    bbox_subdataset = f"NETCDF:\"{netCDF_path}\":{bbox_layer}"
-    print(f"Processing bounding box layer: {bbox_layer}")
-
-    with rasterio.open(bbox_subdataset) as bbox_src:
-        metadata = bbox_src.tags()
-
-        # Extract the WKT geometry
-        wkt_string = metadata.get('NC_GLOBAL#product_geometry_wkt')
-        if not wkt_string:
-            raise ValueError("Bounding box WKT string not found in the metadata.")
-
-        bounding_box = wkt.loads(wkt_string)
-
-        # Extract start_time from filename and format as YYYY-MM-DDTHH:MM:SS
-        filename = os.path.basename(netCDF_path)
-        match = re.search(r'(\d{4})(\d{2})(\d{2})', filename)
-        start_time = f"{match.group(1)}-{match.group(2)}-{match.group(3)}T00:00:00" if match else None
-
-        # Create GeoDataFrame
-        gdf = gpd.GeoDataFrame(
-            [{'geometry': bounding_box, 'start_time': start_time}],
-            crs="EPSG:4326"  # Assuming the WKT is in lat/lon (WGS84)
-        )
-
-        # Write GeoJSON to file
-        geojson_output_path = os.path.join(output_dir, f"{bbox_layer}.geojson")
-        gdf.to_file(geojson_output_path, driver="GeoJSON")
-
-        print(f"Saved GeoJSON: {geojson_output_path}")
-
-    return
-
-
 def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster):
 
     """
@@ -75,12 +28,12 @@ def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster):
             return
 
     # Define the rasters to process
-    rasters = ['amplitude', 'azimuthPixelOffsets', 'rangePixelOffsets', 'unfilteredCoherence', 'unwrappedPhase']
+    rasters = ['amplitude', 'azimuthPixelOffsets', 'rangePixelOffsets', 'unfilteredCoherence', 'losDisplacement']
 
     # Ensure the output directories exist
-    single_band_dir = os.path.join(output_dir, "geotiffs")
+    single_band_dir = os.path.join(output_dir, "cogs_1band")
     img_tif_dir = os.path.join(output_dir, "imgtiffs")
-    viz_dir = os.path.join(output_dir, "viz")
+    viz_dir = os.path.join(output_dir, "cogs_4band")
 
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(single_band_dir, exist_ok=True)
@@ -90,9 +43,6 @@ def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster):
     for raster in rasters:
         subdataset_name = f"NETCDF:\"{netcdf_path}\":/science/grids/data/{raster}"
         conn_comp = f"NETCDF:\"{netcdf_path}\":/science/grids/data/connectedComponents"
-
-        if raster == 'unwrappedPhase':
-            raster = 'losDisplacement'
 
         print(f"Processing layer: {raster}")
 
@@ -297,18 +247,13 @@ def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster):
     return
 
 
-def create_viz_files(nc, outdir_cogs, outdir_footprint, water_mask_path):
-    print("Adding this line to ensure this is the version running, and that tiles are not being generated.")
+def create_viz_files(nc, outdir_viz, water_mask_path):
     print("=====================================")
-    print("Making COGs")
+    print("Making viz files...")
     print("=====================================")
-    colorize_netCDF_layer_COG(nc, outdir_cogs, water_mask_path)
+    colorize_netCDF_layer_COG(nc, outdir_viz, water_mask_path)
     print("=====================================")
-    print("Extracting footprint")
-    print("=====================================")
-    extract_footprint(nc, outdir_footprint)
-    print("=====================================")
-    print("Derivatives generated successfully")
+    print("Viz files generated successfully.")
     print("=====================================")
 
 
@@ -316,9 +261,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Process netCDF files.")
     parser.add_argument('nc', help="Path to the netCDF file")
-    parser.add_argument('outdir_cogs', help="Output directory for COGs")
-    parser.add_argument('outdir_tiles', help="Output directory for tiles")
-    parser.add_argument('outdir_footprint', help="Output directory for footprints")
+    parser.add_argument('outdir_viz', help="Path to the output directory")
     parser.add_argument('water_mask', help="Path to the water mask raster")
     args = parser.parse_args()
-    create_viz_files(args.nc, args.outdir_cogs, args.outdir_tiles, args.outdir_footprint, args.water_mask)
+    create_viz_files(args.nc, args.outdir_viz, args.water_mask)
