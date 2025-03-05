@@ -538,13 +538,12 @@ def coseis_sar():
     gunw_id = nc_path.stem
     gunw_id_dir = isce_data_directory / gunw_id
     nc_file_path = gunw_id_dir / f"{gunw_id}.nc"
-    cogs_dir = gunw_id_dir / "cogs"
-    footprint_dir = gunw_id_dir / "footprint"
+    viz_dir = gunw_id_dir / "viz"
     water_filename = "water_mask_derived_from_pekel_water_occurrence_2021_with_at_least_95_perc_water.geo"
     water_mask_path = isce_data_directory / water_filename
 
     try:
-        create_viz_files(nc_file_path, cogs_dir, footprint_dir, water_mask_path)
+        create_viz_files(nc_file_path, viz_dir, water_mask_path)
     except (FileNotFoundError, PermissionError) as e:
         print(f'Error creating visualization files: {e}')
 

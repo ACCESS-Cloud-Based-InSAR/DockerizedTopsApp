@@ -194,8 +194,10 @@ def prepare_for_delivery(nc_path: Path, all_metadata: dict, product:str) -> Path
     out_dir = Path(gunw_id)
     out_dir.mkdir(exist_ok=True)
 
-    browse_path = out_dir / f"{gunw_id}.png"
-    gen_browse_imagery(nc_path, browse_path)
+    # Only produce browse png for GUNW products
+    if product == "GUNW":
+        browse_path = out_dir / f'{gunw_id}.png'
+        gen_browse_imagery(nc_path, browse_path)
 
     metadata = format_metadata(nc_path, all_metadata, product)
 

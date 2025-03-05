@@ -231,7 +231,7 @@ def make_geocube(isce_data_directory: Union[str, Path]) -> Path:
     return metadata_path
 
 
-def _write_json_config(*, gunw_id: str, directory: Path) -> Path:
+def _write_json_config(*, product: str, gunw_id: str, directory: Path) -> Path:
     """Reads the json template and writes a new entry: `file: '<gunw_id>.nc'`.
 
     Then, the new json file is saved in the directory specified. The filename
@@ -239,6 +239,8 @@ def _write_json_config(*, gunw_id: str, directory: Path) -> Path:
 
     Parameters
     ----------
+    product : str
+        The product type. Currently, GUNW and COSEIS_SAR are supported.
     gunw_id : str
         The gunw_id is specified as this will be used to create a netcdf file
         `<gunw_id>.nc`.
@@ -250,7 +252,7 @@ def _write_json_config(*, gunw_id: str, directory: Path) -> Path:
     Path
         Path to `tops_group.json`.
     """
-    nc_template = read_netcdf_packaging_template()
+    nc_template = read_netcdf_packaging_template(product=product)
 
     nc_template["filename"] = f"{gunw_id}.nc"
     # This will be appended to the global source attribute
@@ -267,6 +269,7 @@ def _write_json_config(*, gunw_id: str, directory: Path) -> Path:
 
 def perform_netcdf_packaging(
     *,
+    product:str,
     gunw_id: str,
     isce_data_dir: Union[str, Path]
 ) -> Path:
@@ -277,7 +280,7 @@ def perform_netcdf_packaging(
     assert metadata_path.exists()
 
     # Write config file
-    _write_json_config(gunw_id=gunw_id, directory=merged_dir)
+    _write_json_config(product=product, gunw_id=gunw_id, directory=merged_dir)
 
     cwd = Path.cwd()
     os.chdir(merged_dir)
@@ -491,7 +494,7 @@ def package_gunw_product(
     )
 
     out_nc_file = perform_netcdf_packaging(
-        isce_data_dir=isce_data_directory, gunw_id=gunw_id
+        product=product, isce_data_dir=isce_data_directory, gunw_id=gunw_id
     )
 
     if additional_2d_layers is not None:

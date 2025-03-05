@@ -210,13 +210,8 @@ def mask_iono_ifg_bursts(tops_dir: Path,
                 f"Geo2radar mask {get_swath(str(lat))}"
                 f" /{get_burst(str(lat))}"
             )
-
-            # This is workaround for directories with 'lat' in their path
-            dir_path, filename = os.path.split(str(lat))
-            lon_filename = filename.replace("lat", "lon")
-            lon = os.path.join(dir_path, lon_filename)
-            # lon = str(lat).replace("lat", "lon")
-
+            
+            lon = str(lat).replace("lat", "lon")
             # Get the swath and burst number
             swath = get_swath(str(lat))
             burst = get_burst(str(lat))
