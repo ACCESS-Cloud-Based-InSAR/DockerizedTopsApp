@@ -278,21 +278,6 @@
                                 {
                                   "group" : [
                                     {
-                                      "name" : "troposphere",
-                                      "content" : [
-                                        {
-                                          "dataset" : [
-                                            {
-                                              "name" : "troposphereHydrostatic",
-                                              "type" : "str",
-                                              "description" : "placeholder dummy: [3D]"
-                                            },{
-                                              "name" : "troposphereWet",
-                                              "type" : "str",
-                                              "description" : "placeholder dummy: [3D]"
-                                            }]
-                                        }]
-                                    },{
                                       "name" : "tides",
                                       "content" : [
                                         {
