@@ -86,9 +86,15 @@ def save_png(
     return out_png_path
 
 
-def get_wrapped_ifg(nc_path: Path) -> np.ndarray:
-    cc, profile = open_science_grid(nc_path, "connectedComponents")
-    unw, _ = open_science_grid(nc_path, "unwrappedPhase")
+def get_wrapped_ifg(nc_path: Path,
+                    product: str) -> np.ndarray:
+    cc, profile = open_science_grid(nc_path, 'connectedComponents')
+
+    if product == 'GUNW':
+        unw, _ = open_science_grid(nc_path, 'unwrappedPhase')
+
+    elif product == 'COSEIS_SAR':
+        unw, _ = open_science_grid(nc_path, 'losDisplacement')
 
     mask_cc = get_connected_component_mask(cc)
     mask_water = get_water_mask_raster_for_browse_image(profile)
@@ -103,9 +109,9 @@ def get_wrapped_ifg(nc_path: Path) -> np.ndarray:
     return wrapped
 
 
-def gen_browse_imagery(nc_path: Path, out_path: Path) -> Path:
+def gen_browse_imagery(nc_path: Path, out_path: Path, product:str) -> Path:
 
-    wrapped = get_wrapped_ifg(nc_path)
+    wrapped = get_wrapped_ifg(nc_path, product)
     save_png(wrapped, out_path)
     return out_path
 
@@ -195,7 +201,7 @@ def prepare_for_delivery(nc_path: Path, all_metadata: dict, product:str) -> Path
     out_dir.mkdir(exist_ok=True)
 
     browse_path = out_dir / f'{gunw_id}.png'
-    gen_browse_imagery(nc_path, browse_path)
+    gen_browse_imagery(nc_path, browse_path, product)
 
     metadata = format_metadata(nc_path, all_metadata, product)
 
