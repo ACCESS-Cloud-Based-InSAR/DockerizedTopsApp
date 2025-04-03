@@ -99,23 +99,25 @@ def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster):
                 data[aligned_water == 255] = nodata_value
                 data = np.ma.masked_equal(data, nodata_value)
 
-        # Open the connected components raster and mask the data
-        with rasterio.open(conn_comp) as src:
-            connComp = src.read(1)
+        # Apply connected components and coherence mask to all layers except 
+        # rangePixelOffsets and azimuthPixelOffsets
+        if raster not in ['rangePixelOffsets', 'azimuthPixelOffsets']:
+            with rasterio.open(conn_comp) as src:
+                connComp = src.read(1)
 
-        msk = np.array(connComp) * -1
-        msk[msk < 0] = 1
+            msk = np.array(connComp) * -1
+            msk[msk < 0] = 1
 
-        with rasterio.open(unfiltered_coherence) as src:
-            unfCoherence = src.read(1)
+            with rasterio.open(unfiltered_coherence) as src:
+                unfCoherence = src.read(1)
 
-        # Apply additional mask for unfiltered_coherence < 0.5
-        msk[unfCoherence < 0.5] = 0  # Update mask where coherence is low
+            # Apply additional mask for unfiltered_coherence < 0.5
+            msk[unfCoherence < 0.5] = 0  # Update mask where coherence is low
 
-        # Apply the combined mask
-        data = data * msk
-        data[data == 0] = nodata_value  # Convert all zeros to nodata_value
-        data = np.ma.masked_equal(data, nodata_value)  # Apply masking
+            # Apply the combined mask
+            data = data * msk
+            data[data == 0] = nodata_value  # Convert all zeros to nodata_value
+            data = np.ma.masked_equal(data, nodata_value)  # Apply masking
 
         # Write the single-band raster as a compressed Cloud Optimized GeoTIFF (COG)
         with rasterio.open(
