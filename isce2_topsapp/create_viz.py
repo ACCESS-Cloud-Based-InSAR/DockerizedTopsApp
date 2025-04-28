@@ -4,7 +4,8 @@ import shutil
 import numpy as np
 import rasterio
 from rasterio.warp import Resampling, reproject
-
+from osgeo import gdal
+import tempfile
 
 def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster):
     """
@@ -117,6 +118,26 @@ def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster):
             bigtiff="YES"         # Support large files
         ) as dst:
             dst.write(data, 1)  # Write the masked data to the first band
+
+        # Create a temporary file in the same directory
+        temp_output = output_single_band + ".tmp.tif"
+
+        # Write as a proper COG to the temp file
+        gdal.Translate(
+            temp_output,
+            output_single_band,
+            options=gdal.TranslateOptions(
+                format="COG",
+                creationOptions=[
+                    "COMPRESS=DEFLATE",
+                    "BIGTIFF=YES",
+                    "PREDICTOR=2"
+                ]
+            )
+        )
+
+        # Replace the original with the temp file
+        os.replace(temp_output, output_single_band)
 
     return
 
