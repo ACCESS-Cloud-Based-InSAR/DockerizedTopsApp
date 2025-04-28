@@ -57,5 +57,18 @@
                         "units": "meter",
                         "description": "Range pixel offsets measured through patch correlation."
                 }
+        },
+        "denseOffsetsSNR": {
+                "dst_group": "/science/grids/data",
+                "dst_variable": "denseOffsetsSNR",
+                "input_relative_path": "merged/dense_offsets_snr.bil.geo",
+                "src_band_number": 1,
+                "nodata": 0,
+                "attrs": {
+                        "standard_name": "denseOffsetsSNR",
+                        "long_name": "denseOffsetsSNR",
+                        "units": "unitless",
+                        "description":"Dense pixel offsets signal-to-noise ratio."
+                }
         }
 }

@@ -453,7 +453,7 @@ def package_gunw_product(
     standard_product: bool = True,
     additional_attributes: Optional[dict] = None,
 ) -> Path:
-    """Creates a GUNW standard product netcdf from the ISCE outputs and some
+    """Creates a GUNW standard product or COSEIS-SAR product netcdf from the ISCE outputs and some
     initial metadata.
 
     Parameters

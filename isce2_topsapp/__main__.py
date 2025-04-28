@@ -494,6 +494,7 @@ def coseis_sar():
     if args.dense_offsets:
         additional_2d_layers_for_packaging.append('rangePixelOffsets')
         additional_2d_layers_for_packaging.append('azimuthPixelOffsets')
+        additional_2d_layers_for_packaging.append('denseOffsetsSNR')
     if args.unfiltered_coherence:
         additional_2d_layers_for_packaging.append('unfilteredCoherence')
 

@@ -3,9 +3,9 @@ import shutil
 
 import numpy as np
 import rasterio
-from rasterio.warp import Resampling, reproject
 from osgeo import gdal
-import tempfile
+from rasterio.warp import Resampling, reproject
+
 
 def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster):
     """
@@ -23,7 +23,8 @@ def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster):
             return
 
     # Define the rasters to process
-    rasters = ['amplitude', 'azimuthPixelOffsets', 'rangePixelOffsets', 'unfilteredCoherence', 'losDisplacement']
+    rasters = ['amplitude', 'azimuthPixelOffsets', 'rangePixelOffsets',
+               'unfilteredCoherence', 'losDisplacement', 'denseOffsetsSNR']
 
     # Ensure the output directories exist
     single_band_dir = os.path.join(output_dir, "cogs_1band")
@@ -78,7 +79,7 @@ def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster):
 
         # Apply connected components and coherence mask to all layers except
         # rangePixelOffsets and azimuthPixelOffsets
-        if raster not in ['rangePixelOffsets', 'azimuthPixelOffsets']:
+        if raster not in ['rangePixelOffsets', 'azimuthPixelOffsets', 'denseOffsetsSNR']:
             with rasterio.open(conn_comp) as src:
                 connComp = src.read(1)
 
