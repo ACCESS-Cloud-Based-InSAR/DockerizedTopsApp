@@ -269,7 +269,7 @@ def _write_json_config(*, product: str, gunw_id: str, directory: Path) -> Path:
 
 def perform_netcdf_packaging(
     *,
-    product:str,
+    product: str,
     gunw_id: str,
     isce_data_dir: Union[str, Path]
 ) -> Path:

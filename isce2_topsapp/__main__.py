@@ -431,7 +431,7 @@ def coseis_sar():
         dry_run=args.dry_run,
         geocode_resolution=args.output_resolution,
         frame_id=args.frame_id,
-        water_mask_flag=args.estimate_ionosphere_delay,
+        water_mask_flag=True,   # Download water mask regardless of iono computation. It is needed for viz masking
     )
     loc_data['frame_id'] = args.frame_id
     loc_data['cmd_line_str'] = cmd_line_str
@@ -474,8 +474,9 @@ def coseis_sar():
             correct_burst_ramps=True,
         )
 
-    # Convert dense offsets to meters
-    convert_offsets('merged/filt_dense_offsets.bil.geo', 'merged/filt_topophase.unw.geo', 'reference/IW2.xml')
+    if args.dense_offsets:
+        # Convert dense offsets to meters
+        convert_offsets('merged/filt_dense_offsets.bil.geo', 'merged/filt_topophase.unw.geo', 'reference/IW2.xml')
 
     # Convert unwrapped phase to meters
     unwrapped_pix = 'merged/filt_topophase.unw.geo'
@@ -544,7 +545,7 @@ def coseis_sar():
     water_mask_path = isce_data_directory / water_filename
 
     try:
-        create_viz_files(nc_file_path, viz_dir, water_mask_path)
+        create_viz_files(nc_file_path, viz_dir, water_mask_path, args.unfiltered_coherence, args.dense_offsets)
     except (FileNotFoundError, PermissionError) as e:
         print(f'Error creating visualization files: {e}')
 

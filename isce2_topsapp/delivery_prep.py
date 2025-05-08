@@ -109,14 +109,14 @@ def get_wrapped_ifg(nc_path: Path,
     return wrapped
 
 
-def gen_browse_imagery(nc_path: Path, out_path: Path, product:str) -> Path:
+def gen_browse_imagery(nc_path: Path, out_path: Path, product: str) -> Path:
 
     wrapped = get_wrapped_ifg(nc_path, product)
     save_png(wrapped, out_path)
     return out_path
 
 
-def format_metadata(nc_path: Path, all_metadata: dict, product:str) -> dict:
+def format_metadata(nc_path: Path, all_metadata: dict, product: str) -> dict:
 
     label = nc_path.name[:-3]  # removes suffix .nc
     geojson = all_metadata["gunw_geo"].__geo_interface__
@@ -194,7 +194,7 @@ def format_metadata(nc_path: Path, all_metadata: dict, product:str) -> dict:
     return data
 
 
-def prepare_for_delivery(nc_path: Path, all_metadata: dict, product:str) -> Path:
+def prepare_for_delivery(nc_path: Path, all_metadata: dict, product: str) -> Path:
     gunw_id = nc_path.stem
 
     out_dir = Path(gunw_id)

@@ -7,7 +7,7 @@ from osgeo import gdal
 from rasterio.warp import Resampling, reproject
 
 
-def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster):
+def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster, unfiltered_coherence=False, dense_offsets=False):
     """
     Function to produce 1-band cloud optimized GeoTIFFs from a NetCDF sublayers.
     """
@@ -22,9 +22,17 @@ def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster):
             print(f"No subdatasets found in {netcdf_path}")
             return
 
-    # Define the rasters to process
-    rasters = ['amplitude', 'azimuthPixelOffsets', 'rangePixelOffsets',
-               'unfilteredCoherence', 'losDisplacement', 'denseOffsetsSNR']
+    # Define the rasters to process (based on DockerizedTopsApp inputs)
+    if dense_offsets and unfiltered_coherence:
+        rasters = ['amplitude', 'azimuthPixelOffsets', 'rangePixelOffsets',
+                   'unfilteredCoherence', 'losDisplacement', 'denseOffsetsSNR']
+    elif dense_offsets and not unfiltered_coherence:
+        rasters = ['amplitude', 'azimuthPixelOffsets', 'rangePixelOffsets',
+                   'losDisplacement', 'denseOffsetsSNR']
+    elif not dense_offsets and unfiltered_coherence:
+        rasters = ['amplitude', 'unfilteredCoherence', 'losDisplacement']
+    else:
+        rasters = ['amplitude', 'losDisplacement']
 
     # Ensure the output directories exist
     single_band_dir = os.path.join(output_dir, "cogs_1band")
@@ -143,11 +151,11 @@ def colorize_netCDF_layer_COG(netcdf_path, output_dir, water_raster):
     return
 
 
-def create_viz_files(nc, outdir_viz, water_mask_path):
+def create_viz_files(nc, outdir_viz, water_mask_path, unfiltered_coherence, dense_offsets):
     print("=====================================")
     print("Making viz files...")
     print("=====================================")
-    colorize_netCDF_layer_COG(nc, outdir_viz, water_mask_path)
+    colorize_netCDF_layer_COG(nc, outdir_viz, water_mask_path, unfiltered_coherence, dense_offsets)
     print("=====================================")
     print("Viz files generated successfully.")
     print("=====================================")
@@ -159,5 +167,7 @@ if __name__ == "__main__":
     parser.add_argument('nc', help="Path to the netCDF file")
     parser.add_argument('outdir_viz', help="Path to the output directory")
     parser.add_argument('water_mask', help="Path to the water mask raster")
+    parser.add_argument('unfiltered_coherence', help="True/False for unfiltered coherence arg")
+    parser.add_argument('dense_offsets', help="True/False for dense offsets arg")
     args = parser.parse_args()
-    create_viz_files(args.nc, args.outdir_viz, args.water_mask)
+    create_viz_files(args.nc, args.outdir_viz, args.water_mask, args.unfiltered_coherence, args.dense_offsets)
