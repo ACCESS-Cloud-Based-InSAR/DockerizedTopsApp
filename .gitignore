@@ -99,6 +99,7 @@ conf/settings.conf
 tests/*.ipynb
 tests/out/*.ipynb
 !tests/localize-data.ipynb
+!tests/config-job.ipynb
 /isce2_topsapp.egg-info/
 !tests/prepare-for-delivery.ipynb
 !tests/solid_earth_tides.ipynb
