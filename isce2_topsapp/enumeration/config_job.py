@@ -1,14 +1,15 @@
-import pandas as pd
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
+from datetime import timedelta
 
+import pandas as pd
 
+from .asf_query import get_gunw_hits, query_slc_over_frame
 from .s1_stack import (
-    get_processing_df,
-    format_results,
     filter_min_coverage,
     find_date,
+    format_results,
+    get_processing_df,
 )
-from .asf_query import query_slc_over_frame, get_gunw_hits
 
 
 def _ensure_utc(dt):
@@ -17,11 +18,22 @@ def _ensure_utc(dt):
 
 
 def get_job_config(frame_id: int, reference_date: str, secondary_date: str) -> dict:
+    # Convert and order reference/secondary dates
+    ref_dt = _ensure_utc(reference_date)
+    sec_dt = _ensure_utc(secondary_date)
+
+    # Force reference date to be later date
+    if ref_dt < sec_dt:
+        ref_dt, sec_dt = sec_dt, ref_dt
+
     # Get frame geometry
     frame_df = get_processing_df(frame_id)
 
     # Query SLC archive over the frame
-    asf_results = query_slc_over_frame(frame_df)
+    time_buffer = 1
+    asf_results = query_slc_over_frame(frame_df,
+        start_time = sec_dt - timedelta(days=time_buffer),
+        stop_time = ref_dt + timedelta(days=time_buffer))
 
     # Format results
     df_formatted = format_results(asf_results)
@@ -40,14 +52,6 @@ def get_job_config(frame_id: int, reference_date: str, secondary_date: str) -> d
         raise ValueError(
             "All dates were dropped due to insufficient coverage. No valid SLCs remain."
         )
-
-    # Convert and order reference/secondary dates
-    ref_dt = _ensure_utc(reference_date)
-    sec_dt = _ensure_utc(secondary_date)
-
-    # Force reference date to be later date
-    if ref_dt < sec_dt:
-        ref_dt, sec_dt = sec_dt, ref_dt
 
     # Find matching repeat-pass groups
     try:
