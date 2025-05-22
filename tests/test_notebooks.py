@@ -21,4 +21,7 @@ def test_notebooks(notebook_name, monkeypatch):
 
     out_notebook = out_dir / f"{notebook_name}"
 
-    pm.execute_notebook(test_dir / f"{notebook_name}", output_path=out_notebook)
+    pm.execute_notebook(
+        test_dir / f"{notebook_name}",
+        output_path=out_notebook,
+    )

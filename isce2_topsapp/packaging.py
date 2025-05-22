@@ -29,8 +29,8 @@ CUSTOM_PROD_PREFIX = "S1-GUNW_CUSTOM"
 # Warning: the packaging scripts were written as command line scripts and
 # are highly dependent on the current working directory and its structure.
 #
-# Frequently, scripts (if they fail) may change the current working directory so
-# cannot be re-run with the same inputs unless the initial current working
+# Frequently, scripts (if they fail) may change the current working directory
+# so cannot be re-run with the same inputs unless the initial current working
 # directory is correctly configured in the workspace as initially intended.
 #
 # For example, let `cwd` be the current working directory and `F` be some
@@ -59,7 +59,9 @@ def read_baselines(tops_proc_xml: str) -> dict:
 
     tags = [e.tag for e in elements]
     vals = [float(e.text) for e in elements]
-    parallel_baselines = [vals[k] for (k, val) in enumerate(vals) if "Bpar" in tags[k]]
+    parallel_baselines = [
+        vals[k] for (k, val) in enumerate(vals) if "Bpar" in tags[k]
+    ]
     perpendicular_baselines = [
         vals[k] for (k, val) in enumerate(vals) if "Bperp" in tags[k]
     ]
@@ -73,7 +75,8 @@ def read_baselines(tops_proc_xml: str) -> dict:
 def get_mean_baseline_data(tops_proc_xml: str) -> dict:
     baseline_data = read_baselines(tops_proc_xml)
     mean_baseline_data = {
-        f"mean_{key[:-1]}": np.mean(val) for (key, val) in baseline_data.items()
+        f"mean_{key[:-1]}": np.mean(val)
+        for (key, val) in baseline_data.items()
     }
     return mean_baseline_data
 
@@ -159,7 +162,11 @@ def get_gunw_id(
     version = DATASET_VERSION.replace(".", "_")
     version = f"v{version}"
 
-    gunw_prefix = STANDARD_PROD_PREFIX if standard_product else CUSTOM_PROD_PREFIX
+    if standard_product:
+        gunw_prefix = STANDARD_PROD_PREFIX
+    else:
+        gunw_prefix = CUSTOM_PROD_PREFIX
+
     ids = [
         gunw_prefix,
         asc_or_desc,
@@ -234,7 +241,8 @@ def _write_json_config(*, gunw_id: str, directory: Path) -> Path:
     nc_template["filename"] = f"{gunw_id}.nc"
     # This will be appended to the global source attribute
     nc_template["software_statement"] = (
-        f"using the DockerizedTopsApp HyP3 plugin version {isce2_topsapp.__version__}"
+        "using the DockerizedTopsApp HyP3 plugin version "
+        f"{isce2_topsapp.__version__}"
     )
 
     out_path = directory / "tops_groups.json"
@@ -243,7 +251,11 @@ def _write_json_config(*, gunw_id: str, directory: Path) -> Path:
     return out_path
 
 
-def perform_netcdf_packaging(*, gunw_id: str, isce_data_dir: Union[str, Path]) -> Path:
+def perform_netcdf_packaging(
+    *,
+    gunw_id: str,
+    isce_data_dir: Union[str, Path]
+) -> Path:
     # Check that the metadata.h5 exists
     isce_data_dir = Path(isce_data_dir)
     merged_dir = isce_data_dir / "merged"
@@ -335,13 +347,23 @@ def get_layer_mean(
     return mean_val
 
 
-def get_geocoded_layer_means(*, merged_dir: Optional[Union[Path, str]] = None) -> dict:
+def get_geocoded_layer_means(
+    *,
+    merged_dir: Optional[Union[Path, str]] = None
+) -> dict:
     if merged_dir is None:
         cwd = Path.cwd()
         merged_dir = f"{cwd}/merged"
 
-    def get_layer_mean_p(layer_name: str, apply_water_mask: bool = False) -> float:
-        return get_layer_mean(merged_dir, layer_name, apply_water_mask=apply_water_mask)
+    def get_layer_mean_p(
+        layer_name: str,
+        apply_water_mask: bool = False
+    ) -> float:
+        return get_layer_mean(
+            merged_dir,
+            layer_name,
+            apply_water_mask=apply_water_mask
+        )
 
     mean_vals = {
         "mean_filtered_coherence_without_water_mask": get_layer_mean_p(
@@ -384,7 +406,8 @@ def record_wkt_geometry_as_global_attrs(
 def record_stats_as_global_attrs(
     *, netcdf_path: Path, isce_data_dir: Union[Path, str]
 ) -> Path:
-    """Records the mean coherence (with and without water mask), mean incidence angle, mean azimuth angle, and
+    """Records the mean coherence (with and without water mask), mean
+    incidence angle, mean azimuth angle, and
     mean baselines (parallel and perp)"""
     merged_dir = Path(isce_data_dir) / "merged"
     layer_means_from_geocoded_isce_files = get_geocoded_layer_means(

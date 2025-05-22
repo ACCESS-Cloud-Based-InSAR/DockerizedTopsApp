@@ -55,7 +55,8 @@ def download_dem_for_isce2(
     full_res_dem_dir : Path, optional
     low_res_dem_dir : Path, optional
     buffer : float, optional
-        In degrees, by default .4, which is about 44 km at equator (or about 2.5 bursts at the equator)
+        In degrees, by default .4, which is about 44 km at equator
+        (or about 2.5 bursts at the equator)
     Returns
     -------
     dict
@@ -98,7 +99,13 @@ def download_dem_for_isce2(
     # remove keys that do not work with ISCE gdal format
     [
         dem_profile_isce.pop(key)
-        for key in ["blockxsize", "blockysize", "compress", "interleave", "tiled"]
+        for key in [
+            "blockxsize",
+            "blockysize",
+            "compress",
+            "interleave",
+            "tiled",
+        ]
     ]
 
     with rasterio.open(full_res_dem_path, "w", **dem_profile_isce) as ds:
