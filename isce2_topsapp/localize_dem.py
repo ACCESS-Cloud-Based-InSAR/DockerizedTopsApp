@@ -4,14 +4,13 @@ from typing import Optional
 
 import numpy as np
 import rasterio
-from lxml import etree
-from shapely.geometry import box
-
 from dem_stitcher.rio_tools import (
     reproject_arr_to_match_profile,
     update_profile_resolution,
 )
 from dem_stitcher.stitcher import stitch_dem
+from lxml import etree
+from shapely.geometry import box
 
 
 def tag_dem_xml_as_ellipsoidal(dem_path: Path) -> str:
