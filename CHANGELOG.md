@@ -8,6 +8,9 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.4.0]
 
+### Added
+* Job configuration with dedup for topsApp based on frame-id, ref and sec date
+
 ### Changed
 * Use `s1_orbits` rather than `hyp3lib` to download Sentinel-1 orbits files in `localize_orbits.download_orbits`
 
