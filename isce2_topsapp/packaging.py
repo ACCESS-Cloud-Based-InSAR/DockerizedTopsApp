@@ -1,15 +1,15 @@
 import datetime
 import hashlib
 import json
-import os
+import os  # noqa: D100
 import subprocess
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import h5py
 import numpy as np
 import rasterio
-from dateparser import parse
+from dateparser import parse  # type: ignore
 from lxml import etree
 
 import isce2_topsapp
@@ -26,25 +26,24 @@ STANDARD_PROD_PREFIX = "S1-GUNW"
 CUSTOM_PROD_PREFIX = "S1-GUNW_CUSTOM"
 
 
-"""Warning: the packaging scripts were written as command line scripts and
-are highly dependent on the current working directory and its structure.
-
-Frequently, scripts (if they fail) may change the current working directory so
-cannot be re-run with the same inputs unless the initial current working
-directory are correctly configured in the workspace as initially intended.
-
-For example, let `cwd` be the current working directory and `F` be some
-routine that takes `cwd`. If `F(cwd)` fails, then `F(cwd)` may fail
-simply because the actual current working directory is different because this
-was changed during runtime of `F`.
-"""
+# Warning: the packaging scripts were written as command line scripts and
+# are highly dependent on the current working directory and its structure.
+#
+# Frequently, scripts (if they fail) may change the current working directory
+# so cannot be re-run with the same inputs unless the initial current working
+# directory is correctly configured in the workspace as initially intended.
+#
+# For example, let `cwd` be the current working directory and `F` be some
+# routine that takes `cwd`. If `F(cwd)` fails, then `F(cwd)` may fail
+# simply because the actual current working directory is different because this
+# was changed during runtime of `F`.
 
 # The filename in the ISCE2 merged folder
 LAYER2PATH = {
     "incidence_angle": {"file_name": "los.rdr.geo", "band": 1},
     "azimuth_angle": {"file_name": "los.rdr.geo", "band": 2},
     "filtered_coherence": {"file_name": "phsig.cor.geo", "band": 1},
-    "unfiltered_coherence": {"file_name": "topophase.cor.geo", "band": 2}
+    "unfiltered_coherence": {"file_name": "topophase.cor.geo", "band": 2},
 }
 
 
@@ -60,7 +59,9 @@ def read_baselines(tops_proc_xml: str) -> dict:
 
     tags = [e.tag for e in elements]
     vals = [float(e.text) for e in elements]
-    parallel_baselines = [vals[k] for (k, val) in enumerate(vals) if "Bpar" in tags[k]]
+    parallel_baselines = [
+        vals[k] for (k, val) in enumerate(vals) if "Bpar" in tags[k]
+    ]
     perpendicular_baselines = [
         vals[k] for (k, val) in enumerate(vals) if "Bperp" in tags[k]
     ]
@@ -73,7 +74,10 @@ def read_baselines(tops_proc_xml: str) -> dict:
 
 def get_mean_baseline_data(tops_proc_xml: str) -> dict:
     baseline_data = read_baselines(tops_proc_xml)
-    mean_baseline_data = {f'mean_{key[:-1]}': np.mean(val) for (key, val) in baseline_data.items()}
+    mean_baseline_data = {
+        f"mean_{key[:-1]}": np.mean(val)
+        for (key, val) in baseline_data.items()
+    }
     return mean_baseline_data
 
 
@@ -158,7 +162,11 @@ def get_gunw_id(
     version = DATASET_VERSION.replace(".", "_")
     version = f"v{version}"
 
-    gunw_prefix = STANDARD_PROD_PREFIX if standard_product else CUSTOM_PROD_PREFIX
+    if standard_product:
+        gunw_prefix = STANDARD_PROD_PREFIX
+    else:
+        gunw_prefix = CUSTOM_PROD_PREFIX
+
     ids = [
         gunw_prefix,
         asc_or_desc,
@@ -232,9 +240,10 @@ def _write_json_config(*, gunw_id: str, directory: Path) -> Path:
 
     nc_template["filename"] = f"{gunw_id}.nc"
     # This will be appended to the global source attribute
-    nc_template[
-        "software_statement"
-    ] = f"using the DockerizedTopsApp HyP3 plugin version {isce2_topsapp.__version__}"
+    nc_template["software_statement"] = (
+        "using the DockerizedTopsApp HyP3 plugin version "
+        f"{isce2_topsapp.__version__}"
+    )
 
     out_path = directory / "tops_groups.json"
     with open(out_path, "w") as f:
@@ -242,7 +251,11 @@ def _write_json_config(*, gunw_id: str, directory: Path) -> Path:
     return out_path
 
 
-def perform_netcdf_packaging(*, gunw_id: str, isce_data_dir: Union[str, Path]) -> Path:
+def perform_netcdf_packaging(
+    *,
+    gunw_id: str,
+    isce_data_dir: Union[str, Path]
+) -> Path:
     # Check that the metadata.h5 exists
     isce_data_dir = Path(isce_data_dir)
     merged_dir = isce_data_dir / "merged"
@@ -270,7 +283,7 @@ def package_additional_layers_into_gunw(
     gunw_path: Path,
     isce_data_directory: Path,
     additional_2d_layers: list,
-    additional_attributes: dict,
+    additional_attributes: Optional[dict],
 ):
     # Current workflow of additional layers
     # 1. Do any additional processing/formatting outside of GUNW
@@ -309,19 +322,22 @@ def package_additional_layers_into_gunw(
 
 
 def get_layer_mean(
-    merged_dir: Union[Path, str], layer_name: str, apply_water_mask: bool = False, default_isce_nodata: float = 0.,
+    merged_dir: Union[Path, str],
+    layer_name: str,
+    apply_water_mask: bool = False,
+    default_isce_nodata: float = 0.0,
 ) -> float:
     log = f"Extracting mean value from {layer_name}"
     if apply_water_mask:
         log += " with water mask"
     print(log)
     merged_dir = Path(merged_dir)
-    layer_path = merged_dir / LAYER2PATH[layer_name]["file_name"]
+    layer_path = merged_dir / str(LAYER2PATH[layer_name]["file_name"])
     band_num = LAYER2PATH[layer_name]["band"]
 
     with rasterio.open(layer_path) as ds:
         X = ds.read(band_num)
-        X_nodata = (X == default_isce_nodata)
+        X_nodata = X == default_isce_nodata
         if apply_water_mask:
             p = ds.profile
             water_mask = get_water_mask_raster_for_browse_image(p)
@@ -331,13 +347,23 @@ def get_layer_mean(
     return mean_val
 
 
-def get_geocoded_layer_means(*, merged_dir: Union[Path, str] = None) -> Path:
+def get_geocoded_layer_means(
+    *,
+    merged_dir: Optional[Union[Path, str]] = None
+) -> dict:
     if merged_dir is None:
         cwd = Path.cwd()
         merged_dir = f"{cwd}/merged"
 
-    def get_layer_mean_p(layer_name: str, apply_water_mask: bool = False) -> float:
-        return get_layer_mean(merged_dir, layer_name, apply_water_mask=apply_water_mask)
+    def get_layer_mean_p(
+        layer_name: str,
+        apply_water_mask: bool = False
+    ) -> float:
+        return get_layer_mean(
+            merged_dir,
+            layer_name,
+            apply_water_mask=apply_water_mask
+        )
 
     mean_vals = {
         "mean_filtered_coherence_without_water_mask": get_layer_mean_p(
@@ -369,21 +395,28 @@ def record_params_as_global_attrs(
     return netcdf_path
 
 
-def record_wkt_geometry_as_global_attrs(*, netcdf_path: Path, product_geometry_wkt: str) -> Path:
+def record_wkt_geometry_as_global_attrs(
+    *, netcdf_path: Path, product_geometry_wkt: str
+) -> Path:
     with h5py.File(netcdf_path, mode="a") as file:
         file.attrs.update(product_geometry_wkt=product_geometry_wkt)
     return netcdf_path
 
 
-def record_stats_as_global_attrs(*, netcdf_path: Union[Path, str], isce_data_dir: Union[Path, str]) -> Path:
-    """Records the mean coherence (with and without water mask), mean incidence angle, mean azimuth angle, and
+def record_stats_as_global_attrs(
+    *, netcdf_path: Path, isce_data_dir: Union[Path, str]
+) -> Path:
+    """Records the mean coherence (with and without water mask), mean
+    incidence angle, mean azimuth angle, and
     mean baselines (parallel and perp)"""
-    merged_dir = Path(isce_data_dir) / 'merged'
-    layer_means_from_geocoded_isce_files = get_geocoded_layer_means(merged_dir=merged_dir)
+    merged_dir = Path(isce_data_dir) / "merged"
+    layer_means_from_geocoded_isce_files = get_geocoded_layer_means(
+        merged_dir=merged_dir
+    )
 
-    tops_proc_xml = Path(isce_data_dir) / 'topsProc.xml'
-    mean_baseline_data = get_mean_baseline_data(tops_proc_xml)
-    with h5py.File(netcdf_path, mode='a') as file:
+    tops_proc_xml = Path(isce_data_dir) / "topsProc.xml"
+    mean_baseline_data = get_mean_baseline_data(str(tops_proc_xml))
+    with h5py.File(netcdf_path, mode="a") as file:
         file.attrs.update(**layer_means_from_geocoded_isce_files)
         file.attrs.update(**mean_baseline_data)
     return netcdf_path
@@ -398,9 +431,9 @@ def package_gunw_product(
     topaspp_params: dict,
     cmd_line_str: str,
     product_geometry_wkt: str,
-    additional_2d_layers: list = None,
+    additional_2d_layers: Optional[list] = None,
     standard_product: bool = True,
-    additional_attributes: dict = None,
+    additional_attributes: Optional[dict] = None,
 ) -> Path:
     """Creates a GUNW standard product netcdf from the ISCE outputs and some
     initial metadata.
@@ -456,7 +489,9 @@ def package_gunw_product(
         topsapp_params=topaspp_params,
         cmd_line_str=cmd_line_str,
     )
-    out_nc_file = record_stats_as_global_attrs(netcdf_path=out_nc_file, isce_data_dir=isce_data_directory)
+    out_nc_file = record_stats_as_global_attrs(
+        netcdf_path=out_nc_file, isce_data_dir=isce_data_directory
+    )
     out_nc_file = record_wkt_geometry_as_global_attrs(
         netcdf_path=out_nc_file, product_geometry_wkt=product_geometry_wkt
     )
