@@ -4,7 +4,7 @@ import json
 import os  # noqa: D100
 import subprocess
 from pathlib import Path
-from typing import Union, Optional
+from typing import Optional, Union
 
 import h5py
 import numpy as np

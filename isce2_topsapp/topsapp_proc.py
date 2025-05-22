@@ -1,5 +1,5 @@
-import subprocess
 from pathlib import Path
+import subprocess
 
 from jinja2 import Template
 from tqdm import tqdm
