@@ -10,7 +10,7 @@ notebooks = [
 ]
 
 
-pytest.mark.parametrize("notebook_name", notebooks)
+@pytest.mark.parametrize("notebook_name", notebooks)
 def test_notebooks(notebook_name, monkeypatch):
 
     test_dir = Path(__file__).parents[0].absolute()
@@ -20,4 +20,7 @@ def test_notebooks(notebook_name, monkeypatch):
 
     out_notebook = out_dir / f"{notebook_name}"
 
-    pm.execute_notebook(test_dir / f"{notebook_name}", output_path=out_notebook)
+    pm.execute_notebook(
+        test_dir / f"{notebook_name}",
+        output_path=out_notebook,
+    )
