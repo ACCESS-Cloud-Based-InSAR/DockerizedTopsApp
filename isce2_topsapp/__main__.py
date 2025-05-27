@@ -23,6 +23,7 @@ from isce2_topsapp import (BurstParams,
                            topsappParams,
                            topsapp_processing,
                            )
+from isce2_topsapp.enumeration import get_slcs_for_date_and_frame
 from isce2_topsapp.iono_proc import iono_processing
 from isce2_topsapp.json_encoder import MetadataEncoder
 from isce2_topsapp.packaging import update_gunw_internal_version_attribute
@@ -142,8 +143,12 @@ def get_slc_parser():
     parser.add_argument('--bucket')
     parser.add_argument('--bucket-prefix', default='')
     parser.add_argument('--dry-run', action='store_true')
-    parser.add_argument('--reference-scenes', type=str.split, nargs='+', required=True)
-    parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
+    reference_group = parser.add_mutually_exclusive_group(required=True)
+    reference_group.add_argument('--reference-scenes', type=str.split, nargs='+')
+    reference_group.add_argument('--reference-date', type=str) # TODO add date validation
+    secondary_group = parser.add_mutually_exclusive_group(required=True)
+    secondary_group.add_argument('--secondary-scenes', type=str.split, nargs='+')
+    secondary_group.add_argument('--secondary-date', type=str) # TODO add date validation
     parser.add_argument('--estimate-ionosphere-delay', type=true_false_string_argument, default=True)
     parser.add_argument('--frame-id', type=int, default=-1, required=True,
                         help=('If -1 is specified, no frame is used and a non-standard product generated. '
@@ -160,13 +165,21 @@ def get_slc_parser():
 
 
 def update_slc_namespace(args: Namespace) -> Namespace:
+    if args.reference_date:
+        args.reference_scenes = get_slcs_for_date_and_frame(args.reference_date, args.frame_id)
+        print(f'Found reference scenes {args.reference_scenes}')
+    else:
+        args.reference_scenes = [
+            item for sublist in args.reference_scenes for item in sublist
+        ]
 
-    args.reference_scenes = [
-        item for sublist in args.reference_scenes for item in sublist
-    ]
-    args.secondary_scenes = [
-        item for sublist in args.secondary_scenes for item in sublist
-    ]
+    if args.secondary_date:
+        args.secondary_scenes = get_slcs_for_date_and_frame(args.secondary_date, args.frame_id)
+        print(f'Found secondary scenes {args.secondary_scenes}')
+    else:
+        args.secondary_scenes = [
+            item for sublist in args.secondary_scenes for item in sublist
+        ]
 
     args.esd_coherence_threshold = esd_threshold_argument(args.esd_coherence_threshold)
 
