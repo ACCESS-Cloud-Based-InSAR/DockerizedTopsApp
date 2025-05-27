@@ -145,10 +145,10 @@ def get_slc_parser():
     parser.add_argument('--dry-run', action='store_true')
     reference_group = parser.add_mutually_exclusive_group(required=True)
     reference_group.add_argument('--reference-scenes', type=str.split, nargs='+')
-    reference_group.add_argument('--reference-date', type=str) # TODO add date validation
+    reference_group.add_argument('--reference-date', type=str)  # TODO add date validation
     secondary_group = parser.add_mutually_exclusive_group(required=True)
     secondary_group.add_argument('--secondary-scenes', type=str.split, nargs='+')
-    secondary_group.add_argument('--secondary-date', type=str) # TODO add date validation
+    secondary_group.add_argument('--secondary-date', type=str)  # TODO add date validation
     parser.add_argument('--estimate-ionosphere-delay', type=true_false_string_argument, default=True)
     parser.add_argument('--frame-id', type=int, default=-1, required=True,
                         help=('If -1 is specified, no frame is used and a non-standard product generated. '
