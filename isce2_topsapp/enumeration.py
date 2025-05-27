@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+import datetime
 
 import asf_search
 import requests
@@ -25,8 +25,9 @@ def _get_wkt_polygon(geometry):
     return f'polygon(({coordinates}))'
 
 
-def get_slcs_for_date_and_frame(date: str, frame_id: int) -> list[str]:
+def get_slcs_for_date_and_frame(date: datetime.date, frame_id: int) -> list[str]:
     frame = _get_frame_by_id(frame_id)
+    date_as_datetime = datetime.datetime(year=date.year, month=date.month, day=date.day)
     results = asf_search.search(
         dataset=asf_search.constants.DATASET.SENTINEL1,
         processingLevel=asf_search.constants.PRODUCT_TYPE.SLC,
@@ -35,8 +36,8 @@ def get_slcs_for_date_and_frame(date: str, frame_id: int) -> list[str]:
         flightDirection=frame['properties']['dir'],
         relativeOrbit=frame['properties']['path'],
         intersectsWith=_get_wkt_polygon(frame['geometry']),
-        start=datetime.strptime(date, '%Y-%m-%d') + timedelta(minutes=-30),
-        end=datetime.strptime(date, '%Y-%m-%d') + timedelta(days=1, minutes=30),
+        start=date_as_datetime + datetime.timedelta(minutes=-30),
+        end=date_as_datetime + datetime.timedelta(days=1, minutes=30),
     )
     if len(results) == 0:
         raise ValueError(f'No Sentinel-1 SLCs found for date {date} and frame id {frame_id}.')
