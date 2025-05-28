@@ -153,7 +153,7 @@ def test_localize_slc_with_valid_pairs(reference_ids, secondary_ids, frame_id):
 
 
 def test_get_slcs_by_date_and_frame():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r'^No Sentinel-1 SLCs found for date '):
         get_slcs_for_date_and_frame(date(2018, 2, 17), 16584)
 
     assert get_slcs_for_date_and_frame(date(2018, 2, 18), 16584) == [
