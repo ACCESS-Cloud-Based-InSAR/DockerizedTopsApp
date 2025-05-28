@@ -19,12 +19,12 @@ from isce2_topsapp import (BurstParams,
                            download_water_mask,
                            get_asf_slc_objects,
                            get_region_of_interest,
+                           get_slcs_for_date_and_frame,
                            package_gunw_product,
                            prepare_for_delivery,
                            topsappParams,
                            topsapp_processing,
                            )
-from isce2_topsapp.enumeration import get_slcs_for_date_and_frame
 from isce2_topsapp.iono_proc import iono_processing
 from isce2_topsapp.json_encoder import MetadataEncoder
 from isce2_topsapp.packaging import update_gunw_internal_version_attribute
