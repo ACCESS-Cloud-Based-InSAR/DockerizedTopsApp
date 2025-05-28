@@ -227,7 +227,7 @@ def download_slcs(
 
 def _get_frame_by_id(frame_id: int) -> gpd.GeoSeries:
     frames = gpd.read_file(Path(__file__).parent / 'data' / 's1_frames_latitude_aligned.geojson.zip')
-    return frames[frames.frame_id==frame_id].reset_index(drop=True).iloc[0]
+    return frames[frames.frame_id == frame_id].reset_index(drop=True).iloc[0]
 
 
 def get_slcs_for_date_and_frame(date: datetime.date, frame_id: int) -> list[str]:
