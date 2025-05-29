@@ -17,7 +17,7 @@ def test_intersection_geometry():
     ref_ob = get_asf_slc_objects(ref_ids)
     sec_ob = get_asf_slc_objects(sec_ids)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r'The overlap between reference and secondary scenes is empty'):
         get_interferogram_geo(ref_ob, sec_ob)
 
     # Disconnected Secondary
@@ -28,7 +28,7 @@ def test_intersection_geometry():
     ref_ob = get_asf_slc_objects(ref_ids)
     sec_ob = get_asf_slc_objects(sec_ids)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r'Reference and/or secondary dates were not connected in their coverage'):
         get_interferogram_geo(ref_ob, sec_ob)
 
 
@@ -112,8 +112,9 @@ def test_bad_frame_with_intersection():
     ref_ob = get_asf_slc_objects(ref_ids)
     sec_ob = get_asf_slc_objects(sec_ids)
 
-    with pytest.raises(ValueError):
-        get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id)
+    get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id, min_frame_coverage=0.0)
+    with pytest.raises(ValueError, match=r'IFG area \(i.e. ref and sec overlap\) covers less than 10.0% of Frame area'):
+        get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id, min_frame_coverage=0.1)
 
 
 reference_list = [
