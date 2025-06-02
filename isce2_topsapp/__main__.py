@@ -25,6 +25,7 @@ from isce2_topsapp import (BurstParams,
                            )
 from isce2_topsapp.iono_proc import iono_processing
 from isce2_topsapp.json_encoder import MetadataEncoder
+from isce2_topsapp.localize_slc import MIN_FRAME_COVERAGE_DEFAULT
 from isce2_topsapp.packaging import update_gunw_internal_version_attribute
 from isce2_topsapp.solid_earth_tides import update_gunw_with_solid_earth_tide
 
@@ -33,6 +34,7 @@ def localize_data(
     reference_scenes: list,
     secondary_scenes: list,
     frame_id: int = -1,
+    min_frame_coverage: float = MIN_FRAME_COVERAGE_DEFAULT,
     dry_run: bool = False,
     water_mask_flag: bool = True,
     geocode_resolution: int = 90
@@ -46,7 +48,7 @@ def localize_data(
     And discussed in the readme.
     """
     out_slc = download_slcs(
-        reference_scenes, secondary_scenes, frame_id=frame_id, dry_run=dry_run
+        reference_scenes, secondary_scenes, frame_id=frame_id, min_frame_coverage=min_frame_coverage, dry_run=dry_run
     )
 
     out_orbits = download_orbits(reference_scenes, secondary_scenes)
@@ -149,6 +151,7 @@ def get_slc_parser():
                         help=('If -1 is specified, no frame is used and a non-standard product generated. '
                               'See examples in repository. For generating SLC pairs and a fixed frame, see:'
                               'https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator'))
+    parser.add_argument('--min-frame-coverage', type=float, default=MIN_FRAME_COVERAGE_DEFAULT)
     parser.add_argument('--compute-solid-earth-tide', type=true_false_string_argument, default=True)
     parser.add_argument('--esd-coherence-threshold', type=float, default=-1.)
     parser.add_argument('--output-resolution', type=int, default=90, required=False)
@@ -201,6 +204,7 @@ def gunw_slc():
         dry_run=args.dry_run,
         geocode_resolution=args.output_resolution,
         frame_id=args.frame_id,
+        min_frame_coverage=args.min_frame_coverage,
         water_mask_flag=args.estimate_ionosphere_delay,
     )
     loc_data['frame_id'] = args.frame_id
