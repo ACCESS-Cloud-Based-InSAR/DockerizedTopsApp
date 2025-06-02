@@ -11,7 +11,7 @@ from shapely.geometry import GeometryCollection, Polygon, shape
 from shapely.ops import unary_union
 from tqdm import tqdm
 
-MIN_FRAME_COVERAGE_DEFAULT = 0.95
+MIN_FRAME_COVERAGE_DEFAULT = 0.01
 
 
 def get_gunw_extent_from_frame_id(frame_id) -> Polygon:
