@@ -59,7 +59,10 @@ def get_session():
 
 
 def get_interferogram_geo(
-    reference_obs: list, secondary_obs: list, frame_id: int = -1, min_frame_coverage: float = MIN_FRAME_COVERAGE_DEFAULT,
+    reference_obs: list,
+    secondary_obs: list,
+    frame_id: int = -1,
+    min_frame_coverage: float = MIN_FRAME_COVERAGE_DEFAULT,
 ) -> GeometryCollection:
     reference_geos = [shape(r.geojson()["geometry"]) for r in reference_obs]
     secondary_geos = [shape(r.geojson()["geometry"]) for r in secondary_obs]
@@ -187,7 +190,9 @@ def download_slcs(
     assert len(reference_obs) == len(reference_ids)
     assert len(secondary_obs) == len(secondary_ids)
 
-    ifg_geo = get_interferogram_geo(reference_obs, secondary_obs, frame_id=frame_id, min_frame_coverage=min_frame_coverage)
+    ifg_geo = get_interferogram_geo(
+        reference_obs, secondary_obs, frame_id=frame_id, min_frame_coverage=min_frame_coverage
+    )
 
     percent_water_low_res = get_percent_water_from_ne_land(ifg_geo)
     if percent_water_low_res >= 80:
