@@ -28,7 +28,7 @@ dependencies:
  - notebook
  - numpy<1.24
  - pandas
- - pandera==0.22.1  # FIXME: https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/issues/209
+ - pandera<=0.22.1  # FIXME: https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/issues/209
  - pysolid
  - papermill
  - pytest
