@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0]
+
+### Added
+* `--min-frame-coverage` parameter to `gunw_slc` entrypoint and `isce2_topsapp.__main__:gunw_slc`. Specifies a minimum
+  percent of the ARIA Frame that the intersection of reference/secondary scenes must cover. Jobs not meeting the given
+  threshold will raise an error rather than generating a GUNW product.
+
 ## [0.4.0]
 
 ### Changed

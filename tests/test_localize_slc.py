@@ -17,7 +17,7 @@ def test_intersection_geometry():
     ref_ob = get_asf_slc_objects(ref_ids)
     sec_ob = get_asf_slc_objects(sec_ids)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r'The overlap between reference and secondary scenes is empty'):
         get_interferogram_geo(ref_ob, sec_ob)
 
     # Disconnected Secondary
@@ -28,7 +28,7 @@ def test_intersection_geometry():
     ref_ob = get_asf_slc_objects(ref_ids)
     sec_ob = get_asf_slc_objects(sec_ids)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r'Reference and/or secondary dates were not connected in their coverage'):
         get_interferogram_geo(ref_ob, sec_ob)
 
 
@@ -102,7 +102,23 @@ def test_bad_date_order():
     assert not check_date_order(ref_props, sec_props)
 
 
-def test_bad_frame_with_intersection():
+def test_min_frame_coverage():
+    ref_ids = ['S1A_IW_SLC__1SDV_20220212T222803_20220212T222830_041886_04FCA3_2B3E',
+               'S1A_IW_SLC__1SDV_20220212T222828_20220212T222855_041886_04FCA3_A3E2']
+    sec_ids = ['S1A_IW_SLC__1SDV_20220131T222803_20220131T222830_041711_04F690_8F5F',
+               'S1A_IW_SLC__1SDV_20220131T222828_20220131T222855_041711_04F690_28D7']
+    frame_id = 25502
+
+    ref_ob = get_asf_slc_objects(ref_ids)
+    sec_ob = get_asf_slc_objects(sec_ids)
+
+    get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id, min_frame_coverage=0.72)
+    with pytest.raises(
+            ValueError, match=r'^IFG area \(i\.e\. ref and sec overlap\) covers less than 73\.0% of Frame area$'):
+        get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id, min_frame_coverage=0.73)
+
+
+def test_min_frame_coverage_default():
     ref_ids = ['S1A_IW_SLC__1SDV_20230125T135954_20230125T140021_046941_05A132_D35C',
                'S1A_IW_SLC__1SDV_20230125T140019_20230125T140046_046941_05A132_82DF']
     sec_ids = ['S1A_IW_SLC__1SDV_20221220T135956_20221220T140023_046416_058F77_B248',
@@ -112,7 +128,9 @@ def test_bad_frame_with_intersection():
     ref_ob = get_asf_slc_objects(ref_ids)
     sec_ob = get_asf_slc_objects(sec_ids)
 
-    with pytest.raises(ValueError):
+    get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id, min_frame_coverage=0.0)
+    with pytest.raises(
+            ValueError, match=r'^IFG area \(i\.e\. ref and sec overlap\) covers less than 1\.0% of Frame area$'):
         get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id)
 
 
