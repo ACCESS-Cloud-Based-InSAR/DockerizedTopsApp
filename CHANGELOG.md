@@ -6,17 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.0]
+## [0.6.0]
 
 ### Added
 * `isce2_topsapp.__main__.gunw_slc` now accepts `--reference-date` and `--secondary-date` parameters as alternatives to
   `--reference-scenes` and `--secondary-scenes`. When provided, `gunw_slc` will process all Sentinel-1 IW SLC scenes for
   the given date and `--frame-id` in order to generate a standard ARIA_S1_GUNW product.
 
+## [0.5.0]
+
+### Added
+* `--min-frame-coverage` parameter to `gunw_slc` entrypoint and `isce2_topsapp.__main__:gunw_slc`. Specifies a minimum
+  percent of the ARIA Frame that the intersection of reference/secondary scenes must cover. Jobs not meeting the given
+  threshold will raise an error rather than generating a GUNW product.
+* Pushed formatting changes
+
 ## [0.4.0]
 
 ### Changed
-* Pushed formatting changes
 * Use `s1_orbits` rather than `hyp3lib` to download Sentinel-1 orbits files in `localize_orbits.download_orbits`
 
 ### Removed
@@ -49,7 +56,6 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 * The root logger is no longer set to DEBUG by ISCE2 preventing excessive logging from all packages in the environment
-
 
 ## [0.3.3]
 
