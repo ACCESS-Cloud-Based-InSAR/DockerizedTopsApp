@@ -197,6 +197,14 @@ def test_get_slcs_by_date_and_frame():
         'S1C_IW_SLC__1SDV_20250519T000015_20250519T000042_002392_005070_1A43',
         'S1C_IW_SLC__1SDV_20250518T235950_20250519T000017_002392_005070_A436',
     ]
+    assert get_slcs_for_date_and_frame(date(2025, 1, 4), 25672) == [
+        'S1A_IW_SLC__1SDV_20250103T235934_20250104T000002_057287_070C52_215C',
+        'S1A_IW_SLC__1SDV_20250103T235910_20250103T235937_057287_070C52_1291'
+    ]
+    assert get_slcs_for_date_and_frame(date(2025, 1, 3), 25672) == [
+        'S1A_IW_SLC__1SDV_20250103T235934_20250104T000002_057287_070C52_215C',
+        'S1A_IW_SLC__1SDV_20250103T235910_20250103T235937_057287_070C52_1291'
+    ]
 
     # ascending crossing equator with multiple relative orbits
     assert get_slcs_for_date_and_frame(date(2022, 5, 14), 13403) == [
