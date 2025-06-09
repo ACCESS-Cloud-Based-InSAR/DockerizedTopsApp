@@ -12,11 +12,11 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * `--min-frame-coverage` parameter to `gunw_slc` entrypoint and `isce2_topsapp.__main__:gunw_slc`. Specifies a minimum
   percent of the ARIA Frame that the intersection of reference/secondary scenes must cover. Jobs not meeting the given
   threshold will raise an error rather than generating a GUNW product.
+* Pushed formatting changes
 
 ## [0.4.0]
 
 ### Changed
-* Pushed formatting changes
 * Use `s1_orbits` rather than `hyp3lib` to download Sentinel-1 orbits files in `localize_orbits.download_orbits`
 
 ### Removed
@@ -49,7 +49,6 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 * The root logger is no longer set to DEBUG by ISCE2 preventing excessive logging from all packages in the environment
-
 
 ## [0.3.3]
 
