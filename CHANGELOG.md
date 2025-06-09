@@ -11,7 +11,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 * `isce2_topsapp.__main__.gunw_slc` now accepts `--reference-date` and `--secondary-date` parameters as alternatives to
   `--reference-scenes` and `--secondary-scenes`. When provided, `gunw_slc` will process all Sentinel-1 IW SLC scenes for
-  the given date and `--frame-id` in order to generate a standard ARIA_S1_GUNW product.
+  the given date and `--frame-id` in order to generate an ARIA_S1_GUNW product.
 
 ## [0.5.0]
 
