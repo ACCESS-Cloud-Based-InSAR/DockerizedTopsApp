@@ -236,6 +236,11 @@ def _get_frame_by_id(frame_id: int) -> gpd.GeoSeries:
     return frames[frames.frame_id == frame_id].reset_index(drop=True).iloc[0]
 
 
+def _get_dates(product: asf.ASFProduct) -> set[datetime.date]:
+    date_strings = [product.properties[field].strip('Z') for field in ['startTime', 'stopTime']]
+    return {datetime.datetime.fromisoformat(date_string).date() for date_string in date_strings}
+
+
 def get_slcs_for_date_and_frame(date: datetime.date, frame_id: int) -> list[str]:
     frame = _get_frame_by_id(frame_id)
     date_as_datetime = datetime.datetime(year=date.year, month=date.month, day=date.day)
@@ -250,6 +255,7 @@ def get_slcs_for_date_and_frame(date: datetime.date, frame_id: int) -> list[str]
         start=date_as_datetime - datetime.timedelta(minutes=5),
         end=date_as_datetime + datetime.timedelta(days=1, minutes=5),
     )
-    if len(results) == 0:
+    if not any(product_date == date for product in results for product_date in _get_dates(product)):
         raise ValueError(f'No Sentinel-1 SLCs found for date {date} and frame id {frame_id}.')
+
     return [result.properties['sceneName'] for result in results]

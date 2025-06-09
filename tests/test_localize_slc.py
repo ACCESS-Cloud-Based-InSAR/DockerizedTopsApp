@@ -203,3 +203,11 @@ def test_get_slcs_by_date_and_frame():
         'S1A_IW_SLC__1SDV_20220514T153240_20220514T153307_043209_052911_51B2',
         'S1A_IW_SLC__1SDV_20220514T153215_20220514T153242_043208_052911_BBAE',
     ]
+
+    with pytest.raises(ValueError, match=r'^No Sentinel-1 SLCs found for date '):
+        get_slcs_for_date_and_frame(date(2025, 1, 4), 25671)
+
+    assert get_slcs_for_date_and_frame(date(2025, 1, 3), 25671) == [
+        'S1A_IW_SLC__1SDV_20250103T235910_20250103T235937_057287_070C52_1291',
+        'S1A_IW_SLC__1SDV_20250103T235845_20250103T235912_057287_070C52_5599',
+    ]
