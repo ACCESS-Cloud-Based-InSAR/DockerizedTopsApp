@@ -158,8 +158,8 @@ def get_slc_parser():
                               'See examples in repository. For generating SLC pairs and a fixed frame, see:'
                               'https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator'))
     parser.add_argument('--min-frame-coverage', type=float, default=MIN_FRAME_COVERAGE_DEFAULT,
-                        help=('Minimum amount of the frame that must be covered by the overlap '
-                              'between the reference and secondary granules.'))
+                        help=('Minimum amount of the frame that must be covered by the overlap of the reference '
+                              'and secondary granules. Values should be between 0.0 and 1.0, inclusive.'))
     parser.add_argument('--compute-solid-earth-tide', type=true_false_string_argument, default=True)
     parser.add_argument('--esd-coherence-threshold', type=float, default=-1.)
     parser.add_argument('--output-resolution', type=int, default=90, required=False)

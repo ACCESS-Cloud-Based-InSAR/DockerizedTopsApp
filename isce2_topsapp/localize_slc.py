@@ -79,7 +79,8 @@ def get_interferogram_geo(
         frame_coverage = gunw_geo.intersection(ifg_geo).area / gunw_geo.area
         if frame_coverage < min_frame_coverage:
             raise ValueError(
-                f"IFG area (i.e. ref and sec overlap) covers less than {min_frame_coverage*100}% of Frame area"
+                f"IFG area (i.e. ref and sec overlap) covers only {frame_coverage*100:.2f}% of Frame area; "
+                f"the requested minimum coverage was {min_frame_coverage*100:.2f}%."
             )
         ifg_geo = gunw_geo
     return ifg_geo
