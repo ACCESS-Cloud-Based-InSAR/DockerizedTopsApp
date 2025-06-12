@@ -117,7 +117,8 @@ def test_min_frame_coverage():
 
     get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id, min_frame_coverage=0.72)
 
-    match = r'IFG area (i.e. ref and sec overlap) covers only 72.08% of Frame area; the requested minimum coverage was 73.00%.'
+    match = (r'IFG area (i.e. ref and sec overlap) covers only 72.08% of Frame area; '
+             r'the requested minimum coverage was 73.00%.')
     with pytest.raises(ValueError, match=re.escape(match)):
         get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id, min_frame_coverage=0.73)
 
@@ -134,7 +135,8 @@ def test_min_frame_coverage_default():
 
     get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id, min_frame_coverage=0.0)
 
-    match = r'IFG area (i.e. ref and sec overlap) covers only 0.00% of Frame area; the requested minimum coverage was 1.00%.'
+    match = (r'IFG area (i.e. ref and sec overlap) covers only 0.00% of Frame area; '
+             r'the requested minimum coverage was 1.00%.')
     with pytest.raises(ValueError, match = re.escape(match)):
         get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id)
 
