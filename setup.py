@@ -39,6 +39,7 @@ setup(
         "netcdf4",
         "numpy",
         "rasterio",
+        "requests",
         "shapely",
         "tqdm",
     ],

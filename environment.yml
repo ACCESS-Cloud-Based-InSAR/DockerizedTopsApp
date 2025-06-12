@@ -36,6 +36,7 @@ dependencies:
  - pytest-cov
  - pytest-mock
  - rasterio
+ - requests
  - rioxarray<0.14.0
  - xarray
  - scipy<1.10

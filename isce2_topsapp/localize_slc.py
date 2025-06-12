@@ -1,3 +1,4 @@
+import datetime
 import netrc
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
@@ -22,16 +23,6 @@ def get_gunw_extent_from_frame_id(frame_id) -> Polygon:
     df_gunw = df_gunw_extent[ind].reset_index(drop=True)
     gunw_geo = df_gunw.geometry[0]
     return gunw_geo
-
-
-def get_processing_geo_from_frame_id(frame_id: int) -> Polygon:
-    data_dir = Path(__file__).parent / "data"
-    path_to_frames_zip = data_dir / "s1_frames_latitude_aligned.geojson.zip"
-    df_frames = gpd.read_file(path_to_frames_zip)
-    ind = df_frames.frame_id == frame_id
-    df_frame = df_frames[ind].reset_index(drop=True)
-    processing_geo = df_frame.geometry[0]
-    return processing_geo
 
 
 def get_asf_slc_objects(slc_ids: list) -> list:
@@ -88,7 +79,8 @@ def get_interferogram_geo(
         frame_coverage = gunw_geo.intersection(ifg_geo).area / gunw_geo.area
         if frame_coverage < min_frame_coverage:
             raise ValueError(
-                f"IFG area (i.e. ref and sec overlap) covers less than {min_frame_coverage*100}% of Frame area"
+                f"IFG area (i.e. ref and sec overlap) covers only {frame_coverage*100:.2f}% of Frame area; "
+                f"the requested minimum coverage was {min_frame_coverage*100:.2f}%."
             )
         ifg_geo = gunw_geo
     return ifg_geo
@@ -211,7 +203,7 @@ def download_slcs(
 
     processing_geo = ifg_geo
     if frame_id != -1:
-        processing_geo = get_processing_geo_from_frame_id(frame_id)
+        processing_geo = _get_frame_by_id(frame_id).geometry
 
     all_obs = reference_obs + secondary_obs
     n = len(all_obs)
@@ -238,3 +230,33 @@ def download_slcs(
         "reference_properties": reference_props,
         "secondary_properties": secondary_props,
     }
+
+
+def _get_frame_by_id(frame_id: int) -> gpd.GeoSeries:
+    frames = gpd.read_file(Path(__file__).parent / 'data' / 's1_frames_latitude_aligned.geojson.zip')
+    return frames[frames.frame_id == frame_id].reset_index(drop=True).iloc[0]
+
+
+def _get_dates(product: asf.ASFProduct) -> set[datetime.date]:
+    date_strings = [product.properties[field].strip('Z') for field in ['startTime', 'stopTime']]
+    return {datetime.datetime.fromisoformat(date_string).date() for date_string in date_strings}
+
+
+def get_slcs_for_date_and_frame(date: datetime.date, frame_id: int) -> list[str]:
+    frame = _get_frame_by_id(frame_id)
+    date_as_datetime = datetime.datetime(year=date.year, month=date.month, day=date.day)
+    results = asf.search(
+        dataset=asf.constants.DATASET.SENTINEL1,
+        processingLevel=asf.constants.PRODUCT_TYPE.SLC,
+        beamMode=asf.constants.BEAMMODE.IW,
+        polarization=[asf.constants.POLARIZATION.VV, asf.constants.POLARIZATION.VV_VH],
+        flightDirection=frame.orbit_direction,
+        relativeOrbit=list({frame.relative_orbit_number_min, frame.relative_orbit_number_max}),
+        intersectsWith=frame.geometry.wkt,
+        start=date_as_datetime - datetime.timedelta(minutes=5),
+        end=date_as_datetime + datetime.timedelta(days=1, minutes=5),
+    )
+    if not any(product_date == date for product in results for product_date in _get_dates(product)):
+        raise ValueError(f'No Sentinel-1 SLCs found for date {date} and frame id {frame_id}.')
+
+    return [result.properties['sceneName'] for result in results]

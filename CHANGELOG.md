@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0]
+
+### Added
+* `isce2_topsapp.__main__.gunw_slc` now accepts `--reference-date` and `--secondary-date` parameters as alternatives to
+  `--reference-scenes` and `--secondary-scenes`. When provided, `gunw_slc` will process all Sentinel-1 IW SLC scenes for
+  the given date and `--frame-id` in order to generate an ARIA_S1_GUNW product.
+
 ## [0.5.0]
 
 ### Added
