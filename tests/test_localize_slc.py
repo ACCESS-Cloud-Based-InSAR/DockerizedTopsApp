@@ -176,7 +176,7 @@ def test_localize_slc_with_valid_pairs(reference_ids, secondary_ids, frame_id):
 
 
 def test_get_slcs_by_date_and_frame():
-    with pytest.raises(ValueError, match=r'^No Sentinel-1 SLCs found for date '):
+    with pytest.raises(ValueError, match=r'^No Sentinel-1A/1B SLCs found for date '):
         get_slcs_for_date_and_frame(date(2018, 2, 17), 16584)
 
     assert get_slcs_for_date_and_frame(date(2018, 2, 18), 16584) == [
@@ -193,15 +193,17 @@ def test_get_slcs_by_date_and_frame():
         'S1B_IW_SLC__1SDV_20201222T151918_20201222T151945_024817_02F3D5_F283',
     ]
 
-    # crossing midnight
-    assert get_slcs_for_date_and_frame(date(2025, 5, 18), 18830) == [
-        'S1C_IW_SLC__1SDV_20250519T000015_20250519T000042_002392_005070_1A43',
-        'S1C_IW_SLC__1SDV_20250518T235950_20250519T000017_002392_005070_A436',
+    # earlier scene crossing midnight
+    assert get_slcs_for_date_and_frame(date(2021, 5, 15), 18829) == [
+        'S1B_IW_SLC__1SDV_20210516T000016_20210516T000043_026922_033760_77C5',
+        'S1B_IW_SLC__1SDV_20210515T235951_20210516T000019_026922_033760_F8C1',
     ]
-    assert get_slcs_for_date_and_frame(date(2025, 5, 19), 18830) == [
-        'S1C_IW_SLC__1SDV_20250519T000015_20250519T000042_002392_005070_1A43',
-        'S1C_IW_SLC__1SDV_20250518T235950_20250519T000017_002392_005070_A436',
+    assert get_slcs_for_date_and_frame(date(2021, 5, 16), 18829) == [
+        'S1B_IW_SLC__1SDV_20210516T000016_20210516T000043_026922_033760_77C5',
+        'S1B_IW_SLC__1SDV_20210515T235951_20210516T000019_026922_033760_F8C1',
     ]
+
+    # later scene crossing midnight
     assert get_slcs_for_date_and_frame(date(2025, 1, 4), 25672) == [
         'S1A_IW_SLC__1SDV_20250103T235934_20250104T000002_057287_070C52_215C',
         'S1A_IW_SLC__1SDV_20250103T235910_20250103T235937_057287_070C52_1291'
@@ -217,10 +219,14 @@ def test_get_slcs_by_date_and_frame():
         'S1A_IW_SLC__1SDV_20220514T153215_20220514T153242_043208_052911_BBAE',
     ]
 
-    with pytest.raises(ValueError, match=r'^No Sentinel-1 SLCs found for date '):
+    # scenes close to midnight but not crossing
+    with pytest.raises(ValueError, match=r'^No Sentinel-1A/1B SLCs found for date '):
         get_slcs_for_date_and_frame(date(2025, 1, 4), 25671)
-
     assert get_slcs_for_date_and_frame(date(2025, 1, 3), 25671) == [
         'S1A_IW_SLC__1SDV_20250103T235910_20250103T235937_057287_070C52_1291',
         'S1A_IW_SLC__1SDV_20250103T235845_20250103T235912_057287_070C52_5599',
     ]
+
+    # Sentinel-1C acquisitions should be ignored
+    with pytest.raises(ValueError, match=r'^No Sentinel-1A/1B SLCs found for date '):
+        get_slcs_for_date_and_frame(date(2025, 5, 18), 18830)

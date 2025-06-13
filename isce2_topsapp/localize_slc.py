@@ -247,6 +247,7 @@ def get_slcs_for_date_and_frame(date: datetime.date, frame_id: int) -> list[str]
     date_as_datetime = datetime.datetime(year=date.year, month=date.month, day=date.day)
     results = asf.search(
         dataset=asf.constants.DATASET.SENTINEL1,
+        platform=['SA', 'SB'],
         processingLevel=asf.constants.PRODUCT_TYPE.SLC,
         beamMode=asf.constants.BEAMMODE.IW,
         polarization=[asf.constants.POLARIZATION.VV, asf.constants.POLARIZATION.VV_VH],
@@ -257,6 +258,6 @@ def get_slcs_for_date_and_frame(date: datetime.date, frame_id: int) -> list[str]
         end=date_as_datetime + datetime.timedelta(days=1, minutes=5),
     )
     if not any(product_date == date for product in results for product_date in _get_dates(product)):
-        raise ValueError(f'No Sentinel-1 SLCs found for date {date} and frame id {frame_id}.')
+        raise ValueError(f'No Sentinel-1A/1B SLCs found for date {date} and frame id {frame_id}.')
 
     return [result.properties['sceneName'] for result in results]
