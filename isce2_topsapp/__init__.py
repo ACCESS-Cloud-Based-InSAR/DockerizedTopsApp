@@ -37,7 +37,7 @@ from isce2_topsapp.localize_burst import (  # noqa: E402
 from isce2_topsapp.localize_dem import download_dem_for_isce2  # noqa: E402
 from isce2_topsapp.localize_mask import download_water_mask  # noqa: E402
 from isce2_topsapp.localize_orbits import download_orbits  # noqa: E402
-from isce2_topsapp.localize_slc import download_slcs, get_asf_slc_objects  # noqa: E402
+from isce2_topsapp.localize_slc import download_slcs, get_asf_slc_objects, get_slcs_for_date_and_frame  # noqa: E402
 from isce2_topsapp.packaging import package_gunw_product  # noqa: E402
 from isce2_topsapp.topsapp_params import topsappParams  # noqa: E402
 from isce2_topsapp.topsapp_proc import topsapp_processing  # noqa: E402
@@ -68,6 +68,7 @@ __all__ = [
     "download_slcs",
     "get_asf_slc_objects",
     "get_region_of_interest",
+    "get_slcs_for_date_and_frame",
     "download_dem_for_isce2",
     "download_water_mask",
     "download_aux_cal",

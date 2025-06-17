@@ -4,6 +4,7 @@ import netrc
 import os
 import sys
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
+from datetime import date
 from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Optional
@@ -18,6 +19,7 @@ from isce2_topsapp import (BurstParams,
                            download_water_mask,
                            get_asf_slc_objects,
                            get_region_of_interest,
+                           get_slcs_for_date_and_frame,
                            package_gunw_product,
                            prepare_for_delivery,
                            topsappParams,
@@ -144,16 +146,20 @@ def get_slc_parser():
     parser.add_argument('--bucket')
     parser.add_argument('--bucket-prefix', default='')
     parser.add_argument('--dry-run', action='store_true')
-    parser.add_argument('--reference-scenes', type=str.split, nargs='+', required=True)
-    parser.add_argument('--secondary-scenes', type=str.split, nargs='+', required=True)
+    reference_group = parser.add_mutually_exclusive_group(required=True)
+    reference_group.add_argument('--reference-scenes', type=str.split, nargs='+')
+    reference_group.add_argument('--reference-date', type=date.fromisoformat)
+    secondary_group = parser.add_mutually_exclusive_group(required=True)
+    secondary_group.add_argument('--secondary-scenes', type=str.split, nargs='+')
+    secondary_group.add_argument('--secondary-date', type=date.fromisoformat)
     parser.add_argument('--estimate-ionosphere-delay', type=true_false_string_argument, default=True)
     parser.add_argument('--frame-id', type=int, default=-1, required=True,
                         help=('If -1 is specified, no frame is used and a non-standard product generated. '
                               'See examples in repository. For generating SLC pairs and a fixed frame, see:'
                               'https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator'))
     parser.add_argument('--min-frame-coverage', type=float, default=MIN_FRAME_COVERAGE_DEFAULT,
-                        help=('Minimum amount of the frame that must be covered by the overlap '
-                              'between the reference and secondary granules.'))
+                        help=('Minimum amount of the frame that must be covered by the overlap of the reference '
+                              'and secondary granules. Values should be between 0.0 and 1.0, inclusive.'))
     parser.add_argument('--compute-solid-earth-tide', type=true_false_string_argument, default=True)
     parser.add_argument('--esd-coherence-threshold', type=float, default=-1.)
     parser.add_argument('--output-resolution', type=int, default=90, required=False)
@@ -165,13 +171,21 @@ def get_slc_parser():
 
 
 def update_slc_namespace(args: Namespace) -> Namespace:
+    if args.reference_date:
+        args.reference_scenes = get_slcs_for_date_and_frame(args.reference_date, args.frame_id)
+        print(f'Found reference scenes {args.reference_scenes}')
+    else:
+        args.reference_scenes = [
+            item for sublist in args.reference_scenes for item in sublist
+        ]
 
-    args.reference_scenes = [
-        item for sublist in args.reference_scenes for item in sublist
-    ]
-    args.secondary_scenes = [
-        item for sublist in args.secondary_scenes for item in sublist
-    ]
+    if args.secondary_date:
+        args.secondary_scenes = get_slcs_for_date_and_frame(args.secondary_date, args.frame_id)
+        print(f'Found secondary scenes {args.secondary_scenes}')
+    else:
+        args.secondary_scenes = [
+            item for sublist in args.secondary_scenes for item in sublist
+        ]
 
     args.esd_coherence_threshold = esd_threshold_argument(args.esd_coherence_threshold)
 

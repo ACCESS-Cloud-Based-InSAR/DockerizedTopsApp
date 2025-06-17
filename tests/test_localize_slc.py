@@ -1,4 +1,6 @@
+import re
 import warnings
+from datetime import date
 
 import pytest
 
@@ -6,7 +8,8 @@ from isce2_topsapp.localize_slc import (check_date_order,
                                         check_flight_direction,
                                         check_track_numbers, download_slcs,
                                         get_asf_slc_objects,
-                                        get_interferogram_geo)
+                                        get_interferogram_geo,
+                                        get_slcs_for_date_and_frame)
 
 
 def test_intersection_geometry():
@@ -113,8 +116,10 @@ def test_min_frame_coverage():
     sec_ob = get_asf_slc_objects(sec_ids)
 
     get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id, min_frame_coverage=0.72)
-    with pytest.raises(
-            ValueError, match=r'^IFG area \(i\.e\. ref and sec overlap\) covers less than 73\.0% of Frame area$'):
+
+    match = (r'IFG area (i.e. ref and sec overlap) covers only 72.08% of Frame area; '
+             r'the requested minimum coverage was 73.00%.')
+    with pytest.raises(ValueError, match=re.escape(match)):
         get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id, min_frame_coverage=0.73)
 
 
@@ -129,8 +134,10 @@ def test_min_frame_coverage_default():
     sec_ob = get_asf_slc_objects(sec_ids)
 
     get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id, min_frame_coverage=0.0)
-    with pytest.raises(
-            ValueError, match=r'^IFG area \(i\.e\. ref and sec overlap\) covers less than 1\.0% of Frame area$'):
+
+    match = (r'IFG area (i.e. ref and sec overlap) covers only 0.00% of Frame area; '
+             r'the requested minimum coverage was 1.00%.')
+    with pytest.raises(ValueError, match=re.escape(match)):
         get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id)
 
 
@@ -166,3 +173,60 @@ frame_id_list = [-1, -1, -1, 22438]
 @pytest.mark.parametrize("reference_ids, secondary_ids, frame_id", zip(reference_list, secondary_list, frame_id_list))
 def test_localize_slc_with_valid_pairs(reference_ids, secondary_ids, frame_id):
     assert download_slcs(reference_ids, secondary_ids, frame_id=frame_id, dry_run=True)
+
+
+def test_get_slcs_by_date_and_frame():
+    with pytest.raises(ValueError, match=r'^No Sentinel-1A/1B SLCs found for date '):
+        get_slcs_for_date_and_frame(date(2018, 2, 17), 16584)
+
+    assert get_slcs_for_date_and_frame(date(2018, 2, 18), 16584) == [
+        'S1A_IW_SLC__1SDV_20180218T003445_20180218T003512_020654_0235ED_81FB',
+        'S1A_IW_SLC__1SDV_20180218T003420_20180218T003447_020654_0235ED_D95D',
+    ]
+    assert get_slcs_for_date_and_frame(date(2016, 1, 29), 1928) == [
+        'S1A_IW_SLC__1SSV_20160129T142226_20160129T142252_009710_00E2CF_E92E',
+        'S1A_IW_SLC__1SSV_20160129T142201_20160129T142228_009710_00E2CF_05D3',
+    ]
+    assert get_slcs_for_date_and_frame(date(2020, 12, 22), 17949) == [
+        'S1B_IW_SLC__1SDV_20201222T152007_20201222T152034_024817_02F3D5_9C80',
+        'S1B_IW_SLC__1SDV_20201222T151943_20201222T152010_024817_02F3D5_4D14',
+        'S1B_IW_SLC__1SDV_20201222T151918_20201222T151945_024817_02F3D5_F283',
+    ]
+
+    # earlier scene crossing midnight
+    assert get_slcs_for_date_and_frame(date(2021, 5, 15), 18829) == [
+        'S1B_IW_SLC__1SDV_20210516T000016_20210516T000043_026922_033760_77C5',
+        'S1B_IW_SLC__1SDV_20210515T235951_20210516T000019_026922_033760_F8C1',
+    ]
+    assert get_slcs_for_date_and_frame(date(2021, 5, 16), 18829) == [
+        'S1B_IW_SLC__1SDV_20210516T000016_20210516T000043_026922_033760_77C5',
+        'S1B_IW_SLC__1SDV_20210515T235951_20210516T000019_026922_033760_F8C1',
+    ]
+
+    # later scene crossing midnight
+    assert get_slcs_for_date_and_frame(date(2025, 1, 4), 25672) == [
+        'S1A_IW_SLC__1SDV_20250103T235934_20250104T000002_057287_070C52_215C',
+        'S1A_IW_SLC__1SDV_20250103T235910_20250103T235937_057287_070C52_1291'
+    ]
+    assert get_slcs_for_date_and_frame(date(2025, 1, 3), 25672) == [
+        'S1A_IW_SLC__1SDV_20250103T235934_20250104T000002_057287_070C52_215C',
+        'S1A_IW_SLC__1SDV_20250103T235910_20250103T235937_057287_070C52_1291'
+    ]
+
+    # ascending crossing equator with multiple relative orbits
+    assert get_slcs_for_date_and_frame(date(2022, 5, 14), 13403) == [
+        'S1A_IW_SLC__1SDV_20220514T153240_20220514T153307_043209_052911_51B2',
+        'S1A_IW_SLC__1SDV_20220514T153215_20220514T153242_043208_052911_BBAE',
+    ]
+
+    # scenes close to midnight but not crossing
+    with pytest.raises(ValueError, match=r'^No Sentinel-1A/1B SLCs found for date '):
+        get_slcs_for_date_and_frame(date(2025, 1, 4), 25671)
+    assert get_slcs_for_date_and_frame(date(2025, 1, 3), 25671) == [
+        'S1A_IW_SLC__1SDV_20250103T235910_20250103T235937_057287_070C52_1291',
+        'S1A_IW_SLC__1SDV_20250103T235845_20250103T235912_057287_070C52_5599',
+    ]
+
+    # Sentinel-1C acquisitions should be ignored
+    with pytest.raises(ValueError, match=r'^No Sentinel-1A/1B SLCs found for date '):
+        get_slcs_for_date_and_frame(date(2025, 5, 18), 18830)
