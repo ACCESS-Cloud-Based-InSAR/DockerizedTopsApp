@@ -1,10 +1,10 @@
-# DockerizedTopsApp (aka ISCE2 TopsApp Hyp3-Plugin)
+# DockerizedTopsApp (aka ISCE2 TopsApp HyP3-Plugin)
 
 This repository represents a dockerized science processor for generating an ARIA Sentinel-1 [Geocoded Unwrapped Interferogram](https://asf.alaska.edu/data-sets/derived-data-sets/sentinel-1-interferograms/) (ARIA-S1-GUNW) product from a collection of valid Sentinel-1 IW-mode Single Look Complex (SLC) IDs across a date pair using [ISCE2](https://github.com/isce-framework/isce2). The ARIA-S1-GUNW (or simply a GUNW) is an official NASA product. The initial development of the GUNW was done under the Getting Ready for NISAR initiative and a collection of related ARIA-funded projects. This work has continued under the Project Enabling Cloud-Based InSAR Science for an Exploding NASA InSAR Data Archive (ACCESS19-0023) funded under the ACCESS program. A description of the product can be found here: https://aria.jpl.nasa.gov/products/standard-displacement-products.html
 
 This processor plugs into the [HyP3](https://hyp3-docs.asf.alaska.edu/v2-transition/) platform and therefore can spawn processing at scale from an API. All of the necessary datasets required for processing are determined from the input SLC IDS and then downloaded from public APIs. Thus, this repository accomplishes two goals:
 
-1. Integrates into [Hyp3](https://github.com/ASFHyP3/hyp3) platform so that this processing unit can be called directly from an API or the [hyp3-sdk](https://github.com/ASFHyP3/hyp3-sdk) to generate ARIA GUNWs.
+1. Integrates into [HyP3](https://github.com/ASFHyP3/hyp3) platform so that this processing unit can be called directly from an API or the [hyp3-sdk](https://github.com/ASFHyP3/hyp3-sdk) to generate ARIA GUNWs.
 2. Fashions a command line interface (CLI) for generating the GUNWs for local study and research.
 
 We note all the input datasets are publicly available using a NASA Earthdata account. This codebase can be run locally both within a conda environment or within a docker container. To generate a GUNW, one needs to only specify valid SLC IDs that span a repeat-pass for a specific Sentinel-1 viewing geometry. The `main` branch of this repository is the stable release deployed via the HyP3 platform and can be accessed via the appropriate API.
@@ -200,7 +200,7 @@ This is an open-source plugin and we welcome contributions. Because we use this 
 ## Installation for Development
 
 
-1. Clone or fork this repo. If you are a member of ACCESS or working on new features of this plugin, ask to become a member of this Github organization. The integration tests will be easier to run if you are pushing to branches of this repository as opposed to a fork (require organization secrets). This will ensure new features are more quickly integrated particularly into hyp3. Otherwise, please add secrets to your repository as indicate below.
+1. Clone or fork this repo. If you are a member of ACCESS or working on new features of this plugin, ask to become a member of this Github organization. The integration tests will be easier to run if you are pushing to branches of this repository as opposed to a fork (require organization secrets). This will ensure new features are more quickly integrated particularly into HyP3. Otherwise, please add secrets to your repository as indicate below.
 2. Navigate with your terminal to the repo.
 3. Create a new environment and install requirements using `conda env update --file environment.yml`
 4. Activate the environment: `conda activate topsapp_env`
@@ -233,14 +233,14 @@ The passing of the test suite *do not guarantee successful generation of a GUNW!
 The test suite helps make sure portions of the cloud workflow, e.g. downloading metadata, a simulated CMR handshake, and packaging, occur as expected. 
 However, the plugin takes about 1.5 to 3 hours (depending on the number of corrections requested) to generate a final GUNW. 
 Therefore, these integration are *not* sufficient to permit a new release (see more instructions below). 
-Until we have a complete end-to-end test of the workflow (via Hyp3), any new feature cannot be integrated into official production (i.e. the `main` branch). 
+Until we have a complete end-to-end test of the workflow (via HyP3), any new feature cannot be integrated into official production (i.e. the `main` branch).
 As a first step, it is imperative to share the output of a new feature (i.e. the GUNW file and the command to generate it). 
 Here is a notebook that demonstrates how to compare GUNWs that will be very helpful: https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsapp-Debugging-NBs/blob/dev/2_Compare_GUNWs.ipynb
 
 
-## Hyp3 and Cloud Submission
+## HyP3 and Cloud Submission
 
-There are two branches: `dev` and `main`. The former is the "test" branch and the later is the "production" branch. When submitting jobs to Hyp3 there are two job types related to `INSAR_ISCE_TEST` and `INSAR_ISCE`. The former corresponds to the `dev` branch and the latter to `main`. This allows us to test the plugin *in the cloud* incrementally before transitioning new features to production. This is a design feature of Hyp3 (thanks, Joseph Kennedy!). Since end-to-end tests are required as noted above, this ensures that our production branch is always well tested.
+There are two branches: `dev` and `main`. The former is the "test" branch and the latter is the "production" branch. When submitting jobs to HyP3 there are two job types related to `INSAR_ISCE_TEST` and `INSAR_ISCE`. The former corresponds to the `dev` branch and the latter to `main`. This allows us to test the plugin *in the cloud* incrementally before transitioning new features to production. This is a design feature of HyP3 (thanks, Joseph Kennedy!). Since end-to-end tests are required as noted above, this ensures that our production branch is always well tested.
 
 ## Versions
 
