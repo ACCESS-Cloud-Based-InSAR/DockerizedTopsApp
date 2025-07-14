@@ -21,22 +21,18 @@ from isce2_topsapp.packaging_utils.ionosphere import (
 from isce2_topsapp.templates import read_netcdf_packaging_template
 from isce2_topsapp.water_mask import get_water_mask_raster_for_browse_image
 
-DATASET_VERSION = "3.0.1"
-STANDARD_PROD_PREFIX = "S1-GUNW"
-CUSTOM_PROD_PREFIX = "S1-GUNW_CUSTOM"
+"""Warning: the packaging scripts were written as command line scripts and
+are highly dependent on the current working directory and its structure.
 
+Frequently, scripts (if they fail) may change the current working directory so
+cannot be re-run with the same inputs unless the initial current working
+directory are correctly configured in the workspace as initially intended.
 
-# Warning: the packaging scripts were written as command line scripts and
-# are highly dependent on the current working directory and its structure.
-#
-# Frequently, scripts (if they fail) may change the current working directory
-# so cannot be re-run with the same inputs unless the initial current working
-# directory is correctly configured in the workspace as initially intended.
-#
-# For example, let `cwd` be the current working directory and `F` be some
-# routine that takes `cwd`. If `F(cwd)` fails, then `F(cwd)` may fail
-# simply because the actual current working directory is different because this
-# was changed during runtime of `F`.
+For example, let `cwd` be the current working directory and `F` be some
+routine that takes `cwd`. If `F(cwd)` fails, then `F(cwd)` may fail
+simply because the actual current working directory is different because this
+was changed during runtime of `F`.
+"""
 
 # The filename in the ISCE2 merged folder
 LAYER2PATH = {
@@ -45,6 +41,20 @@ LAYER2PATH = {
     "filtered_coherence": {"file_name": "phsig.cor.geo", "band": 1},
     "unfiltered_coherence": {"file_name": "topophase.cor.geo", "band": 2},
 }
+
+
+def product_naming_scheme(product: str):
+    if product == "GUNW":
+        DATASET_VERSION = "3.0.1"
+        STANDARD_PROD_PREFIX = "S1-GUNW"
+        CUSTOM_PROD_PREFIX = "S1-GUNW_CUSTOM"
+        return DATASET_VERSION, STANDARD_PROD_PREFIX, CUSTOM_PROD_PREFIX
+
+    elif product == "COSEIS_SAR":
+        DATASET_VERSION = "1.0.0"
+        STANDARD_PROD_PREFIX = "S1-COSEIS_SAR"
+        CUSTOM_PROD_PREFIX = "S1-COSEIS_SAR"
+        return DATASET_VERSION, STANDARD_PROD_PREFIX, CUSTOM_PROD_PREFIX
 
 
 def read_baselines(tops_proc_xml: str) -> dict:
@@ -125,6 +135,7 @@ def get_gunw_id(
     reference_properties: list,
     secondary_properties: list,
     extent: list,
+    product: str = "GUNW",
     standard_product: bool = True,
 ) -> str:
     # asc_or_desc: will be "A" or "D"
@@ -157,6 +168,9 @@ def get_gunw_id(
     secondary_ids = [p["sceneName"] for p in secondary_properties]
     ifg_hash = get_gunw_hash_id(reference_ids, secondary_ids)
     ifg_hash_trunc = ifg_hash[:4]
+
+    # product type
+    DATASET_VERSION, STANDARD_PROD_PREFIX, CUSTOM_PROD_PREFIX = product_naming_scheme(product)
 
     # version
     version = DATASET_VERSION.replace(".", "_")
@@ -217,7 +231,7 @@ def make_geocube(isce_data_directory: Union[str, Path]) -> Path:
     return metadata_path
 
 
-def _write_json_config(*, gunw_id: str, directory: Path) -> Path:
+def _write_json_config(*, product: str, gunw_id: str, directory: Path) -> Path:
     """Reads the json template and writes a new entry: `file: '<gunw_id>.nc'`.
 
     Then, the new json file is saved in the directory specified. The filename
@@ -225,6 +239,8 @@ def _write_json_config(*, gunw_id: str, directory: Path) -> Path:
 
     Parameters
     ----------
+    product : str
+        The product type. Currently, GUNW and COSEIS_SAR are supported.
     gunw_id : str
         The gunw_id is specified as this will be used to create a netcdf file
         `<gunw_id>.nc`.
@@ -236,7 +252,7 @@ def _write_json_config(*, gunw_id: str, directory: Path) -> Path:
     Path
         Path to `tops_group.json`.
     """
-    nc_template = read_netcdf_packaging_template()
+    nc_template = read_netcdf_packaging_template(product=product)
 
     nc_template["filename"] = f"{gunw_id}.nc"
     # This will be appended to the global source attribute
@@ -253,6 +269,7 @@ def _write_json_config(*, gunw_id: str, directory: Path) -> Path:
 
 def perform_netcdf_packaging(
     *,
+    product: str,
     gunw_id: str,
     isce_data_dir: Union[str, Path]
 ) -> Path:
@@ -263,7 +280,7 @@ def perform_netcdf_packaging(
     assert metadata_path.exists()
 
     # Write config file
-    _write_json_config(gunw_id=gunw_id, directory=merged_dir)
+    _write_json_config(product=product, gunw_id=gunw_id, directory=merged_dir)
 
     cwd = Path.cwd()
     os.chdir(merged_dir)
@@ -428,6 +445,7 @@ def package_gunw_product(
     reference_properties: list,
     secondary_properties: list,
     extent: list,
+    product: str = 'GUNW',
     topaspp_params: dict,
     cmd_line_str: str,
     product_geometry_wkt: str,
@@ -435,7 +453,7 @@ def package_gunw_product(
     standard_product: bool = True,
     additional_attributes: Optional[dict] = None,
 ) -> Path:
-    """Creates a GUNW standard product netcdf from the ISCE outputs and some
+    """Creates a GUNW standard product or COSEIS-SAR product netcdf from the ISCE outputs and some
     initial metadata.
 
     Parameters
@@ -448,6 +466,8 @@ def package_gunw_product(
         Each item a dictionary per ASF API including ID, starttime, etc
     extent: list
         List of extents ([xmin, ymin, xmax, ymax])
+    product: str
+        The product type. Currently, GUNW and COSEIS_SAR are supported
     additional_2d_layers: list
         List of 2d layers to add. Currently, supported is ionosphere.
     additional_attributes: dict
@@ -469,11 +489,12 @@ def package_gunw_product(
         reference_properties=reference_properties,
         secondary_properties=secondary_properties,
         extent=extent,
+        product=product,
         standard_product=standard_product,
     )
 
     out_nc_file = perform_netcdf_packaging(
-        isce_data_dir=isce_data_directory, gunw_id=gunw_id
+        product=product, isce_data_dir=isce_data_directory, gunw_id=gunw_id
     )
 
     if additional_2d_layers is not None:
