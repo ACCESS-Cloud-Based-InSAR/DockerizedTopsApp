@@ -5,8 +5,8 @@ from typing import Union
 
 import requests
 
-S1A_AUX_URL = "https://sar-mpc.eu/files/S1A_AUX_CAL_20241128.zip"
-S1B_AUX_URL = "https://sar-mpc.eu/files/S1B_AUX_CAL_20241128.zip"
+S1A_AUX_URL = "https://d3g9emy65n853h.cloudfront.net/AUX_CAL/S1A_AUX_CAL_20241128.zip"
+S1B_AUX_URL = "https://d3g9emy65n853h.cloudfront.net/AUX_CAL/S1B_AUX_CAL_20241128.zip"
 
 
 def _download_platform(url: str, aux_cal_dir: Path):
