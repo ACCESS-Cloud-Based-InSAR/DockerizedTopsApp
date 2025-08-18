@@ -26,6 +26,7 @@ This update provides new functionality for production of an the earthquake-speci
 * `rangePixelOffsets` and `azimuthPixelOffsets` units changed from `rad` to `meter` and `input_relative_path` changed from `filt_dense_offsets.geo` to `filt_dense_offsets_m.geo` in `additional_layers.json`.
 * Ampcor window size changed from 64x64 to 32x128 pixels in `topsapp_proc.py`. This change was made to account for ground resolution differences in range/azimuth direction (2.3m/14m), making range/azimuth pixel offset outputs approximately square, rather than rectangular.
 * Updated `iono_processing` function in `iono_proc.py` to take and assign `range_looks` and `azimuth_looks` as arguments based on CLI-defined `output-resolution`. This is necessary for iono layer resolution to match 30- and 90-meter products. Corresponding updates were made in `__main__.py` when calling `iono_processing`.
+* Updated download URLs for S1 AUX_CAL files from sar-mpc.eu to ASF-managed https://d3g9emy65n853h.cloudfront.net/ URLs. Fixes https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/issues/218.
 
 ### Fixed 
 * Code formatting updated to comply with Flake8 rules.
