@@ -7,23 +7,27 @@ import rasterio
 from numpy.testing import assert_almost_equal
 
 from isce2_topsapp.packaging import (
-    DATASET_VERSION,
     get_geocoded_layer_means,
     get_gunw_id,
+    product_naming_scheme,
     read_baselines,
 )
 
 test_dir = Path(__file__).parent
 
 
-def test_gunw_id_generation_crossing_dateline():
+def test_gunw_id_generation_crossing_dateline(product='GUNW'):
     sample_json_path = test_dir / "midnight_crossing_metadata.json"
     metadata = json.load(open(sample_json_path))
     gunw_id = get_gunw_id(
         metadata["reference_properties"],
         metadata["secondary_properties"],
         metadata["extent"],
+        product
     )
+
+    DATASET_VERSION, _, _ = product_naming_scheme(product)
+
     version_str = DATASET_VERSION.replace(".", "_")
     assert (
         gunw_id

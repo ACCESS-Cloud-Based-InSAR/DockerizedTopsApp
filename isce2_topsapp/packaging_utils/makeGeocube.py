@@ -168,17 +168,17 @@ def convert_4326_to_utm(lon: float, lat: float) -> str:
 
 def getMergedOrbit(product):
 
-    ###Create merged orbit
+    # Create merged orbit
     orb = Orbit()
     orb.configure()
 
     burst = product[0].bursts[0]
-    #Add first burst orbit to begin with
+    # Add first burst orbit to begin with
     for sv in burst.orbit:
         orb.addStateVector(sv)
 
     for pp in product:
-        ##Add all state vectors
+        # Add all state vectors
         for bb in pp.bursts:
             for sv in bb.orbit:
                 if (sv.time < orb.minTime) or (sv.time > orb.maxTime):
@@ -252,7 +252,7 @@ def estimateGridPoints(inps):
     Estimate start and end.
     '''
 
-    #pdb.set_trace()
+    # pdb.set_trace()
     inps.proj = CRS.from_epsg(int(inps.epsg))
     inps.ecef = pyproj.Proj(proj='geocent', ellps='WGS84', datum='WGS84')
     inps.lla = CRS.from_epsg(4326)
@@ -587,35 +587,36 @@ def processCube(inps, fid, no_data=-9999):
 
 
 def main():
-    #Command line parser
+    # Command line parser
     inps = cmdLineParse()
 
-    #Load Metadata
+    # Load Metadata
     loadMetadata(inps)
 
-    #Add summary information
+    # Add summary information
     generateSummary(inps)
 
-    ##Get corners
+    # Get corners
     estimateGridPoints(inps)
 
-    ###Create h5 file
+    # Create h5 file
     hdf5_path = Path(inps.outh5)
     if hdf5_path.exists():
         hdf5_path.unlink()
     fid = h5py.File(hdf5_path, 'w')
-    ###Record inputs
 
+    # Record inputs
     writeInputs(inps, fid)
 
-    ###Record summary
+    # Record summary
     writeSummary(inps, fid)
 
-    ####Generate cube
+    # Generate cube
     processCube(inps, fid, no_data=inps.nodata)
 
-    ####Close file
+    # Close file
     fid.close()
+
 
 if __name__ == '__main__':
     '''

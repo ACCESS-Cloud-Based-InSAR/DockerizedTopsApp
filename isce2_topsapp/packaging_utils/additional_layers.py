@@ -16,7 +16,7 @@ def add_2d_layer(
     Combines a lot of standard formatting of the netcdf via rioxarray and
     deletes the previous placeholder if there is one.
 
-    We assume any additional processing specific to GUNW is done outside of
+    We assume any additional processing specific to GUNW or COSEIS_SAR products are done outside of
     this function.
     """
 

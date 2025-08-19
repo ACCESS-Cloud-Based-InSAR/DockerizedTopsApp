@@ -62,7 +62,7 @@ isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T22283
 Add `> topsapp_img.out 2> topsapp_img.err` to avoid unnecessary output to your terminal and record the stdout and stderr as files.
 This is reflected in the [`sample_run.sh`](sample_run.sh).
 
-To be even more explicity, you can use [`tee`](https://en.wikipedia.org/wiki/Tee_(command)) to record output to both including `> >(tee -a topsapp_img.out) 2> >(tee -a topsapp_img.err >&2)`.
+To be even more explicit, you can use [`tee`](https://en.wikipedia.org/wiki/Tee_(command)) to record output to both including `> >(tee -a topsapp_img.out) 2> >(tee -a topsapp_img.err >&2)`.
 
 ## What makes an ARIA-S1-GUNW Product *standard*?
 
@@ -133,6 +133,30 @@ or as a json:
 }
 ```
 
+## The ARIA-COSEIS-SAR Product
+
+In addition to supporting both standard and custom `GUNW` production workflows, this repository enables the generation of sensor-agnostic, earthquake-specific coseismic geocoded InSAR products within the `GUNW` production framework. These products, termed `ARIA-COSEIS-SAR` (or simply `COSEIS-SAR`) products are generated from one or more along-track Sentinel-1 Single Look Complex (SLC) IDs that temporally bracket an earthquake event and spatially cover the full geographic extent required to capture the earthquake-induced surface deformation zone surrounding the epicenter. `COSEIS-SAR` product layers largely mirror `GUNW` layers with a few key differences and additions. Chiefly, line-of-sight (LOS) displacement estimates in the `COSEIS-SAR` product are provided in units of meters (rather than radians) for more rapid cross-sensor integration in downstream earthquake modeling workflows. Additionally, the `COSEIS-SAR` product provides a measure of dense pixel offsets in both range and azimuth directions (also in units of meters) as a supplemental measure of surface displacement. `COSEIS-SAR` layers are provided at an output resolution of 30 meters to enable more detailed surface rupture and damage proxy mapping. Correction layers for solid earth tides and ionosphere propagation path delays are also included with the `COSEIS-SAR` product.
+
+The `COSEIS-SAR` product enhancement to the pre-exisiting `GUNW` production workflow was developed as part of the *One-Stop-Shop of Coseismic Products* project funded under NASA's ROSES Earth Surface and Interior (ESI) focus area (23-ESI23-0012) to enhance access to earthquake-specific coseismic products and facilitate more comprehensive studies of earthquake mechanisms and disaster response efforts, particularly the generation of downstream response products.
+
+## Generate an ARIA-COSEIS-SAR product for the 2019 Ridgecrest, CA earthquake sequence 
+
+`COSEIS-SAR` production leverages identical syntax to the `GUNW` product, with the additon of a required `++process coseis_sar` flag. The example run below will generate a product covering the full region affected by the [July 4, 2019 Mw 6.4](https://earthquake.usgs.gov/earthquakes/eventpage/ci38443183/executive) and [July 5, 2019 Mw 7.1](https://earthquake.usgs.gov/earthquakes/eventpage/ci38457511/executive) earthquakes near Ridgecrest, CA. As with the `GUNW` workflow described above, make sure you have a `~/.netrc` and run the following command:
+
+```
+isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20190716T135159_20190716T135226_028143_032DC3_512B
+			  --secondary-scenes S1A_IW_SLC__1SDV_20190704T135158_20190704T135225_027968_032877_1C4D
+			  --frame-id -1 
+			  --estimate-ionosphere-delay True 
+			  --esd-coherence-threshold -1 
+			  --compute-solid-earth-tide True 
+			  --goldstein-filter-power 0.5 
+			  --output-resolution 30 
+			  --unfiltered-coherence True 
+			  --dense-offsets True 
+			  ++process coseis_sar
+```
+**Note:**`COSEIS-SAR` production takes longer (often *much* longer) than `GUNW` production due to its 30 meter output resolution, as well as the required mosaicking of multiple along-track SLCs to capture the earthquake surface deformation zone. 
 
 # Running with Docker (locally or on a server)
 
