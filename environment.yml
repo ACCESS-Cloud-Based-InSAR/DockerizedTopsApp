@@ -2,7 +2,7 @@ name: topsapp_env
 channels:
  - conda-forge
 dependencies:
- - python>=3.11,<3.12
+ - python>=3.11,<3.13 # currently isce2 does not support 3.13
  - pip
  - affine
  - asf_search>=5.0.0
