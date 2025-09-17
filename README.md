@@ -31,8 +31,9 @@ Our instructions are tailored for this. Below are generic instructions (addition
 `ISCE2` requires Intel `x86_64` complied, conda-forge packages. Please follow the directions [here](https://conda-forge.org/docs/user/tipsandtricks.html#installing-apple-intel-packages-on-apple-silicon) i.e.
 
 ```
-CONDA_SUBDIR=osx-64 conda create -n topsapp_env python
+CONDA_SUBDIR=osx-64 conda create -n topsapp_env python=3.11  # currently env is pinned at 3.11
 conda activate topsapp_env
+export CONDA_SUBDIR=osx-64  # added from official instructions
 conda config --env --set subdir osx-64 
 ```
 Then check
