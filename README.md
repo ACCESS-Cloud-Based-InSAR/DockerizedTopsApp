@@ -45,6 +45,11 @@ and finally update the environment with:
 ```
 mamba env update --file environment.yml
 ```
+To run the test notebooks, you will need to add a `topsapp_env` jupyter kernel, too:
+```
+python -m ipykernel install --user --name topsapp_env
+```
+
 
 ## Additional setup
 
