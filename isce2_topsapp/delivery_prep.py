@@ -65,9 +65,7 @@ def get_connected_component_mask(con_comp: np.ndarray) -> np.ndarray:
     return mask
 
 
-def save_png(
-    arr: np.ndarray, out_png_path: Path, scale_dimension: float = 0.2, cmap: str = "hsv"
-) -> Path:
+def save_png(arr: np.ndarray, out_png_path: Path, scale_dimension: float = 0.2, cmap: str = "hsv") -> Path:
     shape = arr.shape
     # from normal dynamic range to [0, 1]
     arr_scaled = scale_img(arr)
@@ -80,21 +78,20 @@ def save_png(
     cmap_trans = cm.__dict__[cmap]
     im = Image.fromarray(np.uint8(cmap_trans(arr_scaled) * 255))
     # https://stackoverflow.com/a/13211834
-    im = im.resize(shape_new, Image.ANTIALIAS)
+    im = im.resize(shape_new, Image.Resampling.LANCZOS)
 
     im.save(str(out_png_path))
     return out_png_path
 
 
-def get_wrapped_ifg(nc_path: Path,
-                    product: str) -> np.ndarray:
-    cc, profile = open_science_grid(nc_path, 'connectedComponents')
+def get_wrapped_ifg(nc_path: Path, product: str) -> np.ndarray:
+    cc, profile = open_science_grid(nc_path, "connectedComponents")
 
-    if product == 'GUNW':
-        unw, _ = open_science_grid(nc_path, 'unwrappedPhase')
+    if product == "GUNW":
+        unw, _ = open_science_grid(nc_path, "unwrappedPhase")
 
-    elif product == 'COSEIS_SAR':
-        unw, _ = open_science_grid(nc_path, 'losDisplacement')
+    elif product == "COSEIS_SAR":
+        unw, _ = open_science_grid(nc_path, "losDisplacement")
 
     mask_cc = get_connected_component_mask(cc)
     mask_water = get_water_mask_raster_for_browse_image(profile)
@@ -110,24 +107,18 @@ def get_wrapped_ifg(nc_path: Path,
 
 
 def gen_browse_imagery(nc_path: Path, out_path: Path, product: str) -> Path:
-
     wrapped = get_wrapped_ifg(nc_path, product)
     save_png(wrapped, out_path)
     return out_path
 
 
 def format_metadata(nc_path: Path, all_metadata: dict, product: str) -> dict:
-
     label = nc_path.name[:-3]  # removes suffix .nc
     geojson = all_metadata["gunw_geo"].__geo_interface__
 
-    ref_props_all = sorted(
-        all_metadata["reference_properties"], key=lambda prop: prop["startTime"]
-    )
+    ref_props_all = sorted(all_metadata["reference_properties"], key=lambda prop: prop["startTime"])
     ref_props_first = ref_props_all[0]
-    sec_props_all = sorted(
-        all_metadata["secondary_properties"], key=lambda prop: prop["startTime"]
-    )
+    sec_props_all = sorted(all_metadata["secondary_properties"], key=lambda prop: prop["startTime"])
     sec_props_first = sec_props_all[0]
     b_perp = read_baseline_perp(nc_path).mean()
 
@@ -200,7 +191,7 @@ def prepare_for_delivery(nc_path: Path, all_metadata: dict, product: str) -> Pat
     out_dir = Path(gunw_id)
     out_dir.mkdir(exist_ok=True)
 
-    browse_path = out_dir / f'{gunw_id}.png'
+    browse_path = out_dir / f"{gunw_id}.png"
     gen_browse_imagery(nc_path, browse_path, product)
 
     metadata = format_metadata(nc_path, all_metadata, product)
