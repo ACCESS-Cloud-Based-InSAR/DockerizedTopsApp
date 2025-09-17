@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1]
+
+### Added
+* Support for latest ISCE2 and therefore python 3.10 - 3.12!
+* Sentinel-1C support (inherited from ISCE2).
+
+
 ## [1.0.0]
 This update provides new functionality for production of an the earthquake-specific, sensor-agnostic `COSEIS_SAR` product, while leaving the standard `GUNW` product generation functionality (`0.6.0`) unchanged.
 
