@@ -5,6 +5,8 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Optional
 
+import asf_search
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Handling ISCE2 idiosyncrasies; At least the logging fix should be done BEFORE most other imports
 # ----------------------------------------------------------------------------------------------------------------------
@@ -63,6 +65,11 @@ except PackageNotFoundError:
     )
 
 # ----------------------------------------------------------------------------------
+# Increase CMR timeout
+# ----------------------------------------------------------------------------------
+asf_search.constants.INTERNAL.CMR_TIMEOUT = 60 * 5  # 5 minutes
+
+# ----------------------------------------------------------------------------------
 # Public API
 # ----------------------------------------------------------------------------------
 
@@ -84,5 +91,5 @@ __all__ = [
     "__version__",
     "convert_offsets",
     "convert_unwrapped",
-    "create_viz_files"
+    "create_viz_files",
 ]
