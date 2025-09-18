@@ -247,7 +247,7 @@ def get_topsApp_variable(args):
             insar_temp = insar.__getattribute__('esdCoherenceThreshold')
         else:
             insar_temp = -1.0
-        data = np.float(insar_temp)
+        data = float(insar_temp)
     # other variables
     elif variable == 'DEM':
         import numpy as np
@@ -498,7 +498,7 @@ def get_loc(box):
     """Return GeoJSON bbox."""
     import numpy as np
 
-    bbox = np.array(box).astype(np.float)
+    bbox = np.array(box).astype(float)
     coords = [
         [bbox[0, 1], bbox[0, 0]],
         [bbox[1, 1], bbox[1, 0]],

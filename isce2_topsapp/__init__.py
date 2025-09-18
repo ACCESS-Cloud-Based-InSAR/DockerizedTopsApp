@@ -10,6 +10,7 @@ from typing import Optional
 # ----------------------------------------------------------------------------------------------------------------------
 # This ensures all ISCE2 paths and environment variables are set when using this module, see:
 # https://github.com/isce-framework/isce2/blob/main/__init__.py#L41-L50
+import asf_search
 import isce  # noqa: F401
 
 # ISCE2 sets the root logger to DEBUG resulting in excessively verbose logging, see:
@@ -63,6 +64,11 @@ except PackageNotFoundError:
     )
 
 # ----------------------------------------------------------------------------------
+# Increase CMR timeout
+# ----------------------------------------------------------------------------------
+asf_search.constants.INTERNAL.CMR_TIMEOUT = 60 * 5  # 5 minutes
+
+# ----------------------------------------------------------------------------------
 # Public API
 # ----------------------------------------------------------------------------------
 
@@ -84,5 +90,5 @@ __all__ = [
     "__version__",
     "convert_offsets",
     "convert_unwrapped",
-    "create_viz_files"
+    "create_viz_files",
 ]
