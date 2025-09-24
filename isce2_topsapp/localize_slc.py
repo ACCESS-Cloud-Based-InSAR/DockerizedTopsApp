@@ -68,7 +68,9 @@ def get_interferogram_geo(
     connected_sec = secondary_geo.geom_type == "Polygon"
 
     if (not connected_sec) or (not connected_ref):
-        raise ValueError("Reference and/or secondary dates were not connected in their coverage (multipolygons)")
+        raise ValueError(
+            "Reference and/or secondary dates were not connected in their coverage (multipolygons)"
+        )
 
     # Two geometries must intersect for their to be an interferogram
     ifg_geo = secondary_geo.intersection(reference_geo)
@@ -93,7 +95,12 @@ def ensure_repeat_pass_time_small(slc_properties: list, maximum_minutes_between_
     dates = [parse(prop["startTime"]) for prop in slc_properties]
     dates = sorted(dates)
     minutes_apart_from_first_acq = [(date - dates[0]).seconds for date in dates]
-    return all([minutes_apart <= maximum_minutes_between_acq * 60 for minutes_apart in minutes_apart_from_first_acq])
+    return all(
+        [
+            minutes_apart <= maximum_minutes_between_acq * 60
+            for minutes_apart in minutes_apart_from_first_acq
+        ]
+    )
 
 
 def check_flight_direction(slc_properties: list) -> bool:
@@ -110,7 +117,9 @@ def check_date_order(ref_properties: list, sec_properties: list) -> bool:
 def check_if_s1c_has_valid_date(slc_ids: list, slc_properties: list) -> bool:
     assert len(slc_ids) == len(slc_properties)
     s1c_filter_bool = [id.startswith("S1C") for id in slc_ids]
-    s1c_properties_filter = [prop for (k, prop) in enumerate(slc_properties) if s1c_filter_bool[k]]
+    s1c_properties_filter = [
+        prop for (k, prop) in enumerate(slc_properties) if s1c_filter_bool[k]
+    ]
     # No s1c data
     if not sum(s1c_filter_bool):
         return True
@@ -119,8 +128,12 @@ def check_if_s1c_has_valid_date(slc_ids: list, slc_properties: list) -> bool:
     s1c_valid_data_filter = [date >= S1C_MIN_DATE for date in s1c_dates]
     s1c_has_valid_date = all(s1c_valid_data_filter)
     if not s1c_has_valid_date:
-        invalid_s1c_ids = [id for (k, id) in enumerate(s1c_ids) if not s1c_valid_data_filter[k]]
-        print(f"The following S1C acquisitions were before {S1C_MIN_DATE}: {invalid_s1c_ids}")
+        invalid_s1c_ids = [
+            id for (k, id) in enumerate(s1c_ids) if not s1c_valid_data_filter[k]
+        ]
+        print(
+            f"The following S1C acquisitions were before {S1C_MIN_DATE}: {invalid_s1c_ids}"
+        )
     return s1c_has_valid_date
 
 
@@ -166,29 +179,46 @@ def download_slcs(
     secondary_props = [ob.properties for ob in secondary_obs]
 
     minutes_apart = 2
-    if not ensure_repeat_pass_time_small(reference_props, maximum_minutes_between_acq=minutes_apart):
-        raise ValueError("The reference SLCs are more than {minutes_apart} minapart from the initial acq. in this pass")
-    if not ensure_repeat_pass_time_small(secondary_props, maximum_minutes_between_acq=minutes_apart):
-        raise ValueError("The secondary SLCs are more than {minutes_apart} minapart from the initial acq. in this pass")
+    if not ensure_repeat_pass_time_small(
+        reference_props, maximum_minutes_between_acq=minutes_apart
+    ):
+        raise ValueError(
+            "The reference SLCs are more than {minutes_apart} minapart from the initial acq. in this pass"
+        )
+    if not ensure_repeat_pass_time_small(
+        secondary_props, maximum_minutes_between_acq=minutes_apart
+    ):
+        raise ValueError(
+            "The secondary SLCs are more than {minutes_apart} minapart from the initial acq. in this pass"
+        )
 
     if not check_flight_direction(reference_props + secondary_props):
         raise ValueError("The SLCs are not all Descending or Ascending")
 
     if not check_track_numbers(reference_props + secondary_props):
-        raise ValueError("The SLCs do not belong to the same track (or sequential tracks)")
+        raise ValueError(
+            "The SLCs do not belong to the same track (or sequential tracks)"
+        )
 
     if not check_date_order(reference_props, secondary_props):
         raise ValueError("Reference date must occur after secondary date")
 
-    if not check_if_s1c_has_valid_date(reference_ids + secondary_ids, reference_props + secondary_props):
-        raise ValueError(f"The Sentinel-1C acquisitions provided were before {S1C_MIN_DATE}")
+    if not check_if_s1c_has_valid_date(
+        reference_ids + secondary_ids, reference_props + secondary_props
+    ):
+        raise ValueError(
+            f"The Sentinel-1C acquisitions provided were before {S1C_MIN_DATE}"
+        )
 
     # Check the number of objects is the same as inputs
     assert len(reference_obs) == len(reference_ids)
     assert len(secondary_obs) == len(secondary_ids)
 
     ifg_geo = get_interferogram_geo(
-        reference_obs, secondary_obs, frame_id=frame_id, min_frame_coverage=min_frame_coverage
+        reference_obs,
+        secondary_obs,
+        frame_id=frame_id,
+        min_frame_coverage=min_frame_coverage,
     )
 
     percent_water_low_res = get_percent_water_from_ne_land(ifg_geo)
@@ -213,7 +243,9 @@ def download_slcs(
     all_obs = reference_obs + secondary_obs
     n = len(all_obs)
     with ThreadPoolExecutor(max_workers=max_workers_for_download) as executor:
-        results = list(tqdm(executor.map(download_one, all_obs), total=n, desc="Downloading SLCs"))
+        results = list(
+            tqdm(executor.map(download_one, all_obs), total=n, desc="Downloading SLCs")
+        )
 
     n0 = len(reference_obs)
     return {
@@ -236,13 +268,20 @@ def download_slcs(
 
 
 def _get_frame_by_id(frame_id: int) -> gpd.GeoSeries:
-    frames = gpd.read_file(Path(__file__).parent / "data" / "s1_frames_latitude_aligned.geojson.zip")
+    frames = gpd.read_file(
+        Path(__file__).parent / "data" / "s1_frames_latitude_aligned.geojson.zip"
+    )
     return frames[frames.frame_id == frame_id].reset_index(drop=True).iloc[0]
 
 
 def _get_dates(product: asf.ASFProduct) -> set[datetime.date]:
-    date_strings = [product.properties[field].strip("Z") for field in ["startTime", "stopTime"]]
-    return {datetime.datetime.fromisoformat(date_string).date() for date_string in date_strings}
+    date_strings = [
+        product.properties[field].strip("Z") for field in ["startTime", "stopTime"]
+    ]
+    return {
+        datetime.datetime.fromisoformat(date_string).date()
+        for date_string in date_strings
+    }
 
 
 def get_slcs_for_date_and_frame(date: datetime.date, frame_id: int) -> list[str]:
@@ -254,12 +293,20 @@ def get_slcs_for_date_and_frame(date: datetime.date, frame_id: int) -> list[str]
         beamMode=asf.constants.BEAMMODE.IW,
         polarization=[asf.constants.POLARIZATION.VV, asf.constants.POLARIZATION.VV_VH],
         flightDirection=frame.orbit_direction,
-        relativeOrbit=list({frame.relative_orbit_number_min, frame.relative_orbit_number_max}),
+        relativeOrbit=list(
+            {frame.relative_orbit_number_min, frame.relative_orbit_number_max}
+        ),
         intersectsWith=frame.geometry.wkt,
         start=date_as_datetime - datetime.timedelta(minutes=5),
         end=date_as_datetime + datetime.timedelta(days=1, minutes=5),
     )
-    if not any(product_date == date for product in results for product_date in _get_dates(product)):
-        raise ValueError(f"No Sentinel-1A/1B/1C SLCs found for date {date} and frame id {frame_id}.")
+    if not any(
+        product_date == date
+        for product in results
+        for product_date in _get_dates(product)
+    ):
+        raise ValueError(
+            f"No Sentinel-1A/1B/1C SLCs found for date {date} and frame id {frame_id}."
+        )
 
     return [result.properties["sceneName"] for result in results]

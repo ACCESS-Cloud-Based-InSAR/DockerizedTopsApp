@@ -28,9 +28,10 @@ def get_conversion_factors(reference_xml):
     azimuthTimeInterval = burst.azimuthTimeInterval
     sensingMid = burst.sensingMid
     orb = obj.orbit
-    Vs = np.linalg.norm(orb.interpolateOrbit(sensingMid,
-                                             method='hermite').getVelocity())  # satellite velocity at center
-    Ps_vec = orb.interpolateOrbit(sensingMid, method='hermite').getPosition()
+    Vs = np.linalg.norm(
+        orb.interpolateOrbit(sensingMid, method="hermite").getVelocity()
+    )  # satellite velocity at center
+    Ps_vec = orb.interpolateOrbit(sensingMid, method="hermite").getPosition()
     Ps = np.linalg.norm(Ps_vec)  # satellite position at center
 
     # Approximate terrain height
@@ -40,19 +41,19 @@ def get_conversion_factors(reference_xml):
     midRange = burst.midRange
     llh_cen = orb.rdr2geo(sensingMid, midRange, height=terrainHeight)
 
-    refElp = Planet(pname='Earth'). ellipsoid
+    refElp = Planet(pname="Earth").ellipsoid
     xyz_cen = refElp.llh_to_xyz(llh_cen)  # xyz coordinate at image center
 
     Re = np.linalg.norm(xyz_cen)
-    cosb = (Ps**2 + Re**2 - midRange**2)/(2*Ps*Re)
-    Vg = (Re*cosb)*Vs/Ps
+    cosb = (Ps**2 + Re**2 - midRange**2) / (2 * Ps * Re)
+    Vg = (Re * cosb) * Vs / Ps
 
-    azimuthPixelSize = azimuthTimeInterval*Vg
+    azimuthPixelSize = azimuthTimeInterval * Vg
 
-    print('satellite velocity (m/s)', Vs)
-    print('satellite velocity over the ground (m/s)', Vg)
-    print('rangePixelSize (m)', rangePixelSize)
-    print('azimuthPixelSize (m)', azimuthPixelSize)
+    print("satellite velocity (m/s)", Vs)
+    print("satellite velocity over the ground (m/s)", Vg)
+    print("rangePixelSize (m)", rangePixelSize)
+    print("azimuthPixelSize (m)", azimuthPixelSize)
     return azimuthPixelSize, rangePixelSize
 
 
@@ -90,7 +91,7 @@ def convert_offsets(dense_offsets, amplitude, reference_xml):
     azimuth_m = np.where(
         (amp == amp_NoData) | (azimuth_pix == nodata_value),
         nodata_value,
-        azimuth_pix * azimuthPixelSize
+        azimuth_pix * azimuthPixelSize,
     )
 
     # Read the second band (range) and convert
@@ -98,7 +99,7 @@ def convert_offsets(dense_offsets, amplitude, reference_xml):
     range_m = np.where(
         (amp == amp_NoData) | (range_pix == nodata_value),
         nodata_value,
-        range_pix * rangePixelSize
+        range_pix * rangePixelSize,
     )
 
     # Write the converted arrays to a new raster
@@ -106,8 +107,13 @@ def convert_offsets(dense_offsets, amplitude, reference_xml):
     outfile = "merged/filt_dense_offsets_m.geo"
 
     # Create the new raster
-    dense_offsets_m = driver.Create(outfile, dense_offsets_pix.RasterXSize,
-                                    dense_offsets_pix.RasterYSize, 2, gdal.GDT_Float32)
+    dense_offsets_m = driver.Create(
+        outfile,
+        dense_offsets_pix.RasterXSize,
+        dense_offsets_pix.RasterYSize,
+        2,
+        gdal.GDT_Float32,
+    )
 
     # Get the raster bands
     band1 = dense_offsets_m.GetRasterBand(1)

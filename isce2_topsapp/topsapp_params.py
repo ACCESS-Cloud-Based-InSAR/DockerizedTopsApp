@@ -11,7 +11,7 @@ class topsappParams(BaseModel):
     compute_solid_earth_tide: bool = True
     output_resolution: int = 90
     unfiltered_coherence: bool = True
-    goldstein_filter_power: float = .5
+    goldstein_filter_power: float = 0.5
     dense_offsets: bool = False
     esd_coherence_threshold: float = -1
 
@@ -24,7 +24,7 @@ class topsappParams(BaseModel):
             not self.dense_offsets,
             self.unfiltered_coherence,
             self.esd_coherence_threshold == -1,
-            self.goldstein_filter_power == .5,
+            self.goldstein_filter_power == 0.5,
             self.output_resolution == 90,
         ]
         return all(checks)

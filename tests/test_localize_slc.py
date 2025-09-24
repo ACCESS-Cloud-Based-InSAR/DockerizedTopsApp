@@ -23,7 +23,9 @@ def test_intersection_geometry():
     ref_ob = get_asf_slc_objects(ref_ids)
     sec_ob = get_asf_slc_objects(sec_ids)
 
-    with pytest.raises(ValueError, match=r"The overlap between reference and secondary scenes is empty"):
+    with pytest.raises(
+        ValueError, match=r"The overlap between reference and secondary scenes is empty"
+    ):
         get_interferogram_geo(ref_ob, sec_ob)
 
     # Disconnected Secondary
@@ -36,7 +38,10 @@ def test_intersection_geometry():
     ref_ob = get_asf_slc_objects(ref_ids)
     sec_ob = get_asf_slc_objects(sec_ids)
 
-    with pytest.raises(ValueError, match=r"Reference and/or secondary dates were not connected in their coverage"):
+    with pytest.raises(
+        ValueError,
+        match=r"Reference and/or secondary dates were not connected in their coverage",
+    ):
         get_interferogram_geo(ref_ob, sec_ob)
 
 
@@ -136,7 +141,9 @@ def test_min_frame_coverage():
         r"the requested minimum coverage was 73.00%."
     )
     with pytest.raises(ValueError, match=re.escape(match)):
-        get_interferogram_geo(ref_ob, sec_ob, frame_id=frame_id, min_frame_coverage=0.73)
+        get_interferogram_geo(
+            ref_ob, sec_ob, frame_id=frame_id, min_frame_coverage=0.73
+        )
 
 
 def test_min_frame_coverage_default():
@@ -200,7 +207,10 @@ secondary_list = [
 frame_id_list = [-1, -1, -1, 22438]
 
 
-@pytest.mark.parametrize("reference_ids, secondary_ids, frame_id", zip(reference_list, secondary_list, frame_id_list))
+@pytest.mark.parametrize(
+    "reference_ids, secondary_ids, frame_id",
+    zip(reference_list, secondary_list, frame_id_list),
+)
 def test_localize_slc_with_valid_pairs(reference_ids, secondary_ids, frame_id):
     assert download_slcs(reference_ids, secondary_ids, frame_id=frame_id, dry_run=True)
 
@@ -269,7 +279,9 @@ def test_s1c_min_date():
         "S1C_IW_SLC__1SDV_20250507T000014_20250507T000041_002217_004B5D_AAF1",
         "S1C_IW_SLC__1SDV_20250506T235949_20250507T000016_002217_004B5D_9EC8",
     ]
-    error_msg = "The Sentinel-1C acquisitions provided were before 2025-05-19 00:00:00\\+00:00"
+    error_msg = (
+        "The Sentinel-1C acquisitions provided were before 2025-05-19 00:00:00\\+00:00"
+    )
     with pytest.raises(ValueError, match=error_msg):
         download_slcs(slc_ids_ref, slc_ids_sec, 18830)
 

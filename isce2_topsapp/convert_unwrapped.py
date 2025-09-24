@@ -16,13 +16,15 @@ def convert_unwrapped(unwrapped_pix, outfile, vrtfile):
     phase_array = unwrapped.GetRasterBand(2).ReadAsArray()
 
     # Convert phase to meters
-    phase_m = (phase_array * 0.05546576)/(4 * np.pi)
+    phase_m = (phase_array * 0.05546576) / (4 * np.pi)
 
     # Write the converted arrays to a new raster
     driver = gdal.GetDriverByName("ISCE")
 
     # Create the new raster
-    unwrapped_m = driver.Create(outfile, unwrapped.RasterXSize, unwrapped.RasterYSize, 2, gdal.GDT_Float32)
+    unwrapped_m = driver.Create(
+        outfile, unwrapped.RasterXSize, unwrapped.RasterYSize, 2, gdal.GDT_Float32
+    )
 
     # Get the raster bands
     band1 = unwrapped_m.GetRasterBand(1)
