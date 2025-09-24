@@ -69,9 +69,7 @@ def read_baselines(tops_proc_xml: str) -> dict:
 
     tags = [e.tag for e in elements]
     vals = [float(e.text) for e in elements]
-    parallel_baselines = [
-        vals[k] for (k, val) in enumerate(vals) if "Bpar" in tags[k]
-    ]
+    parallel_baselines = [vals[k] for (k, val) in enumerate(vals) if "Bpar" in tags[k]]
     perpendicular_baselines = [
         vals[k] for (k, val) in enumerate(vals) if "Bperp" in tags[k]
     ]
@@ -85,8 +83,7 @@ def read_baselines(tops_proc_xml: str) -> dict:
 def get_mean_baseline_data(tops_proc_xml: str) -> dict:
     baseline_data = read_baselines(tops_proc_xml)
     mean_baseline_data = {
-        f"mean_{key[:-1]}": np.mean(val)
-        for (key, val) in baseline_data.items()
+        f"mean_{key[:-1]}": np.mean(val) for (key, val) in baseline_data.items()
     }
     return mean_baseline_data
 
@@ -170,7 +167,9 @@ def get_gunw_id(
     ifg_hash_trunc = ifg_hash[:4]
 
     # product type
-    DATASET_VERSION, STANDARD_PROD_PREFIX, CUSTOM_PROD_PREFIX = product_naming_scheme(product)
+    DATASET_VERSION, STANDARD_PROD_PREFIX, CUSTOM_PROD_PREFIX = product_naming_scheme(
+        product
+    )
 
     # version
     version = DATASET_VERSION.replace(".", "_")
@@ -257,8 +256,7 @@ def _write_json_config(*, product: str, gunw_id: str, directory: Path) -> Path:
     nc_template["filename"] = f"{gunw_id}.nc"
     # This will be appended to the global source attribute
     nc_template["software_statement"] = (
-        "using the DockerizedTopsApp HyP3 plugin version "
-        f"{isce2_topsapp.__version__}"
+        f"using the DockerizedTopsApp HyP3 plugin version {isce2_topsapp.__version__}"
     )
 
     out_path = directory / "tops_groups.json"
@@ -268,10 +266,7 @@ def _write_json_config(*, product: str, gunw_id: str, directory: Path) -> Path:
 
 
 def perform_netcdf_packaging(
-    *,
-    product: str,
-    gunw_id: str,
-    isce_data_dir: Union[str, Path]
+    *, product: str, gunw_id: str, isce_data_dir: Union[str, Path]
 ) -> Path:
     # Check that the metadata.h5 exists
     isce_data_dir = Path(isce_data_dir)
@@ -364,23 +359,13 @@ def get_layer_mean(
     return mean_val
 
 
-def get_geocoded_layer_means(
-    *,
-    merged_dir: Optional[Union[Path, str]] = None
-) -> dict:
+def get_geocoded_layer_means(*, merged_dir: Optional[Union[Path, str]] = None) -> dict:
     if merged_dir is None:
         cwd = Path.cwd()
         merged_dir = f"{cwd}/merged"
 
-    def get_layer_mean_p(
-        layer_name: str,
-        apply_water_mask: bool = False
-    ) -> float:
-        return get_layer_mean(
-            merged_dir,
-            layer_name,
-            apply_water_mask=apply_water_mask
-        )
+    def get_layer_mean_p(layer_name: str, apply_water_mask: bool = False) -> float:
+        return get_layer_mean(merged_dir, layer_name, apply_water_mask=apply_water_mask)
 
     mean_vals = {
         "mean_filtered_coherence_without_water_mask": get_layer_mean_p(
@@ -445,7 +430,7 @@ def package_gunw_product(
     reference_properties: list,
     secondary_properties: list,
     extent: list,
-    product: str = 'GUNW',
+    product: str = "GUNW",
     topaspp_params: dict,
     cmd_line_str: str,
     product_geometry_wkt: str,

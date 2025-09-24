@@ -14,20 +14,25 @@ from isce.applications import topsApp
 from isce.components import isceobj
 from isce.components.isceobj.TopsProc import runIon
 from isce.components.isceobj.TopsProc.runMergeBursts import (
-    adjustValidWithLooks, interpolateDifferentNumberOfLooks,
-    mergeBox, mergeBursts2, mergeBurstsVirtual, multilook)
+    adjustValidWithLooks,
+    interpolateDifferentNumberOfLooks,
+    mergeBox,
+    mergeBursts2,
+    mergeBurstsVirtual,
+    multilook,
+)
 from numpy.typing import NDArray
 from osgeo import gdal
 from skimage import morphology
 from tqdm import tqdm
 
-'''
+"""
 Reference: Liang et al. (2019): Ionospheric Correction of InSAR Time Series
 Analysis of C-band Sentinel-1 TOPS Data, doi:0.1109/TGRS.2019.2908494
 
 List of parameters for ionospheric correction:
         isce2/examples/input_files/topsApp.xml#L182
-'''
+"""
 
 GEOCODE_LIST_ION = ["merged/topophase.ion"]
 
@@ -36,18 +41,17 @@ def iono_processing(
     *,
     range_looks=19,
     azimuth_looks=7,
-    topsapp_xml_filename: str = 'topsApp.xml',
-    mask_filename: str = '',
+    topsapp_xml_filename: str = "topsApp.xml",
+    mask_filename: str = "",
     correct_burst_ramps: bool = True,
-        ) -> None:
-
-    '''
+) -> None:
+    """
     NOTE: If water mask is not used, the code will return to its
         default processing with addition of using briding of unwrapped
         phase components, and modifed adaptive gaussian filtering.
         Outlier removal and masking using connected component 0 will
         be skipped
-    '''
+    """
     # Use Connected component 0 to mask unwrapped interferogram
     # to improve masking after using water mask, e.g. remove noisy
     # pixels along the coastline
@@ -70,8 +74,8 @@ def iono_processing(
     topsapp.configure()
 
     # Load topsApp PICKLE object from previous topsApp step: fineresamp
-    topsapp_dir = Path('.').resolve()
-    topsapp.loadPickleObj(str(topsapp_dir / 'PICKLE/fineresamp'))
+    topsapp_dir = Path(".").resolve()
+    topsapp.loadPickleObj(str(topsapp_dir / "PICKLE/fineresamp"))
 
     # IONOSPHERE
     # Run iono setup
@@ -91,8 +95,7 @@ def iono_processing(
         runIon.merge(topsapp, ionParam)
 
         # Run iono step rawion : unwrap
-        unwrap(topsapp, ionParam,
-               use_bridging=True, use_conncomp=conncomp_flag)
+        unwrap(topsapp, ionParam, use_bridging=True, use_conncomp=conncomp_flag)
 
         # Run iono step rawion : ionosphere
         ionosphere(topsapp, ionParam)
@@ -100,8 +103,9 @@ def iono_processing(
         # This mode is used for cross
         # Sentinel-1A/B interferogram
         # runIon.ionSwathBySwath(topsapp, ionParam)
-        ionSwathBySwath(topsapp, ionParam,
-                        use_bridging=True, conncomp_flag=conncomp_flag)
+        ionSwathBySwath(
+            topsapp, ionParam, use_bridging=True, conncomp_flag=conncomp_flag
+        )
 
     # Run iono step grd2ion
     # Resample ionosphere from ground to iono layer
@@ -110,8 +114,7 @@ def iono_processing(
     # runIon.grd2ion(topsapp, ionParam)
 
     # Run iono step; filt_gaussian
-    filt_gaussian(topsapp, ionParam,
-                  coh_threshold=coh_threshold, sigma_rule=sigma_rule)
+    filt_gaussian(topsapp, ionParam, coh_threshold=coh_threshold, sigma_rule=sigma_rule)
 
     # Step when using azimuth shift correction
     # between bursts, misregistration due to high iono content
@@ -130,27 +133,31 @@ def iono_processing(
 
         # Create merged/topophase.ion.az_shift file
         # using ion/ion_burst/ files
-        merge_multilook_bursts(topsapp, input_dir='ion/ion_burst',
-                               output_filename='topophase.ion.az_shift')
+        merge_multilook_bursts(
+            topsapp, input_dir="ion/ion_burst", output_filename="topophase.ion.az_shift"
+        )
 
-        GEOCODE_LIST_ION.append('merged/topophase.ion.az_shift')
+        GEOCODE_LIST_ION.append("merged/topophase.ion.az_shift")
 
         # Iono long wavelength
-        merge_bursts(input_file="ion/ion_cal/filt.ion",
-                     output_filename="topophase.ion",
-                     range_looks=range_looks,
-                     azimuth_looks=azimuth_looks)
+        merge_bursts(
+            input_file="ion/ion_cal/filt.ion",
+            output_filename="topophase.ion",
+            range_looks=range_looks,
+            azimuth_looks=azimuth_looks,
+        )
 
     else:
         # Create merged/topophase.ion file
-        merge_bursts(input_file="ion/ion_cal/filt.ion",
-                     output_filename="topophase.ion",
-                     range_looks=range_looks,
-                     azimuth_looks=azimuth_looks)
+        merge_bursts(
+            input_file="ion/ion_cal/filt.ion",
+            output_filename="topophase.ion",
+            range_looks=range_looks,
+            azimuth_looks=azimuth_looks,
+        )
 
     # Geocode ionospheric correction outputs
-    topsapp.runGeocode(GEOCODE_LIST_ION, topsapp.do_unwrap,
-                       topsapp.geocode_bbox)
+    topsapp.runGeocode(GEOCODE_LIST_ION, topsapp.do_unwrap, topsapp.geocode_bbox)
 
     # Create attribute iono processing dict
     steps = ionParam.allSteps
@@ -160,38 +167,36 @@ def iono_processing(
     # attributes dict items must be in the following
     # format: str, Number, ndarray, number, list, tuple
     iono_dict = dict(
-        processing_steps=steps[0:3] + ['geocode'],
+        processing_steps=steps[0:3] + ["geocode"],
         water_mask=str(mask_filename),
         mask_connected_component_zero=str(conncomp_flag),
         do_phase_bridging=str(True),
         swath_mode=str(False) if ionParam.calIonWithMerged else str(True),
         swath_ramp_removal=str(np.bool_(ionParam.rampRemovel)),
-        swath_mode_description=('raw_ion ionosphere calculation'
-                                ' done per swath rather per scene'
-                                ' to adjust for misaligment between'
-                                ' swaths when doing processing on cross'
-                                ' Sentinel 1A/B pair or when there'
-                                ' is a different starting range between'
-                                ' reference and secondary image'),
-        multilook_az_rg1=[ionParam.numberAzimuthLooks,
-                          ionParam.numberRangeLooks],
-        multilook_az_rg2=[ionParam.numberAzimuthLooks0,
-                          ionParam.numberRangeLooks0],
-        iono_height=ionParam.ionHeight
-        )
-
-    burst_ramps_dict = dict(
-        processing_steps=steps + ['geocode'],
+        swath_mode_description=(
+            "raw_ion ionosphere calculation"
+            " done per swath rather per scene"
+            " to adjust for misaligment between"
+            " swaths when doing processing on cross"
+            " Sentinel 1A/B pair or when there"
+            " is a different starting range between"
+            " reference and secondary image"
+        ),
+        multilook_az_rg1=[ionParam.numberAzimuthLooks, ionParam.numberRangeLooks],
+        multilook_az_rg2=[ionParam.numberAzimuthLooks0, ionParam.numberRangeLooks0],
+        iono_height=ionParam.ionHeight,
     )
 
-    attr = dict(ionosphere=iono_dict,
-                ionosphereBurstRamps=burst_ramps_dict)
+    burst_ramps_dict = dict(
+        processing_steps=steps + ["geocode"],
+    )
+
+    attr = dict(ionosphere=iono_dict, ionosphereBurstRamps=burst_ramps_dict)
 
     return attr
 
 
-def mask_iono_ifg_bursts(tops_dir: Path,
-                         mask_filename: Union[str, Path]) -> None:
+def mask_iono_ifg_bursts(tops_dir: Path, mask_filename: Union[str, Path]) -> None:
     # Project mask to burst image coordinate space
 
     def get_swath(x):
@@ -207,8 +212,7 @@ def mask_iono_ifg_bursts(tops_dir: Path,
     with tqdm(total=len(geom_files)) as pbar:
         for lat in geom_files:
             pbar.set_description(
-                f"Geo2radar mask {get_swath(str(lat))}"
-                f" /{get_burst(str(lat))}"
+                f"Geo2radar mask {get_swath(str(lat))} /{get_burst(str(lat))}"
             )
 
             lon = str(lat).replace("lat", "lon")
@@ -274,9 +278,8 @@ def merge_bursts(
     img.load(input_file + ".xml")
 
     ionFiltImage = (
-        np.fromfile(input_file, dtype=np.float32).reshape(
-            img.length * 2, img.width)
-    )[1: img.length * 2: 2, :]
+        np.fromfile(input_file, dtype=np.float32).reshape(img.length * 2, img.width)
+    )[1 : img.length * 2 : 2, :]
     img = isceobj.createImage()
     img.load(os.path.join(mergedir, mergedIfgname + ".xml"))
 
@@ -302,31 +305,34 @@ def merge_bursts(
     image.renderHdr()
 
 
-def merge_multilook_bursts(self: Type[topsApp.TopsInSAR],
-                           input_dir: str = 'ion/ion_burst',
-                           output_filename: str = 'topophase.ion',
-                           mergedir: Union[str, Path] = "./merged") -> None:
+def merge_multilook_bursts(
+    self: Type[topsApp.TopsInSAR],
+    input_dir: str = "ion/ion_burst",
+    output_filename: str = "topophase.ion",
+    mergedir: Union[str, Path] = "./merged",
+) -> None:
     """
     Reference:
     isce2/components/isceobj/TopsProc/runMergeBursts.py#L776
     """
 
     if (self.numberRangeLooks == 1) and (self.numberAzimuthLooks == 1):
-        suffix = ''
+        suffix = ""
     else:
-        suffix = '.full'
+        suffix = ".full"
 
     # Get frames (subswaths)
     frames = []
     burstIndex = []
     swathList = self._insar.getValidSwathList(self.swaths)
     for swath in swathList:
-        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath - 1)
         if minBurst == maxBurst:
-            print('Skipping processing of swath {0}'.format(swath))
+            print("Skipping processing of swath {0}".format(swath))
             continue
-        ifg = self._insar.loadProduct(os.path.join(
-            self._insar.fineIfgDirname, 'IW{0}.xml'.format(swath)))
+        ifg = self._insar.loadProduct(
+            os.path.join(self._insar.fineIfgDirname, "IW{0}.xml".format(swath))
+        )
         frames.append(ifg)
         burstIndex.append([int(swath), minBurst, maxBurst])
 
@@ -334,17 +340,23 @@ def merge_multilook_bursts(self: Type[topsApp.TopsInSAR],
     box = mergeBox(frames)
 
     # Merge iono products
-    mergeBursts2(frames,
-                 os.path.join(input_dir, 'IW%d',  'burst_%02d.ion'),
-                 burstIndex, box,
-                 os.path.join(mergedir, output_filename+suffix),
-                 virtual=True, validOnly=True)
+    mergeBursts2(
+        frames,
+        os.path.join(input_dir, "IW%d", "burst_%02d.ion"),
+        burstIndex,
+        box,
+        os.path.join(mergedir, output_filename + suffix),
+        virtual=True,
+        validOnly=True,
+    )
 
     # Create merged/topophase.ion file
-    multilook(os.path.join(mergedir, output_filename+suffix),
-              outname=os.path.join(mergedir, output_filename),
-              alks=self.numberAzimuthLooks,
-              rlks=self.numberRangeLooks)
+    multilook(
+        os.path.join(mergedir, output_filename + suffix),
+        outname=os.path.join(mergedir, output_filename),
+        alks=self.numberAzimuthLooks,
+        rlks=self.numberRangeLooks,
+    )
 
 
 # UTILITIES FOR MASKING
@@ -388,11 +400,13 @@ def raster_geo2radar(
 
     # Translate raster from geographical to radar coordinate space
     lineIdx = np.array(
-        (lats - mask_ds.GetGeoTransform()[3]) /
-        mask_ds.GetGeoTransform()[5] + 0.5, dtype=np.int32)
+        (lats - mask_ds.GetGeoTransform()[3]) / mask_ds.GetGeoTransform()[5] + 0.5,
+        dtype=np.int32,
+    )
     sampleIdx = np.array(
-        (lons - mask_ds.GetGeoTransform()[0]) /
-        mask_ds.GetGeoTransform()[1] + 0.5, dtype=np.int32)
+        (lons - mask_ds.GetGeoTransform()[0]) / mask_ds.GetGeoTransform()[1] + 0.5,
+        dtype=np.int32,
+    )
     inboundIndex = np.logical_and(
         np.logical_and(lineIdx >= 0, lineIdx <= mask_ds.RasterYSize - 1),
         np.logical_and(sampleIdx >= 0, sampleIdx <= mask_ds.RasterXSize - 1),
@@ -425,7 +439,7 @@ def raster_geo2radar(
 def mask_interferogram(
     ifgFilename: Union[str, Path],
     maskArray: NDArray,
-    outFilename: Union[str, Path] = '',
+    outFilename: Union[str, Path] = "",
 ) -> None:
     """
     This routine uses mask np.array in rdr to mask wrapped interferogram
@@ -444,10 +458,12 @@ def mask_interferogram(
     int_array = int_ds.ReadAsArray()
 
     if not np.array_equal(int_array.shape, maskArray.shape):
-        raise ValueError('Mask array dimensions do not match'
-                         ' the interferogram dimensions!'
-                         f'mask: {maskArray.shape} vs'
-                         f'ifg: {int_array.shape}')
+        raise ValueError(
+            "Mask array dimensions do not match"
+            " the interferogram dimensions!"
+            f"mask: {maskArray.shape} vs"
+            f"ifg: {int_array.shape}"
+        )
 
     # Mask interferogram
     int_array.imag[np.bool_(maskArray)] = 0
@@ -477,10 +493,10 @@ def mask_interferogram(
         int_array.astype(np.complex64).tofile(ifgFilename)
 
 
-def deramp(data: NDArray,
-           mask_in: NDArray = None,
-           ramp_type: str = 'linear') -> NDArray:
-    '''
+def deramp(
+    data: NDArray, mask_in: NDArray = None, ramp_type: str = "linear"
+) -> NDArray:
+    """
     REF: https://github.com/insarlab/MintPy
                         /src/mintpy/objects/ramp.py#L23
 
@@ -493,7 +509,7 @@ def deramp(data: NDArray,
     ramp_type : str
         name of ramp to be estimated. "linear" or 'quadratic"
 
-    '''
+    """
 
     dshape = data.shape
     length, width = dshape[-2:]
@@ -509,21 +525,20 @@ def deramp(data: NDArray,
 
     # 2. ignore pixels with NaN and/or zero data value
     mask *= ~np.isnan(dmean)
-    mask *= (dmean != 0.)
+    mask *= dmean != 0.0
     del dmean
 
     # design matrix
-    xx, yy = np.meshgrid(np.arange(0, width),
-                         np.arange(0, length))
+    xx, yy = np.meshgrid(np.arange(0, width), np.arange(0, length))
     xx = np.array(xx, dtype=np.float32).reshape(-1, 1)
     yy = np.array(yy, dtype=np.float32).reshape(-1, 1)
     ones = np.ones(xx.shape, dtype=np.float32)
-    if ramp_type == 'linear':
+    if ramp_type == "linear":
         G = np.hstack((yy, xx, ones))
-    elif ramp_type == 'quadratic':
-        G = np.hstack((yy**2, xx**2, yy*xx, yy, xx, ones))
+    elif ramp_type == "quadratic":
+        G = np.hstack((yy**2, xx**2, yy * xx, yy, xx, ones))
     else:
-        raise ValueError(f'un-recognized ramp type: {ramp_type}')
+        raise ValueError(f"un-recognized ramp type: {ramp_type}")
 
     # estimate ramp
     X = np.dot(np.linalg.pinv(G[mask, :], rcond=1e-15), data[mask, :])
@@ -533,8 +548,7 @@ def deramp(data: NDArray,
     return ramp.reshape(dshape)
 
 
-def brige_components(unwrapped_ifg: str,
-                     connected_components: str) -> None:
+def brige_components(unwrapped_ifg: str, connected_components: str) -> None:
     """
     This routine preforms "bridging' of unwrapped phase
     connected components. Each component is shifted with
@@ -545,7 +559,7 @@ def brige_components(unwrapped_ifg: str,
     connected_components : str
             path to connected components (labels)
     """
-    print(f'Do bridging {unwrapped_ifg}')
+    print(f"Do bridging {unwrapped_ifg}")
     ifg = gdal.Open(unwrapped_ifg, gdal.GA_Update)
     ifg_conn = gdal.Open(connected_components)
 
@@ -554,11 +568,10 @@ def brige_components(unwrapped_ifg: str,
     labels = ifg_conn.GetRasterBand(1).ReadAsArray()
 
     # Loop over each connected component in the interferogram
-    for i in range(1, np.max(labels)+1):
-
+    for i in range(1, np.max(labels) + 1):
         # Create a binary mask for the current component
         mask = np.zeros_like(interferogram, dtype=bool)
-        mask = (labels == i)
+        mask = labels == i
 
         # Apply a binary closing operation to the mask
         mask = morphology.binary_closing(mask)
@@ -566,8 +579,7 @@ def brige_components(unwrapped_ifg: str,
         # Deramp the data, to remove any trend
         # before estimating median
         # NOTE: move this out of loop, first test it out
-        ramp = deramp(data=interferogram, mask_in=mask,
-                      ramp_type='linear')
+        ramp = deramp(data=interferogram, mask_in=mask, ramp_type="linear")
         derampped_interferogram = interferogram - ramp
 
         # Calculate the median phase value for the current component
@@ -586,11 +598,14 @@ def brige_components(unwrapped_ifg: str,
 # MODIFIED FUNCTIONS FROM ISCE2/TOPSPROC, TRIED TO KEEP THEM
 # IN AN ORIGINAL FORM
 
-def unwrap(self: Type[topsApp.TopsInSAR],
-           ionParam: Type[runIon.dummy],
-           use_bridging: bool = True,
-           use_conncomp: bool = True) -> None:
-    '''
+
+def unwrap(
+    self: Type[topsApp.TopsInSAR],
+    ionParam: Type[runIon.dummy],
+    use_bridging: bool = True,
+    use_conncomp: bool = True,
+) -> None:
+    """
     unwrap lower and upper band interferograms
     ref: isce2/components/isceobj/TopsProc/runIon.py#L915
 
@@ -598,7 +613,7 @@ def unwrap(self: Type[topsApp.TopsInSAR],
         to mask out unreliable pixels in unwrapped interferograms
         Added option to use bridging between diconnected unwrapped
         phase components
-    '''
+    """
 
     # Get number of looks for second multilooking
     nrange0 = ionParam.numberRangeLooks0
@@ -614,20 +629,26 @@ def unwrap(self: Type[topsApp.TopsInSAR],
 
     # Bridge and mask using connected components
     if use_bridging | use_conncomp:
-        lower_unw_ifg = Path(ionParam.ionDirname, ionParam.lowerDirname,
-                             ionParam.mergedDirname,
-                             self._insar.unwrappedIntFilename)
-        upper_unw_ifg = Path(ionParam.ionDirname, ionParam.upperDirname,
-                             ionParam.mergedDirname,
-                             self._insar.unwrappedIntFilename)
+        lower_unw_ifg = Path(
+            ionParam.ionDirname,
+            ionParam.lowerDirname,
+            ionParam.mergedDirname,
+            self._insar.unwrappedIntFilename,
+        )
+        upper_unw_ifg = Path(
+            ionParam.ionDirname,
+            ionParam.upperDirname,
+            ionParam.mergedDirname,
+            self._insar.unwrappedIntFilename,
+        )
 
         for ion_ifg in [lower_unw_ifg, upper_unw_ifg]:
             # Shifted unwrapped componentes with their median value
             if use_bridging:
-                brige_components(str(ion_ifg), str(ion_ifg) + '.conncomp')
+                brige_components(str(ion_ifg), str(ion_ifg) + ".conncomp")
             # Use connected component 0 to mask unwrapped interferograms
             if use_conncomp:
-                runIon.maskUnwrap(str(ion_ifg), str(ion_ifg) + '.conncomp')
+                runIon.maskUnwrap(str(ion_ifg), str(ion_ifg) + ".conncomp")
 
     # Multilook
     ionParam.numberRangeLooks0 = nrange0
@@ -635,11 +656,13 @@ def unwrap(self: Type[topsApp.TopsInSAR],
     runIon.multilook_unw(self, ionParam, ionParam.mergedDirname)
 
 
-def filt_gaussian(self: Type[topsApp.TopsInSAR],
-                  ionParam: Type[runIon.dummy],
-                  coh_threshold: float = 0.5,
-                  sigma_rule: int = 2) -> None:
-    '''
+def filt_gaussian(
+    self: Type[topsApp.TopsInSAR],
+    ionParam: Type[runIon.dummy],
+    coh_threshold: float = 0.5,
+    sigma_rule: int = 2,
+) -> None:
+    """
     This function filters image using gaussian filter
 
     REF: isce2/components/isceobj/TopsProc/runIon.py#L1906
@@ -647,17 +670,14 @@ def filt_gaussian(self: Type[topsApp.TopsInSAR],
     M.G. April 2023 : Added option to mask out pixel using coherence
     threshold  and sigma rule for outlier removal before gaussian
     filtering
-    '''
+    """
 
-    print('filtering ionosphere')
+    print("filtering ionosphere")
     # Using not projected ionosphere
-    ionfile = Path(ionParam.ionDirname, ionParam.ioncalDirname,
-                   ionParam.ionRawNoProj)
-    corfile = Path(ionParam.ionDirname, ionParam.ioncalDirname,
-                   ionParam.ionCorNoProj)
+    ionfile = Path(ionParam.ionDirname, ionParam.ioncalDirname, ionParam.ionRawNoProj)
+    corfile = Path(ionParam.ionDirname, ionParam.ioncalDirname, ionParam.ionCorNoProj)
 
-    outfile = Path(ionParam.ionDirname, ionParam.ioncalDirname,
-                   ionParam.ionFilt)
+    outfile = Path(ionParam.ionDirname, ionParam.ioncalDirname, ionParam.ionFilt)
 
     # Read files using gdal
     iono_ds = gdal.Open(str(ionfile))
@@ -683,8 +703,7 @@ def filt_gaussian(self: Type[topsApp.TopsInSAR],
     #                polynomial_order, coherence_threshold)
 
     if ionParam.ionFit:
-        ion_fit = runIon.weight_fitting(ion, cor, width, length,
-                                        1, 1, 1, 1, 2, 0.85)
+        ion_fit = runIon.weight_fitting(ion, cor, width, length, 1, 1, 1, 1, 2, 0.85)
         ion -= ion_fit * (ion != 0)
     else:
         ion_fit = np.zeros(ion.shape)
@@ -701,26 +720,26 @@ def filt_gaussian(self: Type[topsApp.TopsInSAR],
         mean = np.mean(np.ma.masked_equal(ion, 0))
         std = np.std(np.ma.masked_equal(ion, 0))
 
-        ion[ion > mean + sigma_rule*std] = 0
-        ion[ion < mean - sigma_rule*std] = 0
+        ion[ion > mean + sigma_rule * std] = 0
+        ion[ion < mean - sigma_rule * std] = 0
 
     # Run modifed adaptive filtering MG April 2023
-    filt = adaptive_gaussian(ion, cor**14,
-                             ionParam.ionFilteringWinsizeMax,
-                             ionParam.ionFilteringWinsizeMin)
+    filt = adaptive_gaussian(
+        ion, cor**14, ionParam.ionFilteringWinsizeMax, ionParam.ionFilteringWinsizeMin
+    )
 
     # Add estimated surface if exists
     filt += ion_fit * (filt != 0)
 
     # Save
-    ion = np.zeros((length*2, width), dtype=np.float32)
-    ion[0:length*2:2, :] = amp
-    ion[1:length*2:2, :] = filt
+    ion = np.zeros((length * 2, width), dtype=np.float32)
+    ion[0 : length * 2 : 2, :] = amp
+    ion[1 : length * 2 : 2, :] = filt
     ion.astype(np.float32).tofile(str(outfile))
     img = isceobj.createImage()
-    img.load(str(ionfile) + '.xml')
+    img.load(str(ionfile) + ".xml")
     img.filename = str(outfile)
-    img.extraFilename = str(outfile) + '.vrt'
+    img.extraFilename = str(outfile) + ".vrt"
     img.renderHdr()
 
     # Close gdal files
@@ -728,9 +747,10 @@ def filt_gaussian(self: Type[topsApp.TopsInSAR],
     cor_ds = None
 
 
-def adaptive_gaussian(ionos: NDArray, wgt: NDArray,
-                      size_max: int = 200, size_min: int = 100) -> NDArray:
-    '''
+def adaptive_gaussian(
+    ionos: NDArray, wgt: NDArray, size_max: int = 200, size_min: int = 100
+) -> NDArray:
+    """
     This program performs Gaussian filtering with adaptive window size.
 
     REF: isce2/components/isceobj/TopsProc/runIon.py#L1846
@@ -744,7 +764,7 @@ def adaptive_gaussian(ionos: NDArray, wgt: NDArray,
         and mean, so it is important to mask zeros (aka nans)
         before calculation
 
-    '''
+    """
 
     length = (ionos.shape)[0]
     width = (ionos.shape)[1]
@@ -765,20 +785,21 @@ def adaptive_gaussian(ionos: NDArray, wgt: NDArray,
         size2 = np.int32(np.around(size[i]))
         if size2 % 2 == 0:
             size2 += 1
-        if (i+1) % 10 == 0:
-            print('min win: %4d, max win: %4d, current win: %4d' % (
-                np.int32(np.around(size_min)),
-                np.int32(np.around(size_max)),
-                size2))
+        if (i + 1) % 10 == 0:
+            print(
+                "min win: %4d, max win: %4d, current win: %4d"
+                % (np.int32(np.around(size_min)), np.int32(np.around(size_max)), size2)
+            )
 
-        g2d = runIon.gaussian(size2, sigma*size2/size_max, scale=1.0)
-        scale = ss.fftconvolve(wgt, g2d, mode='same')
-        flt[:, :, i] = ss.fftconvolve(
-            ionos*wgt, g2d, mode='same') / (scale + (scale == 0))
+        g2d = runIon.gaussian(size2, sigma * size2 / size_max, scale=1.0)
+        scale = ss.fftconvolve(wgt, g2d, mode="same")
+        flt[:, :, i] = ss.fftconvolve(ionos * wgt, g2d, mode="same") / (
+            scale + (scale == 0)
+        )
 
         # variance of resulting filtered sample
         scale = scale**2
-        var = ss.fftconvolve(wgt, g2d**2, mode='same') / (scale + (scale == 0))
+        var = ss.fftconvolve(wgt, g2d**2, mode="same") / (scale + (scale == 0))
         # in case there is a large area without data where scale is very small,
         # which leads to wired values in variance
         var[~flag] = 0  # MG mask the variance where there are 0s in input data
@@ -792,8 +813,7 @@ def adaptive_gaussian(ionos: NDArray, wgt: NDArray,
     # Find indexes with minimum values along the axis 2
     ixs = np.argmin(np.absolute(std - std_mv), axis=2)
 
-    index = np.nonzero(np.ones((length, width))) + \
-        (ixs.reshape(length*width), )
+    index = np.nonzero(np.ones((length, width))) + (ixs.reshape(length * width),)
 
     out = flt[index]
     out = out.reshape((length, width))
@@ -806,18 +826,20 @@ def adaptive_gaussian(ionos: NDArray, wgt: NDArray,
     size_smt = size_min
     if size_smt % 2 == 0:
         size_smt += 1
-    g2d = runIon.gaussian(size_smt, size_smt/2.0, scale=1.0)
-    scale = ss.fftconvolve((out != 0), g2d, mode='same')
-    out2 = ss.fftconvolve(out, g2d, mode='same') / (scale + (scale == 0))
+    g2d = runIon.gaussian(size_smt, size_smt / 2.0, scale=1.0)
+    scale = ss.fftconvolve((out != 0), g2d, mode="same")
+    out2 = ss.fftconvolve(out, g2d, mode="same") / (scale + (scale == 0))
 
     return out2
 
 
-def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
-                    ionParam: Type[runIon.dummy],
-                    use_bridging: bool = True,
-                    conncomp_flag: bool = True) -> None:
-    '''
+def ionSwathBySwath(
+    self: Type[topsApp.TopsInSAR],
+    ionParam: Type[runIon.dummy],
+    use_bridging: bool = True,
+    conncomp_flag: bool = True,
+) -> None:
+    """
     This routine merge, unwrap and compute ionosphere swath by swath,
     and then adjust phase difference between adjacent swaths caused
     by relative range timing error between adjacent swaths.
@@ -831,7 +853,7 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
 
     MG: did little clean up of the code, replaced step 2 & 3 with
         functions
-    '''
+    """
 
     #########################################
     # SET PARAMETERS HERE
@@ -847,19 +869,21 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
 
     #########################################
 
-    print('computing ionosphere swath by swath')
+    print("computing ionosphere swath by swath")
     # if ionParam.calIonWithMerged == False:
-    warningInfo = (f'{datetime.datetime.now()} calculating ionosphere'
-                   f'swath by swath, there may be slight phase error'
-                   f'between subswaths\n')
-    with open(os.path.join(ionParam.ionDirname, ionParam.warning), 'a') as f:
+    warningInfo = (
+        f"{datetime.datetime.now()} calculating ionosphere"
+        f"swath by swath, there may be slight phase error"
+        f"between subswaths\n"
+    )
+    with open(os.path.join(ionParam.ionDirname, ionParam.warning), "a") as f:
         f.write(warningInfo)
 
     # get bursts
     numValidSwaths = 0
     swathList = self._insar.getValidSwathList(self.swaths)
     for swath in swathList:
-        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath - 1)
         if minBurst == maxBurst:
             # print('Skipping processing of swath {0}'.format(swath))
             continue
@@ -867,19 +891,22 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
 
     if numValidSwaths <= 1:
         raise Exception(
-            'There are less than one subswaths, no need to use swath-by-swath'
-            'method to compute ionosphere!')
+            "There are less than one subswaths, no need to use swath-by-swath"
+            "method to compute ionosphere!"
+        )
     else:
         xmlDirname = os.path.join(
             ionParam.ionDirname, ionParam.lowerDirname, ionParam.fineIfgDirname
-            )
+        )
 
-        merge_kwargs = {'numberRangeLooks': ionParam.numberRangeLooks,
-                        'numberAzimuthLooks': ionParam.numberAzimuthLooks}
+        merge_kwargs = {
+            "numberRangeLooks": ionParam.numberRangeLooks,
+            "numberAzimuthLooks": ionParam.numberAzimuthLooks,
+        }
 
-        (box, burstValidBox,
-         burstValidBox2, frames) = runIon.getMergeBox(self, xmlDirname,
-                                                      **merge_kwargs)
+        (box, burstValidBox, burstValidBox2, frames) = runIon.getMergeBox(
+            self, xmlDirname, **merge_kwargs
+        )
 
     # compute ionosphere swath by swath
     corList = []
@@ -890,12 +917,12 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
     for i in range(nswath):
         swath = swathList[i]
         # MG Change merged dir for each swath
-        ionParam.mergedDirname = mergedDirname + '_IW{0}'.format(swath)
-        ionParam.ioncalDirname = ioncalDirname + '_IW{0}'.format(swath)
+        ionParam.mergedDirname = mergedDirname + "_IW{0}".format(swath)
+        ionParam.ioncalDirname = ioncalDirname + "_IW{0}".format(swath)
 
-        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath - 1)
         if minBurst == maxBurst:
-            print('Skipping processing of swath {0}'.format(swath))
+            print("Skipping processing of swath {0}".format(swath))
             continue
         else:
             ii += 1
@@ -908,75 +935,91 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
         for dirx in dirs:
             outputFilename = self._insar.mergedIfgname
             outputDirname = os.path.join(
-                ionParam.ionDirname, dirx, ionParam.mergedDirname)
+                ionParam.ionDirname, dirx, ionParam.mergedDirname
+            )
             os.makedirs(outputDirname, exist_ok=True)
-            suffix = '.full'
+            suffix = ".full"
             if (numberRangeLooks0 == 1) and (numberAzimuthLooks0 == 1):
-                suffix = ''
+                suffix = ""
 
             # merge
-            burstPattern = 'burst_%02d.int'
+            burstPattern = "burst_%02d.int"
             burstDirname = os.path.join(
-                ionParam.ionDirname, dirx, ionParam.fineIfgDirname)
+                ionParam.ionDirname, dirx, ionParam.fineIfgDirname
+            )
 
-            ifg = self._insar.loadProduct(os.path.join(
-                burstDirname, 'IW{0}.xml'.format(swath)))
-            bst = [os.path.join(burstDirname, f'IW{swath}',
-                                burstPattern % (x+1)) for x in range(minBurst,
-                                                                     maxBurst)]
+            ifg = self._insar.loadProduct(
+                os.path.join(burstDirname, "IW{0}.xml".format(swath))
+            )
+            bst = [
+                os.path.join(burstDirname, f"IW{swath}", burstPattern % (x + 1))
+                for x in range(minBurst, maxBurst)
+            ]
 
             # doing adjustment before use
-            adjustment_rvalid = np.int32(np.around(numberRangeLooks/8.0))
-            adjustValidWithLooks([ifg], box,
-                                 numberAzimuthLooks, numberRangeLooks,
-                                 edge=0, avalid='strict',
-                                 rvalid=adjustment_rvalid)
-            mergeBurstsVirtual([ifg], [bst], box, os.path.join(
-                outputDirname, outputFilename+suffix))
+            adjustment_rvalid = np.int32(np.around(numberRangeLooks / 8.0))
+            adjustValidWithLooks(
+                [ifg],
+                box,
+                numberAzimuthLooks,
+                numberRangeLooks,
+                edge=0,
+                avalid="strict",
+                rvalid=adjustment_rvalid,
+            )
+            mergeBurstsVirtual(
+                [ifg], [bst], box, os.path.join(outputDirname, outputFilename + suffix)
+            )
 
             # take looks
-            if suffix not in ['', None]:
-                multilook(os.path.join(outputDirname, outputFilename+suffix),
-                          os.path.join(outputDirname, outputFilename),
-                          numberAzimuthLooks0,
-                          numberRangeLooks0)
+            if suffix not in ["", None]:
+                multilook(
+                    os.path.join(outputDirname, outputFilename + suffix),
+                    os.path.join(outputDirname, outputFilename),
+                    numberAzimuthLooks0,
+                    numberRangeLooks0,
+                )
             else:
-                print('skipping multilooking')
+                print("skipping multilooking")
 
         # The orginal coherence calculated by topsApp.py is not good at all,
         # use the following coherence instead
-        lowerintfile = os.path.join(ionParam.ionDirname,
-                                    ionParam.lowerDirname,
-                                    ionParam.mergedDirname,
-                                    self._insar.mergedIfgname)
-        upperintfile = os.path.join(ionParam.ionDirname,
-                                    ionParam.upperDirname,
-                                    ionParam.mergedDirname,
-                                    self._insar.mergedIfgname)
-        corfile = os.path.join(ionParam.ionDirname,
-                               ionParam.lowerDirname,
-                               ionParam.mergedDirname,
-                               self._insar.correlationFilename)
+        lowerintfile = os.path.join(
+            ionParam.ionDirname,
+            ionParam.lowerDirname,
+            ionParam.mergedDirname,
+            self._insar.mergedIfgname,
+        )
+        upperintfile = os.path.join(
+            ionParam.ionDirname,
+            ionParam.upperDirname,
+            ionParam.mergedDirname,
+            self._insar.mergedIfgname,
+        )
+        corfile = os.path.join(
+            ionParam.ionDirname,
+            ionParam.lowerDirname,
+            ionParam.mergedDirname,
+            self._insar.correlationFilename,
+        )
 
         img = isceobj.createImage()
-        img.load(lowerintfile + '.xml')
+        img.load(lowerintfile + ".xml")
         width = img.width
         length = img.length
-        lowerint = np.fromfile(
-            lowerintfile, dtype=np.complex64).reshape(length, width)
-        upperint = np.fromfile(
-            upperintfile, dtype=np.complex64).reshape(length, width)
+        lowerint = np.fromfile(lowerintfile, dtype=np.complex64).reshape(length, width)
+        upperint = np.fromfile(upperintfile, dtype=np.complex64).reshape(length, width)
 
         ########################################################
         # slight filtering to improve the estimation accuarcy
         # of swath difference
-        if 1 and shutil.which('psfilt1') is not None:
-            cmd1 = 'mv {} tmp'.format(lowerintfile)
-            cmd2 = 'psfilt1 tmp {} {} .3 32 8'.format(lowerintfile, width)
-            cmd3 = 'rm tmp'
-            cmd4 = 'mv {} tmp'.format(upperintfile)
-            cmd5 = 'psfilt1 tmp {} {} .3 32 8'.format(upperintfile, width)
-            cmd6 = 'rm tmp'
+        if 1 and shutil.which("psfilt1") is not None:
+            cmd1 = "mv {} tmp".format(lowerintfile)
+            cmd2 = "psfilt1 tmp {} {} .3 32 8".format(lowerintfile, width)
+            cmd3 = "rm tmp"
+            cmd4 = "mv {} tmp".format(upperintfile)
+            cmd5 = "psfilt1 tmp {} {} .3 32 8".format(upperintfile, width)
+            cmd6 = "rm tmp"
 
             runIon.runCmd(cmd1)
             runIon.runCmd(cmd2)
@@ -989,18 +1032,18 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
         # compute coherence only using interferogram
         # here I use differential interferogram of lower and upper band
         # interferograms so that coherence is not affected by fringes
-        cord = runIon.cal_coherence(
-            lowerint*np.conjugate(upperint), win=3, edge=4)
-        cor = np.zeros((length*2, width), dtype=np.float32)
-        cor[0:length*2:2,
-            :] = np.sqrt((np.absolute(lowerint)+np.absolute(upperint))/2.0)
-        cor[1:length*2:2, :] = cord
+        cord = runIon.cal_coherence(lowerint * np.conjugate(upperint), win=3, edge=4)
+        cor = np.zeros((length * 2, width), dtype=np.float32)
+        cor[0 : length * 2 : 2, :] = np.sqrt(
+            (np.absolute(lowerint) + np.absolute(upperint)) / 2.0
+        )
+        cor[1 : length * 2 : 2, :] = cord
         cor.astype(np.float32).tofile(corfile)
 
         # img = isceobj.Image.createUnwImage()
         img = isceobj.createOffsetImage()
         img.setFilename(corfile)
-        img.extraFilename = corfile + '.vrt'
+        img.extraFilename = corfile + ".vrt"
         img.setWidth(width)
         img.setLength(length)
         img.renderHdr()
@@ -1009,9 +1052,7 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
         # the only change is the iono merged directory
 
         # STEP 2. UNWRAP SWATH INTERFEROGRAM
-        unwrap(self, ionParam,
-               use_bridging=use_bridging,
-               use_conncomp=conncomp_flag)
+        unwrap(self, ionParam, use_bridging=use_bridging, use_conncomp=conncomp_flag)
 
         # STEP 3. COMPUTE IONOSPHERE
         ionosphere(self, ionParam)
@@ -1022,16 +1063,19 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
         corFilename = os.path.join(outDir, ionParam.ionCorNoProj)
 
         img = isceobj.createImage()
-        img.load(outFilename + '.xml')
+        img.load(outFilename + ".xml")
         width = img.width
         length = img.length
 
-        ionos = (np.fromfile(outFilename, dtype=np.float32).reshape(
-            length*2, width))[1:length*2:2, :]
-        amp = (np.fromfile(outFilename, dtype=np.float32).reshape(
-            length*2, width))[0:length*2:2, :]
-        cor = (np.fromfile(corFilename, dtype=np.float32).reshape(
-            length*2, width))[1:length*2:2, :]
+        ionos = (np.fromfile(outFilename, dtype=np.float32).reshape(length * 2, width))[
+            1 : length * 2 : 2, :
+        ]
+        amp = (np.fromfile(outFilename, dtype=np.float32).reshape(length * 2, width))[
+            0 : length * 2 : 2, :
+        ]
+        cor = (np.fromfile(corFilename, dtype=np.float32).reshape(length * 2, width))[
+            1 : length * 2 : 2, :
+        ]
 
         ionosList.append(ionos)
         corList.append(cor)
@@ -1039,15 +1083,17 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
 
     # MG Get the last lower unwrapped
     # interferogram path
-    lowerUnwfile = os.path.join(ionParam.ionDirname,
-                                ionParam.lowerDirname,
-                                ionParam.mergedDirname,
-                                self._insar.unwrappedIntFilename)
+    lowerUnwfile = os.path.join(
+        ionParam.ionDirname,
+        ionParam.lowerDirname,
+        ionParam.mergedDirname,
+        self._insar.unwrappedIntFilename,
+    )
 
     # MG: use image size from lower unwrapped
     # interferogram swath
     img = isceobj.createImage()
-    img.load(lowerUnwfile + '.xml')
+    img.load(lowerUnwfile + ".xml")
     width = img.width
     length = img.length
 
@@ -1062,24 +1108,30 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
         adjustList = [ionosList[0]]
     for adjdata in adjustList:
         masked_cor = corList[1] > corThresholdSwathAdj
-        index = np.nonzero(
-            (adjdata != 0) * (ionosList[1] != 0) * masked_cor)
+        index = np.nonzero((adjdata != 0) * (ionosList[1] != 0) * masked_cor)
         if index[0].size < 5:
-            print(f'WARNING: too few samples available for adjustment'
-                  f' between swaths: {index[0].size} with coherence '
-                  f'threshold: {corThresholdSwathAdj}')
-            print('         no adjustment made!')
             print(
-                '         to do ajustment, please consider using'
-                ' lower coherence threshold')
+                f"WARNING: too few samples available for adjustment"
+                f" between swaths: {index[0].size} with coherence "
+                f"threshold: {corThresholdSwathAdj}"
+            )
+            print("         no adjustment made!")
+            print(
+                "         to do ajustment, please consider using"
+                " lower coherence threshold"
+            )
         else:
-            print(f'number of samples available for adjustment in the'
-                  f' overlap area: {index[0].size}')
+            print(
+                f"number of samples available for adjustment in the"
+                f" overlap area: {index[0].size}"
+            )
 
             # use weighted mean instead
-            wgt = corList[1][index]**14
-            diff = np.sum((ionosList[1] - adjdata)[index] * wgt /
-                          np.sum(wgt, dtype=np.float64), dtype=np.float64)
+            wgt = corList[1][index] ** 14
+            diff = np.sum(
+                (ionosList[1] - adjdata)[index] * wgt / np.sum(wgt, dtype=np.float64),
+                dtype=np.float64,
+            )
 
             index2 = np.nonzero(adjdata != 0)
             adjdata[index2] = adjdata[index2] + diff
@@ -1091,51 +1143,58 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
     for i in range(numValidSwaths):
         nBurst = len(burstValidBox[i])
         for j in range(nBurst):
-
             # index after multi-looking in merged image, index
             # starts from 1
             first_line = np.int32(
-                np.around((burstValidBox[i][j][0] - 1) /
-                          numberAzimuthLooks + 1))
-            last_line = np.int32(
-                np.around(burstValidBox[i][j][1] /
-                          numberAzimuthLooks))
+                np.around((burstValidBox[i][j][0] - 1) / numberAzimuthLooks + 1)
+            )
+            last_line = np.int32(np.around(burstValidBox[i][j][1] / numberAzimuthLooks))
             first_sample = np.int32(
-                np.around((burstValidBox[i][j][2] - 1) /
-                          numberRangeLooks + 1))
-            last_sample = np.int32(
-                np.around(burstValidBox[i][j][3] /
-                          numberRangeLooks))
+                np.around((burstValidBox[i][j][2] - 1) / numberRangeLooks + 1)
+            )
+            last_sample = np.int32(np.around(burstValidBox[i][j][3] / numberRangeLooks))
 
-            corMerged[first_line-1:last_line-1+1,
-                      first_sample-1:last_sample-1+1] = \
-                corList[i][first_line-1:last_line-1 +
-                           1, first_sample-1:last_sample-1+1]
+            corMerged[
+                first_line - 1 : last_line - 1 + 1,
+                first_sample - 1 : last_sample - 1 + 1,
+            ] = corList[i][
+                first_line - 1 : last_line - 1 + 1,
+                first_sample - 1 : last_sample - 1 + 1,
+            ]
 
-            ampMerged[first_line-1:last_line-1+1,
-                      first_sample-1:last_sample-1+1] = \
-                ampList[i][first_line-1:last_line-1 +
-                           1, first_sample-1:last_sample-1+1]
+            ampMerged[
+                first_line - 1 : last_line - 1 + 1,
+                first_sample - 1 : last_sample - 1 + 1,
+            ] = ampList[i][
+                first_line - 1 : last_line - 1 + 1,
+                first_sample - 1 : last_sample - 1 + 1,
+            ]
 
-            ionosMerged[first_line-1:last_line-1+1,
-                        first_sample-1:last_sample-1+1] = \
-                ionosList[i][first_line-1:last_line -
-                             1+1, first_sample-1:last_sample-1+1]
+            ionosMerged[
+                first_line - 1 : last_line - 1 + 1,
+                first_sample - 1 : last_sample - 1 + 1,
+            ] = ionosList[i][
+                first_line - 1 : last_line - 1 + 1,
+                first_sample - 1 : last_sample - 1 + 1,
+            ]
 
     # remove an empirical ramp
     # MG this part can be commented out as ramp is not applied to iono
     # leave it here for now
     if ionParam.rampRemovel != 0:
-        warningInfo = (f'{datetime.datetime.now()} calculating ionosphere for '
-                       f'cross S-1A/B interferogram, an empirical ramp is '
-                       f'removed from estimated ionosphere\n')
+        warningInfo = (
+            f"{datetime.datetime.now()} calculating ionosphere for "
+            f"cross S-1A/B interferogram, an empirical ramp is "
+            f"removed from estimated ionosphere\n"
+        )
 
         warning_file = os.path.join(ionParam.ionDirname, ionParam.warning)
-        with open(warning_file, 'a') as f:
+        with open(warning_file, "a") as f:
             f.write(warningInfo)
 
         abramp = runIon.cal_cross_ab_ramp(
-            swathList, box[1], numberRangeLooks, ionParam.passDirection)
+            swathList, box[1], numberRangeLooks, ionParam.passDirection
+        )
         if ionParam.rampRemovel == -1:
             abramp *= -1.0
         # currently do not apply this
@@ -1145,75 +1204,75 @@ def ionSwathBySwath(self: Type[topsApp.TopsInSAR],
     outDir = os.path.join(ionParam.ionDirname, ionParam.ioncalDirname)
     os.makedirs(outDir, exist_ok=True)
     outFilename = os.path.join(outDir, ionParam.ionRawNoProj)
-    ion = np.zeros((length*2, width), dtype=np.float32)
-    ion[0:length*2:2, :] = ampMerged
-    ion[1:length*2:2, :] = ionosMerged
+    ion = np.zeros((length * 2, width), dtype=np.float32)
+    ion[0 : length * 2 : 2, :] = ampMerged
+    ion[1 : length * 2 : 2, :] = ionosMerged
     ion.astype(np.float32).tofile(outFilename)
     img.filename = outFilename
-    img.extraFilename = outFilename + '.vrt'
+    img.extraFilename = outFilename + ".vrt"
     img.renderHdr()
 
     # dump coherence
     outFilename = os.path.join(outDir, ionParam.ionCorNoProj)
-    ion[1:length*2:2, :] = corMerged
+    ion[1 : length * 2 : 2, :] = corMerged
     ion.astype(np.float32).tofile(outFilename)
     img.filename = outFilename
-    img.extraFilename = outFilename + '.vrt'
+    img.extraFilename = outFilename + ".vrt"
     img.renderHdr()
 
 
 def ionosphere(self, ionParam):
-
     ###################################
     # SET PARAMETERS HERE
     # THESE SHOULD BE GOOD ENOUGH, NO NEED TO SET IN setup(self)
     corThresholdAdj = 0.85
     ###################################
 
-    print('computing ionosphere')
+    print("computing ionosphere")
     # get files
     unw_filename = self._insar.unwrappedIntFilename
     cor_filename = self._insar.correlationFilename
 
-    lowerUnwfile = os.path.join(ionParam.ionDirname, ionParam.lowerDirname,
-                                ionParam.mergedDirname, unw_filename)
-    upperUnwfile = os.path.join(ionParam.ionDirname, ionParam.upperDirname,
-                                ionParam.mergedDirname, unw_filename)
-    corfile = os.path.join(ionParam.ionDirname, ionParam.lowerDirname,
-                           ionParam.mergedDirname, cor_filename)
+    lowerUnwfile = os.path.join(
+        ionParam.ionDirname, ionParam.lowerDirname, ionParam.mergedDirname, unw_filename
+    )
+    upperUnwfile = os.path.join(
+        ionParam.ionDirname, ionParam.upperDirname, ionParam.mergedDirname, unw_filename
+    )
+    corfile = os.path.join(
+        ionParam.ionDirname, ionParam.lowerDirname, ionParam.mergedDirname, cor_filename
+    )
 
     # use image size from lower unwrapped interferogram
     img = isceobj.createImage()
-    img.load(lowerUnwfile + '.xml')
+    img.load(lowerUnwfile + ".xml")
     width = img.width
     length = img.length
 
     lowerUnw = np.fromfile(lowerUnwfile, dtype=np.float32)
-    lowerUnw = lowerUnw.reshape(length*2, width)[1:length*2:2, :]
+    lowerUnw = lowerUnw.reshape(length * 2, width)[1 : length * 2 : 2, :]
     upperUnw = np.fromfile(upperUnwfile, dtype=np.float32)
-    upperUnw = upperUnw.reshape(length*2, width)[1:length*2:2, :]
+    upperUnw = upperUnw.reshape(length * 2, width)[1 : length * 2 : 2, :]
     lowerAmp = np.fromfile(lowerUnwfile, dtype=np.float32)
-    lowerAmp = lowerAmp.reshape(length*2, width)[0:length*2:2, :]
+    lowerAmp = lowerAmp.reshape(length * 2, width)[0 : length * 2 : 2, :]
     upperAmp = np.fromfile(upperUnwfile, dtype=np.float32)
-    upperAmp = upperAmp.reshape(length*2, width)[0:length*2:2, :]
+    upperAmp = upperAmp.reshape(length * 2, width)[0 : length * 2 : 2, :]
     cor = np.fromfile(corfile, dtype=np.float32)
-    cor = cor.reshape(length*2, width)[1:length*2:2, :]
-    amp = np.sqrt(lowerAmp**2+upperAmp**2)
+    cor = cor.reshape(length * 2, width)[1 : length * 2 : 2, :]
+    amp = np.sqrt(lowerAmp**2 + upperAmp**2)
 
     # masked out user-specified areas
     if ionParam.maskedAreas is not None:
-        maskedAreas = runIon.reformatMaskedAreas(ionParam.maskedAreas,
-                                                 length, width)
+        maskedAreas = runIon.reformatMaskedAreas(ionParam.maskedAreas, length, width)
         for area in maskedAreas:
-            lowerUnw[area[0]:area[1], area[2]:area[3]] = 0
-            upperUnw[area[0]:area[1], area[2]:area[3]] = 0
-            cor[area[0]:area[1], area[2]:area[3]] = 0
+            lowerUnw[area[0] : area[1], area[2] : area[3]] = 0
+            upperUnw[area[0] : area[1], area[2] : area[3]] = 0
+            cor[area[0] : area[1], area[2] : area[3]] = 0
 
     # MG: Check if there is data for compution iono
     # skip if array is all 0s
     if np.flatnonzero(lowerUnw).size == 0:
-        print('WARNING: lower/upper band data all zero'
-              ' skip iono computation!')
+        print("WARNING: lower/upper band data all zero skip iono computation!")
         ionos = np.zeros_like(lowerUnw)
     else:
         # compute ionosphere
@@ -1221,27 +1280,28 @@ def ionosphere(self, ionParam):
         fu = runIon.SPEED_OF_LIGHT / ionParam.radarWavelengthUpper
         # polynomial method for removing relative phase unwrapping errors
         adjFlag = 1
-        ionos = runIon.computeIonosphere(lowerUnw, upperUnw, cor, fl, fu,
-                                         adjFlag, corThresholdAdj, 0)
+        ionos = runIon.computeIonosphere(
+            lowerUnw, upperUnw, cor, fl, fu, adjFlag, corThresholdAdj, 0
+        )
 
     # dump ionosphere
     outDir = os.path.join(ionParam.ionDirname, ionParam.ioncalDirname)
     os.makedirs(outDir, exist_ok=True)
     outFilename = os.path.join(outDir, ionParam.ionRawNoProj)
-    ion = np.zeros((length*2, width), dtype=np.float32)
-    ion[0:length*2:2, :] = amp
-    ion[1:length*2:2, :] = ionos
+    ion = np.zeros((length * 2, width), dtype=np.float32)
+    ion[0 : length * 2 : 2, :] = amp
+    ion[1 : length * 2 : 2, :] = ionos
     ion.astype(np.float32).tofile(outFilename)
     img.filename = outFilename
-    img.extraFilename = outFilename + '.vrt'
+    img.extraFilename = outFilename + ".vrt"
     img.renderHdr()
 
     # dump coherence
-    outFilename = os.path.join(ionParam.ionDirname,
-                               ionParam.ioncalDirname,
-                               ionParam.ionCorNoProj)
-    ion[1:length*2:2, :] = cor
+    outFilename = os.path.join(
+        ionParam.ionDirname, ionParam.ioncalDirname, ionParam.ionCorNoProj
+    )
+    ion[1 : length * 2 : 2, :] = cor
     ion.astype(np.float32).tofile(outFilename)
     img.filename = outFilename
-    img.extraFilename = outFilename + '.vrt'
+    img.extraFilename = outFilename + ".vrt"
     img.renderHdr()

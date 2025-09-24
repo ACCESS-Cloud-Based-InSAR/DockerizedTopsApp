@@ -65,7 +65,9 @@ def get_connected_component_mask(con_comp: np.ndarray) -> np.ndarray:
     return mask
 
 
-def save_png(arr: np.ndarray, out_png_path: Path, scale_dimension: float = 0.2, cmap: str = "hsv") -> Path:
+def save_png(
+    arr: np.ndarray, out_png_path: Path, scale_dimension: float = 0.2, cmap: str = "hsv"
+) -> Path:
     shape = arr.shape
     # from normal dynamic range to [0, 1]
     arr_scaled = scale_img(arr)
@@ -116,9 +118,13 @@ def format_metadata(nc_path: Path, all_metadata: dict, product: str) -> dict:
     label = nc_path.name[:-3]  # removes suffix .nc
     geojson = all_metadata["gunw_geo"].__geo_interface__
 
-    ref_props_all = sorted(all_metadata["reference_properties"], key=lambda prop: prop["startTime"])
+    ref_props_all = sorted(
+        all_metadata["reference_properties"], key=lambda prop: prop["startTime"]
+    )
     ref_props_first = ref_props_all[0]
-    sec_props_all = sorted(all_metadata["secondary_properties"], key=lambda prop: prop["startTime"])
+    sec_props_all = sorted(
+        all_metadata["secondary_properties"], key=lambda prop: prop["startTime"]
+    )
     sec_props_first = sec_props_all[0]
     b_perp = read_baseline_perp(nc_path).mean()
 
