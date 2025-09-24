@@ -12,6 +12,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Support for latest ISCE2 and therefore python 3.10 - 3.12!
 * Sentinel-1C support (inherited from ISCE2). Ensure we are not filtering for S1C in localization.
 * Error out for S1C data generated prior to May 19th, 2025 as noted here: https://sentinels.copernicus.eu/-/sentinel-1c-products-are-now-calibrated
+* Use ruff rather than flake8 (added to environment.yml), update actions to latest, and ensure we are up-to-date for CI/CD.
 
 
 ## [1.0.0]
