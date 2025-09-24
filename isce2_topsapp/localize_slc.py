@@ -247,7 +247,6 @@ def get_slcs_for_date_and_frame(date: datetime.date, frame_id: int) -> list[str]
     date_as_datetime = datetime.datetime(year=date.year, month=date.month, day=date.day)
     results = asf.search(
         dataset=asf.constants.DATASET.SENTINEL1,
-        platform=['SA', 'SB'],
         processingLevel=asf.constants.PRODUCT_TYPE.SLC,
         beamMode=asf.constants.BEAMMODE.IW,
         polarization=[asf.constants.POLARIZATION.VV, asf.constants.POLARIZATION.VV_VH],
