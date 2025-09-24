@@ -10,7 +10,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 * Support for latest ISCE2 and therefore python 3.10 - 3.12!
-* Sentinel-1C support (inherited from ISCE2).
+* Sentinel-1C support (inherited from ISCE2). Ensure we are not filtering for S1C in localization.
 
 
 ## [1.0.0]
