@@ -10,7 +10,7 @@ from typing import Optional
 # ----------------------------------------------------------------------------------------------------------------------
 # This ensures all ISCE2 paths and environment variables are set when using this module, see:
 # https://github.com/isce-framework/isce2/blob/main/__init__.py#L41-L50
-import asf_search
+import asf_search  # noqa: E402
 import isce  # noqa: F401
 
 # ISCE2 sets the root logger to DEBUG resulting in excessively verbose logging, see:
@@ -41,11 +41,11 @@ from isce2_topsapp.localize_burst import (  # noqa: E402
 from isce2_topsapp.localize_dem import download_dem_for_isce2  # noqa: E402
 from isce2_topsapp.localize_mask import download_water_mask  # noqa: E402
 from isce2_topsapp.localize_orbits import download_orbits  # noqa: E402
-from isce2_topsapp.localize_slc import (
+from isce2_topsapp.localize_slc import (  # noqa: E402
     download_slcs,
     get_asf_slc_objects,
     get_slcs_for_date_and_frame,
-)  # noqa: E402
+)
 from isce2_topsapp.packaging import package_gunw_product  # noqa: E402
 from isce2_topsapp.topsapp_params import topsappParams  # noqa: E402
 from isce2_topsapp.topsapp_proc import topsapp_processing  # noqa: E402
