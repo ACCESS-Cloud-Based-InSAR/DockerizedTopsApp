@@ -12,7 +12,6 @@ notebooks = [
 
 @pytest.mark.parametrize("notebook_name", notebooks)
 def test_notebooks(notebook_name, monkeypatch):
-
     test_dir = Path(__file__).parents[0].absolute()
 
     out_dir = test_dir / "out"

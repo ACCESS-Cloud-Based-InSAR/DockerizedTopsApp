@@ -18,18 +18,22 @@ We note all the input datasets are publicly available using a NASA Earthdata acc
 
 ## Installation
 
+We use [`mamba`](https://github.com/mamba-org/mamba) to manage our virtual environments and the dependencies required to run this plugin.
+Our instructions are tailored for this. Below are generic instructions (additional instructions have to be followed for Mac ARM users; see below.)
+
 1. Clone this repo `git clone https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp.git`
 2. Navigate with your terminal to the repo.
-3. Create a new environment and install requirements using `conda env update --file environment.yml` (or use [`mamba`](https://github.com/mamba-org/mamba) to speed install up)
+3. Create a new environment and install requirements using `mamba env create --file environment.yml`
 4. Install the package from cloned repo using `python -m pip install -e .`
 
-### For Mac M1 Silicon Users
+### For Mac ARM Users
 
 `ISCE2` requires Intel `x86_64` complied, conda-forge packages. Please follow the directions [here](https://conda-forge.org/docs/user/tipsandtricks.html#installing-apple-intel-packages-on-apple-silicon) i.e.
 
 ```
-CONDA_SUBDIR=osx-64 conda create -n topsapp_env python
+CONDA_SUBDIR=osx-64 conda create -n topsapp_env python=3.11  # currently env is pinned at 3.11
 conda activate topsapp_env
+export CONDA_SUBDIR=osx-64  # added from official instructions
 conda config --env --set subdir osx-64 
 ```
 Then check
@@ -37,6 +41,15 @@ Then check
 python -c "import platform;print(platform.machine())"  # Should print "x86_64"
 echo "CONDA_SUBDIR: $CONDA_SUBDIR"  # Should print "CONDA_SUBDIR: osx-64"
 ```
+and finally update the environment with:
+```
+mamba env update --file environment.yml
+```
+To run the test notebooks, you will need to add a `topsapp_env` jupyter kernel, too:
+```
+python -m ipykernel install --user --name topsapp_env
+```
+
 
 ## Additional setup
 

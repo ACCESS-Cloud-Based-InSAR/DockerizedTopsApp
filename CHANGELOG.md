@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1]
+
+### Added
+* Support for latest ISCE2 and therefore python 3.10 - 3.12!
+* Sentinel-1C support (inherited from ISCE2). Ensure we are not filtering for S1C in localization.
+* Error out for S1C data generated prior to May 19th, 2025 as noted here: https://sentinels.copernicus.eu/-/sentinel-1c-products-are-now-calibrated
+* Use ruff rather than flake8 (added to environment.yml), update actions to latest, and ensure we are up-to-date for CI/CD.
+* Fix ruff formatting across repository
+
+
 ## [1.0.0]
 This update provides new functionality for production of an the earthquake-specific, sensor-agnostic `COSEIS_SAR` product, while leaving the standard `GUNW` product generation functionality (`0.6.0`) unchanged.
 

@@ -578,7 +578,7 @@ def processCube(inps, fid, no_data=-9999):
     cube.create_dataset('heights', data=inps.heights)
     cube.create_dataset('lons', data=md_cube.lonvector)
     cube.create_dataset('lats', data=md_cube.latvector)
-    cube.create_dataset('nodata', data=np.float(no_data))
+    cube.create_dataset('nodata', data=float(no_data))
 
     try:
         shutil.rmtree(memmap_dir)

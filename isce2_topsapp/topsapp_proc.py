@@ -108,7 +108,7 @@ def topsapp_processing(
         do_dense_offsets=do_dense_offsets,
         goldstein_filter_power=goldstein_filter_power,
         ampcor_height=ampcor_window_size,
-        ampcor_width=ampcor_window_size*4,
+        ampcor_width=ampcor_window_size * 4,
     )
     with open("topsApp.xml", "w") as file:
         file.write(topsApp_xml)

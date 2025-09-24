@@ -1,2 +1,8 @@
 [build-system]
 requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
+
+[tool.ruff]
+exclude = ["isce2_topsapp/packaging_utils", 
+           "tests/prepare-for-delivery.ipynb", 
+           "tests/prepare-for-delivery.ipynb",
+           "tests/solid_earth_tides.ipynb"]
