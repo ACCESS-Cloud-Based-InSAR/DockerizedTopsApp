@@ -13,6 +13,9 @@ from shapely.ops import unary_union
 from tqdm import tqdm
 
 MIN_FRAME_COVERAGE_DEFAULT = 0.01
+S1C_MIN_DATE = datetime.datetime(
+    2025, 5, 19, tzinfo=datetime.timezone.utc
+)  # https://sentinels.copernicus.eu/-/sentinel-1c-products-are-now-calibrated
 
 
 def get_gunw_extent_from_frame_id(frame_id) -> Polygon:
@@ -26,7 +29,6 @@ def get_gunw_extent_from_frame_id(frame_id) -> Polygon:
 
 
 def get_asf_slc_objects(slc_ids: list) -> list:
-
     response = asf.granule_search(slc_ids)
 
     def filter_by_type(response):
@@ -79,8 +81,8 @@ def get_interferogram_geo(
         frame_coverage = gunw_geo.intersection(ifg_geo).area / gunw_geo.area
         if frame_coverage < min_frame_coverage:
             raise ValueError(
-                f"IFG area (i.e. ref and sec overlap) covers only {frame_coverage*100:.2f}% of Frame area; "
-                f"the requested minimum coverage was {min_frame_coverage*100:.2f}%."
+                f"IFG area (i.e. ref and sec overlap) covers only {frame_coverage * 100:.2f}% of Frame area; "
+                f"the requested minimum coverage was {min_frame_coverage * 100:.2f}%."
             )
         ifg_geo = gunw_geo
     return ifg_geo
@@ -91,12 +93,7 @@ def ensure_repeat_pass_time_small(slc_properties: list, maximum_minutes_between_
     dates = [parse(prop["startTime"]) for prop in slc_properties]
     dates = sorted(dates)
     minutes_apart_from_first_acq = [(date - dates[0]).seconds for date in dates]
-    return all(
-        [
-            minutes_apart <= maximum_minutes_between_acq * 60
-            for minutes_apart in minutes_apart_from_first_acq
-        ]
-    )
+    return all([minutes_apart <= maximum_minutes_between_acq * 60 for minutes_apart in minutes_apart_from_first_acq])
 
 
 def check_flight_direction(slc_properties: list) -> bool:
@@ -108,6 +105,23 @@ def check_date_order(ref_properties: list, sec_properties: list) -> bool:
     ref_date = parse(ref_properties[0]["startTime"])
     sec_date = parse(sec_properties[0]["startTime"])
     return sec_date < ref_date
+
+
+def check_if_s1c_has_valid_date(slc_ids: list, slc_properties: list) -> bool:
+    assert len(slc_ids) == len(slc_properties)
+    s1c_filter_bool = [id.startswith("S1C") for id in slc_ids]
+    s1c_properties_filter = [prop for (k, prop) in enumerate(slc_properties) if s1c_filter_bool[k]]
+    # No s1c data
+    if not sum(s1c_filter_bool):
+        return True
+    s1c_ids = [id for (k, id) in enumerate(slc_ids) if s1c_filter_bool[k]]
+    s1c_dates = [parse(prop["startTime"]) for prop in s1c_properties_filter]
+    s1c_valid_data_filter = [date >= S1C_MIN_DATE for date in s1c_dates]
+    s1c_has_valid_date = all(s1c_valid_data_filter)
+    if not s1c_has_valid_date:
+        invalid_s1c_ids = [id for (k, id) in enumerate(s1c_ids) if not s1c_valid_data_filter[k]]
+        print(f"The following S1C acquisitions were before {S1C_MIN_DATE}: {invalid_s1c_ids}")
+    return s1c_has_valid_date
 
 
 def check_track_numbers(slc_properties: list):
@@ -152,31 +166,22 @@ def download_slcs(
     secondary_props = [ob.properties for ob in secondary_obs]
 
     minutes_apart = 2
-    if not ensure_repeat_pass_time_small(
-        reference_props, maximum_minutes_between_acq=minutes_apart
-    ):
-        raise ValueError(
-            "The reference SLCs are more than {minutes_apart} min"
-            "apart from the initial acq. in this pass"
-        )
-    if not ensure_repeat_pass_time_small(
-        secondary_props, maximum_minutes_between_acq=minutes_apart
-    ):
-        raise ValueError(
-            "The secondary SLCs are more than {minutes_apart} min"
-            "apart from the initial acq. in this pass"
-        )
+    if not ensure_repeat_pass_time_small(reference_props, maximum_minutes_between_acq=minutes_apart):
+        raise ValueError("The reference SLCs are more than {minutes_apart} minapart from the initial acq. in this pass")
+    if not ensure_repeat_pass_time_small(secondary_props, maximum_minutes_between_acq=minutes_apart):
+        raise ValueError("The secondary SLCs are more than {minutes_apart} minapart from the initial acq. in this pass")
 
     if not check_flight_direction(reference_props + secondary_props):
         raise ValueError("The SLCs are not all Descending or Ascending")
 
     if not check_track_numbers(reference_props + secondary_props):
-        raise ValueError(
-            "The SLCs do not belong to the same track (or sequential tracks)"
-        )
+        raise ValueError("The SLCs do not belong to the same track (or sequential tracks)")
 
     if not check_date_order(reference_props, secondary_props):
         raise ValueError("Reference date must occur after secondary date")
+
+    if not check_if_s1c_has_valid_date(reference_ids + secondary_ids, reference_props + secondary_props):
+        raise ValueError(f"The Sentinel-1C acquisitions provided were before {S1C_MIN_DATE}")
 
     # Check the number of objects is the same as inputs
     assert len(reference_obs) == len(reference_ids)
@@ -208,9 +213,7 @@ def download_slcs(
     all_obs = reference_obs + secondary_obs
     n = len(all_obs)
     with ThreadPoolExecutor(max_workers=max_workers_for_download) as executor:
-        results = list(
-            tqdm(executor.map(download_one, all_obs), total=n, desc="Downloading SLCs")
-        )
+        results = list(tqdm(executor.map(download_one, all_obs), total=n, desc="Downloading SLCs"))
 
     n0 = len(reference_obs)
     return {
@@ -233,12 +236,12 @@ def download_slcs(
 
 
 def _get_frame_by_id(frame_id: int) -> gpd.GeoSeries:
-    frames = gpd.read_file(Path(__file__).parent / 'data' / 's1_frames_latitude_aligned.geojson.zip')
+    frames = gpd.read_file(Path(__file__).parent / "data" / "s1_frames_latitude_aligned.geojson.zip")
     return frames[frames.frame_id == frame_id].reset_index(drop=True).iloc[0]
 
 
 def _get_dates(product: asf.ASFProduct) -> set[datetime.date]:
-    date_strings = [product.properties[field].strip('Z') for field in ['startTime', 'stopTime']]
+    date_strings = [product.properties[field].strip("Z") for field in ["startTime", "stopTime"]]
     return {datetime.datetime.fromisoformat(date_string).date() for date_string in date_strings}
 
 
@@ -247,7 +250,6 @@ def get_slcs_for_date_and_frame(date: datetime.date, frame_id: int) -> list[str]
     date_as_datetime = datetime.datetime(year=date.year, month=date.month, day=date.day)
     results = asf.search(
         dataset=asf.constants.DATASET.SENTINEL1,
-        platform=['SA', 'SB'],
         processingLevel=asf.constants.PRODUCT_TYPE.SLC,
         beamMode=asf.constants.BEAMMODE.IW,
         polarization=[asf.constants.POLARIZATION.VV, asf.constants.POLARIZATION.VV_VH],
@@ -258,6 +260,6 @@ def get_slcs_for_date_and_frame(date: datetime.date, frame_id: int) -> list[str]
         end=date_as_datetime + datetime.timedelta(days=1, minutes=5),
     )
     if not any(product_date == date for product in results for product_date in _get_dates(product)):
-        raise ValueError(f'No Sentinel-1A/1B SLCs found for date {date} and frame id {frame_id}.')
+        raise ValueError(f"No Sentinel-1A/1B/1C SLCs found for date {date} and frame id {frame_id}.")
 
-    return [result.properties['sceneName'] for result in results]
+    return [result.properties["sceneName"] for result in results]

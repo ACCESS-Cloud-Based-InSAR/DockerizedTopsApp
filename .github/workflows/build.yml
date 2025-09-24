@@ -1,28 +1,27 @@
-name: build
+name: Build
 
 on:
   push:
     branches:
-      - main
       - dev
+    tags:
+      - 'v*'
   pull_request:
     branches:
-      - main
       - dev
 
 jobs:
   call-version-info-workflow:
     uses: ASFHyP3/actions/.github/workflows/reusable-version-info.yml@v0.20.0
     with:
-      python_version: '3.11'
+        python_version: '3.11'
 
   call-docker-ghcr-workflow:
     needs: call-version-info-workflow
     uses: ASFHyP3/actions/.github/workflows/reusable-docker-ghcr.yml@v0.20.0
     with:
       version_tag: ${{ needs.call-version-info-workflow.outputs.version_tag }}
-      release_branch: main
-      develop_branch: dev
       user: ${{ github.actor }}
+      file: Dockerfile
     secrets:
       USER_TOKEN: ${{ secrets.GITHUB_TOKEN }}

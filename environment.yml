@@ -38,6 +38,7 @@ dependencies:
  - rasterio
  - requests
  - rioxarray
+ - ruff
  - xarray
  - scipy<1.10
  - setuptools
