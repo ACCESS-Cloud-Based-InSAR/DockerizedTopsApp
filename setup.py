@@ -26,7 +26,7 @@ setup(
     ],
     python_requires=">=3.11",
     install_requires=[
-        "asf_search>=5.0.0",
+        "asf_search>=10.0.5",
         "boto3",
         "dateparser",
         "dem_stitcher>=2.5.8",
