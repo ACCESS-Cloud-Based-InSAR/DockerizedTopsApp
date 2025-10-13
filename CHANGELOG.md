@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2]
+
+### Changed
+- Upgraded to `asf_search>=10.0.5` to resolve jobs failing with `ASFAuthenticationError: Username or password is incorrect`
+  due to https://github.com/asfadmin/Discovery-asf_search/issues/396.
+
 ## [1.0.1]
 
 ### Added
