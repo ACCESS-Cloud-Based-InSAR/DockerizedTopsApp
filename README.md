@@ -81,7 +81,7 @@ To be even more explicit, you can use [`tee`](https://en.wikipedia.org/wiki/Tee_
 
 Starting in version 0.6.0, you can specify acquisition dates instead of explicit scene IDs. The application will automatically discover and process all Sentinel-1 SLC scenes acquired on those dates for the specified frame.
 
-**Date Format:** `YYYY-MM-DD` (ISO 8601 format)
+**Date Format:** `YYYY-MM-DD`
 
 **Basic example using dates:**
 ```bash
