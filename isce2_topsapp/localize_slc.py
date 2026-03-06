@@ -170,6 +170,7 @@ def download_slcs(
     min_frame_coverage: float = MIN_FRAME_COVERAGE_DEFAULT,
     max_workers_for_download: int = 5,
     dry_run: bool = False,
+    download_source: str = "asf",
 ) -> dict:
     reference_obs = get_asf_slc_objects(reference_ids)
     secondary_obs = get_asf_slc_objects(secondary_ids)
@@ -229,23 +230,34 @@ def download_slcs(
             category=RuntimeWarning,
         )
 
-    def download_one(resp):
-        session = get_session()
-        file_name = resp.properties["fileName"]
-        if not dry_run:
-            resp.download(path=".", session=session)
-        return file_name
-
     processing_geo = ifg_geo
     if frame_id != -1:
         processing_geo = _get_frame_by_id(frame_id).geometry
 
-    all_obs = reference_obs + secondary_obs
-    n = len(all_obs)
-    with ThreadPoolExecutor(max_workers=max_workers_for_download) as executor:
-        results = list(
-            tqdm(executor.map(download_one, all_obs), total=n, desc="Downloading SLCs")
+    if download_source == "cdse":
+        from isce2_topsapp.localize_slc_cdse import download_slcs_from_cdse
+
+        all_ids = reference_ids + secondary_ids
+        results = download_slcs_from_cdse(
+            all_ids,
+            output_dir=".",
+            max_workers=max_workers_for_download,
+            dry_run=dry_run,
         )
+    else:
+        def download_one(resp):
+            session = get_session()
+            file_name = resp.properties["fileName"]
+            if not dry_run:
+                resp.download(path=".", session=session)
+            return file_name
+
+        all_obs = reference_obs + secondary_obs
+        n = len(all_obs)
+        with ThreadPoolExecutor(max_workers=max_workers_for_download) as executor:
+            results = list(
+                tqdm(executor.map(download_one, all_obs), total=n, desc="Downloading SLCs")
+            )
 
     n0 = len(reference_obs)
     return {
