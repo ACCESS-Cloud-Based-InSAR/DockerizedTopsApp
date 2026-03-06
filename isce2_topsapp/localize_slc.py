@@ -245,6 +245,7 @@ def download_slcs(
             dry_run=dry_run,
         )
     else:
+
         def download_one(resp):
             session = get_session()
             file_name = resp.properties["fileName"]
@@ -256,7 +257,11 @@ def download_slcs(
         n = len(all_obs)
         with ThreadPoolExecutor(max_workers=max_workers_for_download) as executor:
             results = list(
-                tqdm(executor.map(download_one, all_obs), total=n, desc="Downloading SLCs")
+                tqdm(
+                    executor.map(download_one, all_obs),
+                    total=n,
+                    desc="Downloading SLCs",
+                )
             )
 
     n0 = len(reference_obs)
