@@ -262,11 +262,19 @@ def gunw_slc():
     # Also validate CDSE credentials if using CDSE for download
     if args.download_source == "cdse":
         from isce2_topsapp.localize_slc_cdse import ensure_cdse_credentials
+
         ensure_cdse_credentials()
     cli_params = vars(args).copy()
     [
         cli_params.pop(key)
-        for key in ["username", "password", "bucket", "bucket_prefix", "dry_run", "download_source"]
+        for key in [
+            "username",
+            "password",
+            "bucket",
+            "bucket_prefix",
+            "dry_run",
+            "download_source",
+        ]
     ]
     topsapp_params_obj = topsappParams(**cli_params)
 
@@ -484,11 +492,19 @@ def coseis_sar():
     # Also validate CDSE credentials if using CDSE for download
     if args.download_source == "cdse":
         from isce2_topsapp.localize_slc_cdse import ensure_cdse_credentials
+
         ensure_cdse_credentials()
     cli_params = vars(args).copy()
     [
         cli_params.pop(key)
-        for key in ["username", "password", "bucket", "bucket_prefix", "dry_run", "download_source"]
+        for key in [
+            "username",
+            "password",
+            "bucket",
+            "bucket_prefix",
+            "dry_run",
+            "download_source",
+        ]
     ]
     topsapp_params_obj = topsappParams(**cli_params)
 

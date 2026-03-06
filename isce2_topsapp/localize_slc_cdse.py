@@ -204,8 +204,7 @@ def search_cdse_by_granule_name(granule_name: str) -> dict:
 
     if not results:
         raise LookupError(
-            f"Product '{safe_name}' not found in CDSE catalog. "
-            f"Query: {query}"
+            f"Product '{safe_name}' not found in CDSE catalog. Query: {query}"
         )
 
     # Return the first match (there should be exactly one for a unique granule name)
@@ -241,7 +240,6 @@ def download_single_slc_from_cdse(
     # Search for the product to get its UUID
     product = search_cdse_by_granule_name(granule_name)
     product_id = product["Id"]
-    product_name = product["Name"]  # e.g., S1A_...SAFE
 
     download_url = f"{CDSE_DOWNLOAD_URL}({product_id})/$zip"
     headers = {"Authorization": f"Bearer {access_token}"}
@@ -267,10 +265,12 @@ def download_single_slc_from_cdse(
 
             # Verify the file is non-empty
             if out_path.stat().st_size > 0:
-                print(f"Successfully downloaded {out_filename} from CDSE ({out_path.stat().st_size / 1e6:.1f} MB)")
+                print(
+                    f"Successfully downloaded {out_filename} from CDSE ({out_path.stat().st_size / 1e6:.1f} MB)"
+                )
                 return out_filename
 
-            print(f"Downloaded file is empty, retrying...")
+            print("Downloaded file is empty, retrying...")
             out_path.unlink(missing_ok=True)
 
         except requests.RequestException as e:
