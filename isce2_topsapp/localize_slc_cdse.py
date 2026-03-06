@@ -27,7 +27,7 @@ CDSE_TOKEN_URL = (
     "/auth/realms/CDSE/protocol/openid-connect/token"
 )
 CDSE_ODATA_URL = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
-CDSE_DOWNLOAD_URL = "https://zipper.dataspace.copernicus.eu/odata/v1/Products"
+CDSE_DOWNLOAD_URL = "https://download.dataspace.copernicus.eu/odata/v1/Products"
 
 
 def get_cdse_credentials(
@@ -243,7 +243,7 @@ def download_single_slc_from_cdse(
     product_id = product["Id"]
     product_name = product["Name"]  # e.g., S1A_...SAFE
 
-    download_url = f"{CDSE_DOWNLOAD_URL}({product_id})/$value"
+    download_url = f"{CDSE_DOWNLOAD_URL}({product_id})/$zip"
     headers = {"Authorization": f"Bearer {access_token}"}
 
     out_filename = f"{granule_name}.zip"
