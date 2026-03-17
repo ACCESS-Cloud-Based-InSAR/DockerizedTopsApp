@@ -44,7 +44,7 @@ def localize_data(
     dry_run: bool = False,
     water_mask_flag: bool = True,
     geocode_resolution: int = 90,
-    download_source: str = "asf",
+    download_source: str = "ASF",
 ) -> dict:
     """The dry-run prevents gets necessary metadata from SLCs and orbits.
 
@@ -209,12 +209,12 @@ def get_slc_parser():
     parser.add_argument(
         "--download-source",
         type=str,
-        choices=["asf", "cdse"],
-        default="asf",
+        choices=["ASF", "CDSE"],
+        default="ASF",
         help=(
             "Source for downloading Sentinel-1 SLC granules. "
-            "'asf' uses Alaska Satellite Facility (requires Earthdata credentials). "
-            "'cdse' uses Copernicus Data Space Ecosystem (requires CDSE credentials "
+            "'ASF' uses Alaska Satellite Facility (requires Earthdata credentials). "
+            "'CDSE' uses Copernicus Data Space Ecosystem (requires CDSE credentials "
             "via CDSE_USERNAME/CDSE_PASSWORD env vars or ~/.netrc)."
         ),
     )
@@ -260,7 +260,7 @@ def gunw_slc():
     # Validation 
     ensure_earthdata_credentials(args.username, args.password)
     # Also validate CDSE credentials if using CDSE for download
-    if args.download_source == "cdse":
+    if args.download_source == "CDSE":
         from isce2_topsapp.localize_slc_cdse import ensure_cdse_credentials
 
         ensure_cdse_credentials()
@@ -490,7 +490,7 @@ def coseis_sar():
     # Validation - always need Earthdata creds for ASF metadata lookup
     ensure_earthdata_credentials(args.username, args.password)
     # Also validate CDSE credentials if using CDSE for download
-    if args.download_source == "cdse":
+    if args.download_source == "CDSE":
         from isce2_topsapp.localize_slc_cdse import ensure_cdse_credentials
 
         ensure_cdse_credentials()

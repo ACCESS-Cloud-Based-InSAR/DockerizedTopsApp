@@ -170,7 +170,7 @@ def download_slcs(
     min_frame_coverage: float = MIN_FRAME_COVERAGE_DEFAULT,
     max_workers_for_download: int = 5,
     dry_run: bool = False,
-    download_source: str = "asf",
+    download_source: str = "ASF",
 ) -> dict:
     reference_obs = get_asf_slc_objects(reference_ids)
     secondary_obs = get_asf_slc_objects(secondary_ids)
@@ -234,7 +234,7 @@ def download_slcs(
     if frame_id != -1:
         processing_geo = _get_frame_by_id(frame_id).geometry
 
-    if download_source == "cdse":
+    if download_source == "CDSE":
         from isce2_topsapp.localize_slc_cdse import download_slcs_from_cdse
 
         all_ids = reference_ids + secondary_ids
