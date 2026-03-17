@@ -300,7 +300,9 @@ def download_single_slc_from_cdse(
             out_path.unlink(missing_ok=True)
             # If 404 on /$zip, fall back to /$value (uncompressed, always available)
             if e.response is not None and e.response.status_code == 404:
-                print(f"Compressed format not available, falling back to uncompressed...")
+                print(
+                    "Compressed format not available, falling back to uncompressed..."
+                )
                 try:
                     return _do_download(download_url_value)
                 except requests.RequestException:
