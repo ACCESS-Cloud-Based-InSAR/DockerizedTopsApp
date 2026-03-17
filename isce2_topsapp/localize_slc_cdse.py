@@ -241,7 +241,10 @@ def download_single_slc_from_cdse(
     product = search_cdse_by_granule_name(granule_name)
     product_id = product["Id"]
 
-    download_url = f"{CDSE_DOWNLOAD_URL}({product_id})/$zip"
+    # Try compressed endpoint first (/$zip), fall back to uncompressed (/$value)
+    # The /$zip endpoint only works for recent products (~1 month old)
+    download_url_zip = f"{CDSE_DOWNLOAD_URL}({product_id})/$zip"
+    download_url_value = f"{CDSE_DOWNLOAD_URL}({product_id})/$value"
     headers = {"Authorization": f"Bearer {access_token}"}
 
     out_filename = f"{granule_name}.zip"
@@ -257,6 +260,30 @@ def download_single_slc_from_cdse(
         )
         print(f"Waiting {wait:.0f}s before retry...")
 
+    def _do_download(url: str) -> str:
+        """Perform the actual download from a given URL."""
+        response = requests.get(
+            url,
+            headers=headers,
+            stream=True,
+            timeout=600,
+        )
+        response.raise_for_status()
+
+        with open(out_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192 * 16):
+                if chunk:
+                    f.write(chunk)
+
+        if out_path.stat().st_size == 0:
+            out_path.unlink(missing_ok=True)
+            raise requests.RequestException("Downloaded file is empty")
+
+        print(
+            f"Successfully downloaded {out_filename} from CDSE ({out_path.stat().st_size / 1e6:.1f} MB)"
+        )
+        return out_filename
+
     @tenacity.retry(
         reraise=True,
         stop=tenacity.stop_after_attempt(max_retries),
@@ -267,27 +294,19 @@ def download_single_slc_from_cdse(
     )
     def _attempt_download() -> str:
         try:
-            response = requests.get(
-                download_url,
-                headers=headers,
-                stream=True,
-                timeout=600,
-            )
-            response.raise_for_status()
-
-            with open(out_path, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192 * 16):
-                    if chunk:
-                        f.write(chunk)
-
-            if out_path.stat().st_size == 0:
-                out_path.unlink(missing_ok=True)
-                raise requests.RequestException("Downloaded file is empty")
-
-            print(
-                f"Successfully downloaded {out_filename} from CDSE ({out_path.stat().st_size / 1e6:.1f} MB)"
-            )
-            return out_filename
+            # First try compressed endpoint (smaller files, but only for recent data)
+            return _do_download(download_url_zip)
+        except requests.HTTPError as e:
+            out_path.unlink(missing_ok=True)
+            # If 404 on /$zip, fall back to /$value (uncompressed, always available)
+            if e.response is not None and e.response.status_code == 404:
+                print(f"Compressed format not available, falling back to uncompressed...")
+                try:
+                    return _do_download(download_url_value)
+                except requests.RequestException:
+                    out_path.unlink(missing_ok=True)
+                    raise
+            raise
         except requests.RequestException:
             out_path.unlink(missing_ok=True)
             raise
