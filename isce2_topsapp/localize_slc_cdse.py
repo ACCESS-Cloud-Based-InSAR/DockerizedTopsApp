@@ -14,12 +14,12 @@ References:
 
 import netrc
 import os
-import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Optional
 
 import requests
+import tenacity
 from tqdm import tqdm
 
 CDSE_TOKEN_URL = (
@@ -247,8 +247,25 @@ def download_single_slc_from_cdse(
     out_filename = f"{granule_name}.zip"
     out_path = Path(output_dir) / out_filename
 
-    for attempt in range(1, max_retries + 1):
-        print(f"CDSE download attempt #{attempt} for {granule_name}")
+    def _before(retry_state: tenacity.RetryCallState) -> None:
+        print(f"CDSE download attempt #{retry_state.attempt_number} for {granule_name}")
+
+    def _before_sleep(retry_state: tenacity.RetryCallState) -> None:
+        wait = retry_state.next_action.sleep  # type: ignore[union-attr]
+        print(
+            f"Attempt #{retry_state.attempt_number} failed: {retry_state.outcome.exception()}"
+        )
+        print(f"Waiting {wait:.0f}s before retry...")
+
+    @tenacity.retry(
+        reraise=True,
+        stop=tenacity.stop_after_attempt(max_retries),
+        wait=tenacity.wait_incrementing(start=10, increment=10),
+        retry=tenacity.retry_if_exception_type(requests.RequestException),
+        before=_before,
+        before_sleep=_before_sleep,
+    )
+    def _attempt_download() -> str:
         try:
             response = requests.get(
                 download_url,
@@ -263,27 +280,19 @@ def download_single_slc_from_cdse(
                     if chunk:
                         f.write(chunk)
 
-            # Verify the file is non-empty
-            if out_path.stat().st_size > 0:
-                print(
-                    f"Successfully downloaded {out_filename} from CDSE ({out_path.stat().st_size / 1e6:.1f} MB)"
-                )
-                return out_filename
+            if out_path.stat().st_size == 0:
+                out_path.unlink(missing_ok=True)
+                raise requests.RequestException("Downloaded file is empty")
 
-            print("Downloaded file is empty, retrying...")
+            print(
+                f"Successfully downloaded {out_filename} from CDSE ({out_path.stat().st_size / 1e6:.1f} MB)"
+            )
+            return out_filename
+        except requests.RequestException:
             out_path.unlink(missing_ok=True)
+            raise
 
-        except requests.RequestException as e:
-            print(f"Download attempt #{attempt} failed: {e}")
-            out_path.unlink(missing_ok=True)
-            if attempt < max_retries:
-                wait = 10 * attempt
-                print(f"Waiting {wait}s before retry...")
-                time.sleep(wait)
-
-    raise RuntimeError(
-        f"Failed to download {granule_name} from CDSE after {max_retries} attempts"
-    )
+    return _attempt_download()
 
 
 def download_slcs_from_cdse(
