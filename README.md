@@ -93,7 +93,7 @@ To be even more explicit, you can use [`tee`](https://en.wikipedia.org/wiki/Tee_
 
 ## Generate an ARIA-S1-GUNW using CDSE for Sentinel-1 Download
 
-By default, Sentinel-1 SLC granules are downloaded from the [Alaska Satellite Facility (ASF)](https://asf.alaska.edu/). As an alternative, particularly suited for European users or those operating within the European cloud ecosystem, granules can be downloaded from the [Copernicus Data Space Ecosystem (CDSE)](https://dataspace.copernicus.eu/) by passing `--download-source cdse`. Metadata lookups and bounding box checks still use ASF, so a valid `~/.netrc` entry for `urs.earthdata.nasa.gov` remains required. Additionally, CDSE credentials must be configured as described in the *Additional setup* section above.
+By default, Sentinel-1 SLC granules are downloaded from the [Alaska Satellite Facility (ASF)](https://asf.alaska.edu/). As an alternative, particularly suited for European users or those operating within the European cloud ecosystem, granules can be downloaded from the [Copernicus Data Space Ecosystem (CDSE)](https://dataspace.copernicus.eu/) by passing `--download-source CDSE`. Metadata lookups and bounding box checks still use ASF, so a valid `~/.netrc` entry for `urs.earthdata.nasa.gov` remains required. Additionally, CDSE credentials must be configured as described in the *Additional setup* section above.
 
 ```
 isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T222830_041886_04FCA3_2B3E \
@@ -101,7 +101,7 @@ isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T22283
               --secondary-scenes S1A_IW_SLC__1SDV_20220131T222803_20220131T222830_041711_04F690_8F5F \
                                  S1A_IW_SLC__1SDV_20220131T222828_20220131T222855_041711_04F690_28D7  \
               --frame-id 25502 \
-              --download-source cdse
+              --download-source CDSE
 ```
 
 ## What makes an ARIA-S1-GUNW Product *standard*?
