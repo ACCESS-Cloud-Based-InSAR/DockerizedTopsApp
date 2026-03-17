@@ -257,7 +257,7 @@ def gunw_slc():
     args = parser.parse_args()
     args = update_slc_namespace(args)
 
-    # Validation - always need Earthdata creds for ASF metadata lookup
+    # Validation 
     ensure_earthdata_credentials(args.username, args.password)
     # Also validate CDSE credentials if using CDSE for download
     if args.download_source == "cdse":
