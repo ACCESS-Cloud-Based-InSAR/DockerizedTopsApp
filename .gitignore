@@ -1,3 +1,6 @@
+# Sandbox (local testing, not part of the repository)
+sandbox/
+
 # OS Files
 **/.DS_Store
 **/.DS_Store?
