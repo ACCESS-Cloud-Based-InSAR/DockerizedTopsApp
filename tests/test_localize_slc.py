@@ -7,6 +7,7 @@ import pytest
 from isce2_topsapp.localize_slc import (
     check_date_order,
     check_flight_direction,
+    check_if_s1d_has_valid_date,
     check_track_numbers,
     download_slcs,
     get_asf_slc_objects,
@@ -303,15 +304,23 @@ def test_s1c_min_date():
 
 
 def test_s1d_min_date():
-    # S1D acquisitions before S1D_MIN_DATE should be rejected
-    slc_ids_ref = [
-        "S1D_IW_SLC__1SDV_20260417T120000_20260417T120027_000100_000100_AAAA",
-    ]
-    slc_ids_sec = [
+    # Test check_if_s1d_has_valid_date directly since no real S1D SLCs
+    # exist in ASF yet (download_slcs would fail at ASF search)
+    slc_ids = [
         "S1D_IW_SLC__1SDV_20260401T120000_20260401T120027_000050_000050_BBBB",
     ]
-    error_msg = (
-        "The Sentinel-1D acquisitions provided were before 2026-04-17 00:00:00\\+00:00"
-    )
-    with pytest.raises(ValueError, match=error_msg):
-        download_slcs(slc_ids_ref, slc_ids_sec, 18830)
+    slc_props = [{"startTime": "2026-04-01T12:00:00.000000Z"}]
+    assert not check_if_s1d_has_valid_date(slc_ids, slc_props)
+
+    slc_ids = [
+        "S1D_IW_SLC__1SDV_20260417T120000_20260417T120027_000100_000100_AAAA",
+    ]
+    slc_props = [{"startTime": "2026-04-17T12:00:00.000000Z"}]
+    assert check_if_s1d_has_valid_date(slc_ids, slc_props)
+
+    # Non-S1D data should always pass
+    slc_ids = [
+        "S1A_IW_SLC__1SDV_20200101T120000_20200101T120027_000001_000001_AAAA",
+    ]
+    slc_props = [{"startTime": "2020-01-01T12:00:00.000000Z"}]
+    assert check_if_s1d_has_valid_date(slc_ids, slc_props)
