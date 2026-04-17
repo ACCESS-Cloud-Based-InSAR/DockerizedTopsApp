@@ -216,7 +216,7 @@ def test_localize_slc_with_valid_pairs(reference_ids, secondary_ids, frame_id):
 
 
 def test_get_slcs_by_date_and_frame():
-    with pytest.raises(ValueError, match=r"^No Sentinel-1A/1B/1C SLCs found for date "):
+    with pytest.raises(ValueError, match=r"^No Sentinel-1A/1B/1C/1D SLCs found for date "):
         get_slcs_for_date_and_frame(date(2018, 2, 17), 16584)
 
     assert get_slcs_for_date_and_frame(date(2018, 2, 18), 16584) == [
@@ -260,7 +260,7 @@ def test_get_slcs_by_date_and_frame():
     ]
 
     # scenes close to midnight but not crossing
-    with pytest.raises(ValueError, match=r"^No Sentinel-1A/1B/1C SLCs found for date "):
+    with pytest.raises(ValueError, match=r"^No Sentinel-1A/1B/1C/1D SLCs found for date "):
         get_slcs_for_date_and_frame(date(2025, 1, 4), 25671)
     assert get_slcs_for_date_and_frame(date(2025, 1, 3), 25671) == [
         "S1A_IW_SLC__1SDV_20250103T235910_20250103T235937_057287_070C52_1291",
@@ -296,3 +296,18 @@ def test_s1c_min_date():
         "S1C_IW_SLC__1SDV_20250611T235952_20250612T000019_002742_005A5F_F563",
     ]
     download_slcs(slc_ids_ref, slc_ids_sec, 18830, dry_run=True)
+
+
+def test_s1d_min_date():
+    # S1D acquisitions before S1D_MIN_DATE should be rejected
+    slc_ids_ref = [
+        "S1D_IW_SLC__1SDV_20260417T120000_20260417T120027_000100_000100_AAAA",
+    ]
+    slc_ids_sec = [
+        "S1D_IW_SLC__1SDV_20260401T120000_20260401T120027_000050_000050_BBBB",
+    ]
+    error_msg = (
+        "The Sentinel-1D acquisitions provided were before 2026-04-17 00:00:00\\+00:00"
+    )
+    with pytest.raises(ValueError, match=error_msg):
+        download_slcs(slc_ids_ref, slc_ids_sec, 18830)
