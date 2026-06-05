@@ -6,7 +6,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV PYTHONDONTWRITEBYTECODE=true
 
 # Install libgl1-mesa-glx unzip vim
-RUN apt-get update && apt-get install -y --no-install-recommends libgl1-mesa-glx unzip vim && \
+RUN apt-get update && apt-get install -y --no-install-recommends libgl1-mesa-glx unzip vim curl && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # run commands in a bash login shell
