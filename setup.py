@@ -44,16 +44,13 @@ setup(
     ],
     extras_require={
         "develop": [
-            "flake8",
-            "flake8-import-order",
-            "flake8-blind-except",
-            "flake8-builtins",
             "ipykernel",
-            "jsonschema==3.2.0",
-            "notebook",
+            "jsonschema>=4",
+            "jupyterlab",
             "papermill",
             "pytest",
             "pytest-cov",
+            "ruff",
         ]
     },
     packages=find_packages(),

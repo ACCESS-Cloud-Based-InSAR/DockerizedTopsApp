@@ -1,44 +1,37 @@
-FROM condaforge/mambaforge:latest
+FROM ghcr.io/prefix-dev/pixi:0.73.0-noble
 
 LABEL description="TopsApp Container"
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PYTHONDONTWRITEBYTECODE=true
 
-# Install libgl1-mesa-glx unzip vim
-RUN apt-get update && apt-get install -y --no-install-recommends libgl1-mesa-glx unzip vim && \
+# git is required by setuptools_scm to derive the package version
+RUN apt-get update && apt-get install -y --no-install-recommends libgl1 unzip vim git && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# run commands in a bash login shell
-SHELL ["/bin/bash", "-l", "-c"]
 
 # Create non-root user/group with default inputs
 ARG UID=1000
 ARG GID=1000
 
 RUN groupadd -g "${GID}" --system iscer && \
-    useradd -l -u "${UID}" -g "${GID}" --system -d /home/ops -m  -s /bin/bash iscer && \
-    chown -R iscer:iscer /opt
+    useradd -l -u "${UID}" -g "${GID}" --system -d /home/ops -m  -s /bin/bash iscer
 
 # Switch to non-root user
 USER iscer
-WORKDIR /home/ops
+WORKDIR /home/ops/DockerizedTopsApp
 
-# Ensures we cached mamba install per
+# Ensures we cache the pixi solve per
 # https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#leverage-build-cache
-COPY --chown=iscer:iscer environment.yml /home/ops/environment.yml
+COPY --chown=iscer:iscer pyproject.toml pixi.lock /home/ops/DockerizedTopsApp/
+
+# Create the environment from the lock file
+RUN pixi install --locked && \
+    pixi clean cache --yes
+
 COPY --chown=iscer:iscer . /home/ops/DockerizedTopsApp
 
-# Create the environment with mamba
-RUN mamba env create -f /home/ops/DockerizedTopsApp/environment.yml && \
-    conda clean -afy
-
-# Ensure that environment is activated on startup
-RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.profile && \
-    echo "conda activate topsapp_env" >> ~/.profile
-
-# Install repository with pip
-RUN python -m pip install --no-cache-dir /home/ops/DockerizedTopsApp
+# Install repository into the pixi environment
+RUN pixi run --frozen python -m pip install --no-deps --no-cache-dir .
 
 # set entrypoint
 ENTRYPOINT ["/home/ops/DockerizedTopsApp/isce2_topsapp/etc/entrypoint.sh"]

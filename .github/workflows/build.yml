@@ -11,16 +11,34 @@ on:
       - dev
 
 jobs:
-  call-version-info-workflow:
-    uses: ASFHyP3/actions/.github/workflows/reusable-version-info.yml@v0.21.0
-    with:
-        python_version: '3.11'
+  version-info:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.set_outputs.outputs.version }}
+      version_tag: ${{ steps.set_outputs.outputs.version_tag }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: prefix-dev/setup-pixi@v0.10.1
+        with:
+          pixi-version: latest
+          environments: default
+
+      - name: set outputs
+        id: set_outputs
+        run: |
+          SDIST_VERSION=$(pixi run python -m setuptools_scm)
+          echo "version=${SDIST_VERSION}" >> $GITHUB_OUTPUT
+          echo "version_tag=${SDIST_VERSION/+/_}" >> $GITHUB_OUTPUT
+          echo "Version number: ${SDIST_VERSION}"
 
   call-docker-ghcr-workflow:
-    needs: call-version-info-workflow
+    needs: version-info
     uses: ASFHyP3/actions/.github/workflows/reusable-docker-ghcr.yml@v0.21.0
     with:
-      version_tag: ${{ needs.call-version-info-workflow.outputs.version_tag }}
+      version_tag: ${{ needs.version-info.outputs.version_tag }}
       user: ${{ github.actor }}
       file: Dockerfile
     secrets:

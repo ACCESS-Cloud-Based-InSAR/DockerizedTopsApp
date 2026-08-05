@@ -1,3 +1,9 @@
+# Legacy conda/mamba path for users not yet on pixi.
+#
+# `pyproject.toml` (with `pixi.lock`) is the source of truth for this project and is what
+# CI and the Docker image build from. This file is kept in sync by hand, so it can resolve
+# to a different set of packages than the lock file does. If you hit a dependency problem
+# here, please check against `pixi install` before filing an issue.
 name: topsapp_env
 channels:
  - conda-forge
@@ -9,10 +15,6 @@ dependencies:
  - boto3
  - dask  # see https://github.com/unionai-oss/pandera/issues/1525
  - dateparser
- - flake8
- - flake8-blind-except
- - flake8-builtins
- - flake8-import-order
  - fsspec
  - gdal
  - geopandas
@@ -20,12 +22,12 @@ dependencies:
  - isce2==2.6.4
  - jinja2
  - joblib
- - jsonschema==3.2.0
- - jupyter
+ - jsonschema>=4
+ - jupyterlab
+ - jupyter-collaboration
  - lxml
  - matplotlib
  - netcdf4
- - notebook
  - numpy>=1.24
  - pandas
  - pandera
@@ -40,7 +42,7 @@ dependencies:
  - rioxarray
  - ruff
  - xarray
- - scipy<1.10
+ - scipy>=1.11
  - setuptools
  - setuptools_scm
  - shapely
