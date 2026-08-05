@@ -22,6 +22,8 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Removed
 * `tox.ini`, which only carried `flake8` configuration superseded by `ruff`.
+### Added
+* Support for downloading Sentinel-1 SLC granules from the Copernicus Data Space Ecosystem (CDSE) as an alternative to ASF. Metadata retrieval and bounding box checks continue to use ASF. Download from CDSE uses the compressed `.zip` archive directly, leveraging ISCE2's virtual file access to reduce download traffic.
 
 ## [1.0.2]
 

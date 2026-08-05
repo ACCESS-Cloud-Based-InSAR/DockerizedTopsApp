@@ -44,6 +44,7 @@ def localize_data(
     dry_run: bool = False,
     water_mask_flag: bool = True,
     geocode_resolution: int = 90,
+    download_source: str = "ASF",
 ) -> dict:
     """The dry-run prevents gets necessary metadata from SLCs and orbits.
 
@@ -58,6 +59,7 @@ def localize_data(
         frame_id=frame_id,
         min_frame_coverage=min_frame_coverage,
         dry_run=dry_run,
+        download_source=download_source,
     )
 
     out_orbits = download_orbits(reference_scenes, secondary_scenes)
@@ -204,6 +206,18 @@ def get_slc_parser():
         default=0.5,
         help="The power applied to the patch FFT of the phase filter",
     )
+    parser.add_argument(
+        "--download-source",
+        type=str,
+        choices=["ASF", "CDSE"],
+        default="ASF",
+        help=(
+            "Source for downloading Sentinel-1 SLC granules. "
+            "'ASF' uses Alaska Satellite Facility (requires Earthdata credentials). "
+            "'CDSE' uses Copernicus Data Space Ecosystem (requires CDSE credentials "
+            "via CDSE_USERNAME/CDSE_PASSWORD env vars or ~/.netrc)."
+        ),
+    )
     return parser
 
 
@@ -245,10 +259,22 @@ def gunw_slc():
 
     # Validation
     ensure_earthdata_credentials(args.username, args.password)
+    # Also validate CDSE credentials if using CDSE for download
+    if args.download_source == "CDSE":
+        from isce2_topsapp.localize_slc_cdse import ensure_cdse_credentials
+
+        ensure_cdse_credentials()
     cli_params = vars(args).copy()
     [
         cli_params.pop(key)
-        for key in ["username", "password", "bucket", "bucket_prefix", "dry_run"]
+        for key in [
+            "username",
+            "password",
+            "bucket",
+            "bucket_prefix",
+            "dry_run",
+            "download_source",
+        ]
     ]
     topsapp_params_obj = topsappParams(**cli_params)
 
@@ -268,6 +294,7 @@ def gunw_slc():
         frame_id=args.frame_id,
         min_frame_coverage=args.min_frame_coverage,
         water_mask_flag=args.estimate_ionosphere_delay,
+        download_source=args.download_source,
     )
     loc_data["frame_id"] = args.frame_id
     loc_data["cmd_line_str"] = cmd_line_str
@@ -460,12 +487,24 @@ def coseis_sar():
     args = parser.parse_args()
     args = update_slc_namespace(args)
 
-    # Validation
+    # Validation - always need Earthdata creds for ASF metadata lookup
     ensure_earthdata_credentials(args.username, args.password)
+    # Also validate CDSE credentials if using CDSE for download
+    if args.download_source == "CDSE":
+        from isce2_topsapp.localize_slc_cdse import ensure_cdse_credentials
+
+        ensure_cdse_credentials()
     cli_params = vars(args).copy()
     [
         cli_params.pop(key)
-        for key in ["username", "password", "bucket", "bucket_prefix", "dry_run"]
+        for key in [
+            "username",
+            "password",
+            "bucket",
+            "bucket_prefix",
+            "dry_run",
+            "download_source",
+        ]
     ]
     topsapp_params_obj = topsappParams(**cli_params)
 
@@ -484,6 +523,7 @@ def coseis_sar():
         geocode_resolution=args.output_resolution,
         frame_id=args.frame_id,
         water_mask_flag=True,  # Download water mask regardless of iono computation. It is needed for viz masking
+        download_source=args.download_source,
     )
     loc_data["frame_id"] = args.frame_id
     loc_data["cmd_line_str"] = cmd_line_str
