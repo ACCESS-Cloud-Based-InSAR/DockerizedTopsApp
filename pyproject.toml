@@ -31,6 +31,7 @@ dependencies = [
     "matplotlib",
     "netcdf4",
     "numpy",
+    "pandas>=2.2",
     "rasterio",
     "requests",
     "shapely",
