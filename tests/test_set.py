@@ -9,32 +9,27 @@ import pytest
 import rasterio
 import xarray as xr
 from affine import Affine
-from numpy.testing import assert_almost_equal
-from rasterio.crs import CRS
-
 from isce2_topsapp.solid_earth_tides import (
     get_azimuth_time_array,
     get_start_time_from_slc_id,
     update_gunw_with_solid_earth_tide,
 )
+from numpy.testing import assert_almost_equal
+from rasterio.crs import CRS
 
 
-def test_set_workflow(orbit_files_for_set, gunw_paths_for_set, tmp_path):
+def test_set_workflow(orbit_files_for_set: list[dict], gunw_paths_for_set: list[Path], tmp_path: Path) -> None:
     for gunw_path_for_set, orbit_dict in zip(gunw_paths_for_set, orbit_files_for_set):
-        tmp_gunw = tmp_path / "temp.nc"
+        tmp_gunw = tmp_path / 'temp.nc'
         shutil.copy(gunw_path_for_set, tmp_gunw)
 
-        update_gunw_with_solid_earth_tide(
-            tmp_gunw, "reference", [orbit_dict["reference"]]
-        )
-        update_gunw_with_solid_earth_tide(
-            tmp_gunw, "secondary", [orbit_dict["secondary"]]
-        )
+        update_gunw_with_solid_earth_tide(tmp_gunw, 'reference', [orbit_dict['reference']])
+        update_gunw_with_solid_earth_tide(tmp_gunw, 'secondary', [orbit_dict['secondary']])
 
-        for acq_type in ["reference", "secondary"]:
-            group = f"/science/grids/corrections/external/tides/solidEarth/{acq_type}"
-            variable = "solidEarthTide"
-            with rasterio.open(f"netcdf:{tmp_gunw}:{group}/{variable}") as ds:
+        for acq_type in ['reference', 'secondary']:
+            group = f'/science/grids/corrections/external/tides/solidEarth/{acq_type}'
+            variable = 'solidEarthTide'
+            with rasterio.open(f'netcdf:{tmp_gunw}:{group}/{variable}') as ds:
                 # Check nodata and CRS
                 assert ds.nodata == 0
                 assert ds.crs == CRS.from_epsg(4326)
@@ -44,13 +39,11 @@ def test_set_workflow(orbit_files_for_set, gunw_paths_for_set, tmp_path):
                 assert t != Affine(1, 0, 0, 0, 1, 0)
 
 
-@pytest.mark.parametrize("acq_type", ["reference", "secondary"])
-def test_azimuth_time(
-    orbit_files_for_set: list, gunw_paths_for_set: list, acq_type: str
-):
-    """Ensures deviation of retrieved azimuth time array is within 1e-3 seconds"""
+@pytest.mark.parametrize('acq_type', ['reference', 'secondary'])
+def test_azimuth_time(orbit_files_for_set: list, gunw_paths_for_set: list, acq_type: str) -> None:
+    """Ensure deviation of retrieved azimuth time array is within 1e-3 seconds."""
     for gunw_path_for_set, orbit_dict in zip(gunw_paths_for_set, orbit_files_for_set):
-        group = "science/grids/imagingGeometry"
+        group = 'science/grids/imagingGeometry'
         with xr.open_dataset(gunw_path_for_set, group=group) as ds:
             # lon_res is pos (+) and lat_res is neg (-)
             lon_res, lat_res = ds.rio.resolution()
@@ -62,14 +55,14 @@ def test_azimuth_time(
             lon = ds.longitudeMeta.data - lon_res / 2.0
 
         # Uses secondary image
-        group = "science/radarMetaData/inputSLC"
-        with xr.open_dataset(gunw_path_for_set, group=f"{group}/{acq_type}") as ds:
-            slc_ids = ds["L1InputGranules"].data
+        group = 'science/radarMetaData/inputSLC'
+        with xr.open_dataset(gunw_path_for_set, group=f'{group}/{acq_type}') as ds:
+            slc_ids = ds['L1InputGranules'].data
             # Ensure non-empty and sorted by acq_time
             slc_ids = sorted(list(filter(lambda x: x, slc_ids)))
             slc_start_time = get_start_time_from_slc_id(slc_ids[0])
 
-        hgt_mesh, lat_mesh, lon_mesh = np.meshgrid(hgt, lat, lon, indexing="ij")
+        hgt_mesh, lat_mesh, lon_mesh = np.meshgrid(hgt, lat, lon, indexing='ij')
         # Azimuth time array
         X = get_azimuth_time_array(
             orbit_xmls=[orbit_dict[acq_type]],
@@ -79,7 +72,7 @@ def test_azimuth_time(
             longitude_mesh_arr=lon_mesh,
         )
         # Total seconds from minimum time
-        Y = (X - X.min()) / np.timedelta64(1, "s")
+        Y = (X - X.min()) / np.timedelta64(1, 's')
         # Vertical standard deviation
         Y_std = Y.std(axis=0)
         assert_almost_equal(Y_std, 0, decimal=3)
@@ -96,9 +89,9 @@ def test_azimuth_time(
 
 
 def get_gunw_attrs_for_pysolid(gunw_path: str) -> dict:
-    """Access necessary GUNW attributes to compute SET"""
-    group = "science/grids/imagingGeometry"
-    with xr.open_dataset(gunw_path, group=group, engine="rasterio") as ds:
+    """Access necessary GUNW attributes to compute SET."""
+    group = 'science/grids/imagingGeometry'
+    with xr.open_dataset(gunw_path, group=group, engine='rasterio') as ds:
         # z_meta = ds.heightsMeta.data
         gt = ds.rio.transform()
         x_step = gt.a
@@ -109,37 +102,35 @@ def get_gunw_attrs_for_pysolid(gunw_path: str) -> dict:
         # convert angles to rad
         _, length, width = ds.incidenceAngle.shape
         solidtide_atr = {
-            "LENGTH": length,
-            "WIDTH": width,
-            "X_FIRST": x_first,
-            "Y_FIRST": y_first,
-            "X_STEP": x_step,
-            "Y_STEP": y_step,
+            'LENGTH': length,
+            'WIDTH': width,
+            'X_FIRST': x_first,
+            'Y_FIRST': y_first,
+            'X_STEP': x_step,
+            'Y_STEP': y_step,
         }
 
     return solidtide_atr
 
 
-def get_pysolid_set(gunw_path: Path, acq_type="reference") -> np.ndarray:
-    """Source: https://github.com/insarlab/PySolid/blob/main/docs/plot_grid_SET.ipynb
+def get_pysolid_set(gunw_path: Path, acq_type: str = 'reference') -> np.ndarray:
+    """Return the SET cube as displacement in millimeters (mm).
 
-    returns the SET cube as displacement in millimeters (mm)
+    Source: https://github.com/insarlab/PySolid/blob/main/docs/plot_grid_SET.ipynb
     """
-    assert acq_type in ["reference", "secondary"]
+    assert acq_type in ['reference', 'secondary']
 
-    group = f"science/radarMetaData/inputSLC/{acq_type}"
+    group = f'science/radarMetaData/inputSLC/{acq_type}'
     with xr.open_dataset(gunw_path, group=group) as ds:
-        slc_id = ds["L1InputGranules"].values[0]
+        slc_id = ds['L1InputGranules'].values[0]
     dt_obj = get_start_time_from_slc_id(slc_id).to_pydatetime()
 
     atr = get_gunw_attrs_for_pysolid(gunw_path)
 
-    tide_e, tide_n, tide_u = pysolid.calc_solid_earth_tides_grid(
-        dt_obj, atr, display=False, verbose=True
-    )
+    tide_e, tide_n, tide_u = pysolid.calc_solid_earth_tides_grid(dt_obj, atr, display=False, verbose=True)
 
-    group = "science/grids/imagingGeometry"
-    with xr.open_dataset(gunw_path, group=group, engine="rasterio") as ds:
+    group = 'science/grids/imagingGeometry'
+    with xr.open_dataset(gunw_path, group=group, engine='rasterio') as ds:
         inc_angle = np.deg2rad(ds.incidenceAngle.data)
         az_angle = np.deg2rad(ds.azimuthAngle.data - 90)
 
@@ -155,12 +146,13 @@ def get_pysolid_set(gunw_path: Path, acq_type="reference") -> np.ndarray:
     return tide_los
 
 
-@pytest.mark.parametrize("acq_type", ["reference", "secondary"])
+@pytest.mark.parametrize('acq_type', ['reference', 'secondary'])
 def test_magnitude_of_set_with_variable_timing(
-    acq_type: str, orbit_files_for_set: list, gunw_paths_for_set: list, tmp_path
-):
-    """This test verifies (with the functions above) the SET correction doesn't deviate more than 1 mm than
-    a fixed time calculation.
+    acq_type: str, orbit_files_for_set: list, gunw_paths_for_set: list, tmp_path: Path
+) -> None:
+    """Verify the SET correction doesn't deviate more than 1 mm from a fixed time calculation.
+
+    Relies on the helper functions above.
 
     Note to get an orbit file from a gunw use:
     ```
@@ -172,15 +164,14 @@ def test_magnitude_of_set_with_variable_timing(
     ```
     """
     for gunw_path_for_set, orbit_dict in zip(gunw_paths_for_set, orbit_files_for_set):
-        tmp_gunw = tmp_path / "temp.nc"
+        tmp_gunw = tmp_path / 'temp.nc'
         shutil.copy(gunw_path_for_set, tmp_gunw)
 
         orb_file = orbit_dict[acq_type]
         update_gunw_with_solid_earth_tide(tmp_gunw, acq_type, [orb_file])
 
         path_to_set = (
-            f"netcdf:{tmp_gunw}:/science/grids/corrections/external/"
-            f"tides/solidEarth/{acq_type}/solidEarthTide"
+            f'netcdf:{tmp_gunw}:/science/grids/corrections/external/tides/solidEarth/{acq_type}/solidEarthTide'
         )
         with rasterio.open(path_to_set) as ds:
             X = ds.read()
@@ -192,8 +183,10 @@ def test_magnitude_of_set_with_variable_timing(
         assert np.max(set_abs_diff) < 1
 
 
-def test_overlapping_orbits(get_overlapping_orbits_for_set_test):
-    """See https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/issues/148
+def test_overlapping_orbits(get_overlapping_orbits_for_set_test: list[Path]) -> None:
+    """Ensure overlapping orbits do not crash the azimuth time computation.
+
+    See https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/issues/148
 
     relevant granules are:
 
@@ -211,9 +204,7 @@ def test_overlapping_orbits(get_overlapping_orbits_for_set_test):
     lats = np.linspace(bounds[3], bounds[1], 20)
     hgts = [-500, 0, 500, 1500]
 
-    height_mesh_arr, latitude_mesh_arr, longitude_mesh_arr = np.meshgrid(
-        hgts, lats, lons, indexing="ij"
-    )
+    height_mesh_arr, latitude_mesh_arr, longitude_mesh_arr = np.meshgrid(hgts, lats, lons, indexing='ij')
 
     # Should not crash
     X = get_azimuth_time_array(

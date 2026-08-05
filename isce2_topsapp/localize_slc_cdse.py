@@ -7,7 +7,8 @@ CDSE credentials (username/password) are required and can be provided via:
   - Environment variables: CDSE_USERNAME and CDSE_PASSWORD
   - The ~/.netrc file with machine: dataspace.copernicus.eu
 
-References:
+References
+----------
   - https://documentation.dataspace.copernicus.eu/APIs/OData.html
   - https://documentation.dataspace.copernicus.eu/APIs/Token.html
 """
@@ -16,23 +17,20 @@ import netrc
 import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Optional
 
 import requests
 import tenacity
 from tqdm import tqdm
 
-CDSE_TOKEN_URL = (
-    "https://identity.dataspace.copernicus.eu"
-    "/auth/realms/CDSE/protocol/openid-connect/token"
-)
-CDSE_ODATA_URL = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
-CDSE_DOWNLOAD_URL = "https://download.dataspace.copernicus.eu/odata/v1/Products"
+
+CDSE_TOKEN_URL = 'https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token'
+CDSE_ODATA_URL = 'https://catalogue.dataspace.copernicus.eu/odata/v1/Products'
+CDSE_DOWNLOAD_URL = 'https://download.dataspace.copernicus.eu/odata/v1/Products'
 
 
 def get_cdse_credentials(
-    username: Optional[str] = None,
-    password: Optional[str] = None,
+    username: str | None = None,
+    password: str | None = None,
 ) -> tuple[str, str]:
     """Resolve CDSE credentials from arguments, environment, or ~/.netrc.
 
@@ -52,34 +50,34 @@ def get_cdse_credentials(
         return username, password
 
     # Try environment variables
-    env_user = os.getenv("CDSE_USERNAME")
-    env_pass = os.getenv("CDSE_PASSWORD")
+    env_user = os.getenv('CDSE_USERNAME')
+    env_pass = os.getenv('CDSE_PASSWORD')
     if env_user and env_pass:
         return env_user, env_pass
 
     # Try ~/.netrc
     try:
         nrc = netrc.netrc()
-        auth = nrc.authenticators("dataspace.copernicus.eu")
+        auth = nrc.authenticators('dataspace.copernicus.eu')
         if auth:
             return auth[0], auth[2]
     except (FileNotFoundError, netrc.NetrcParseError):
         pass
 
     raise ValueError(
-        "CDSE credentials not found. Provide them via:\n"
-        "  1. username/password arguments\n"
-        "  2. CDSE_USERNAME and CDSE_PASSWORD environment variables\n"
-        "  3. ~/.netrc entry for machine dataspace.copernicus.eu"
+        'CDSE credentials not found. Provide them via:\n'
+        '  1. username/password arguments\n'
+        '  2. CDSE_USERNAME and CDSE_PASSWORD environment variables\n'
+        '  3. ~/.netrc entry for machine dataspace.copernicus.eu'
     )
 
 
-CDSE_HOST = "dataspace.copernicus.eu"
+CDSE_HOST = 'dataspace.copernicus.eu'
 
 
 def ensure_cdse_credentials(
-    username: Optional[str] = None,
-    password: Optional[str] = None,
+    username: str | None = None,
+    password: str | None = None,
     host: str = CDSE_HOST,
 ) -> None:
     """Ensure CDSE credentials are available in ~/.netrc.
@@ -108,11 +106,11 @@ def ensure_cdse_credentials(
         If no valid credentials can be resolved.
     """
     if username is None:
-        username = os.getenv("CDSE_USERNAME")
+        username = os.getenv('CDSE_USERNAME')
     if password is None:
-        password = os.getenv("CDSE_PASSWORD")
+        password = os.getenv('CDSE_PASSWORD')
 
-    netrc_file = Path.home() / ".netrc"
+    netrc_file = Path.home() / '.netrc'
 
     # Check if netrc already has CDSE credentials
     cdse_in_netrc = False
@@ -126,8 +124,8 @@ def ensure_cdse_credentials(
 
     # If we have credentials but they're not in netrc, append them
     if username and password and not cdse_in_netrc:
-        with open(netrc_file, "a") as f:
-            f.write(f"\nmachine {host} login {username} password {password}\n")
+        with netrc_file.open('a') as f:
+            f.write(f'\nmachine {host} login {username} password {password}\n')
         netrc_file.chmod(0o600)
 
     # Now verify we can get credentials
@@ -135,9 +133,9 @@ def ensure_cdse_credentials(
         get_cdse_credentials(username, password)
     except ValueError:
         raise ValueError(
-            f"Please provide valid CDSE credentials via {netrc_file}, "
-            f"username and password options, or "
-            f"the CDSE_USERNAME and CDSE_PASSWORD environment variables."
+            f'Please provide valid CDSE credentials via {netrc_file}, '
+            f'username and password options, or '
+            f'the CDSE_USERNAME and CDSE_PASSWORD environment variables.'
         )
 
 
@@ -157,15 +155,15 @@ def get_cdse_access_token(username: str, password: str) -> str:
         Bearer access token.
     """
     data = {
-        "grant_type": "password",
-        "username": username,
-        "password": password,
-        "client_id": "cdse-public",
+        'grant_type': 'password',
+        'username': username,
+        'password': password,
+        'client_id': 'cdse-public',
     }
 
     response = requests.post(CDSE_TOKEN_URL, data=data, timeout=60)
     response.raise_for_status()
-    return response.json()["access_token"]
+    return response.json()['access_token']
 
 
 def search_cdse_by_granule_name(granule_name: str) -> dict:
@@ -193,19 +191,17 @@ def search_cdse_by_granule_name(granule_name: str) -> dict:
         If the product is not found on CDSE.
     """
     # Strip extensions if caller accidentally included them
-    granule_name = granule_name.replace(".zip", "").replace(".SAFE", "")
+    granule_name = granule_name.replace('.zip', '').replace('.SAFE', '')
 
-    safe_name = f"{granule_name}.SAFE"
+    safe_name = f'{granule_name}.SAFE'
     query = f"{CDSE_ODATA_URL}?$filter=Name eq '{safe_name}'"
 
     response = requests.get(query, timeout=120)
     response.raise_for_status()
-    results = response.json().get("value", [])
+    results = response.json().get('value', [])
 
     if not results:
-        raise LookupError(
-            f"Product '{safe_name}' not found in CDSE catalog. Query: {query}"
-        )
+        raise LookupError(f"Product '{safe_name}' not found in CDSE catalog. Query: {query}")
 
     # Return the first match (there should be exactly one for a unique granule name)
     return results[0]
@@ -214,7 +210,7 @@ def search_cdse_by_granule_name(granule_name: str) -> dict:
 def download_single_slc_from_cdse(
     granule_name: str,
     access_token: str,
-    output_dir: str = ".",
+    output_dir: str = '.',
     max_retries: int = 3,
 ) -> str:
     """Download a single Sentinel-1 SLC product from CDSE.
@@ -235,30 +231,28 @@ def download_single_slc_from_cdse(
     str
         The filename of the downloaded zip file (e.g., ``<granule_name>.zip``).
     """
-    granule_name = granule_name.replace(".zip", "").replace(".SAFE", "")
+    granule_name = granule_name.replace('.zip', '').replace('.SAFE', '')
 
     # Search for the product to get its UUID
     product = search_cdse_by_granule_name(granule_name)
-    product_id = product["Id"]
+    product_id = product['Id']
 
     # Try compressed endpoint first (/$zip), fall back to uncompressed (/$value)
     # The /$zip endpoint only works for recent products (~1 month old)
-    download_url_zip = f"{CDSE_DOWNLOAD_URL}({product_id})/$zip"
-    download_url_value = f"{CDSE_DOWNLOAD_URL}({product_id})/$value"
-    headers = {"Authorization": f"Bearer {access_token}"}
+    download_url_zip = f'{CDSE_DOWNLOAD_URL}({product_id})/$zip'
+    download_url_value = f'{CDSE_DOWNLOAD_URL}({product_id})/$value'
+    headers = {'Authorization': f'Bearer {access_token}'}
 
-    out_filename = f"{granule_name}.zip"
+    out_filename = f'{granule_name}.zip'
     out_path = Path(output_dir) / out_filename
 
     def _before(retry_state: tenacity.RetryCallState) -> None:
-        print(f"CDSE download attempt #{retry_state.attempt_number} for {granule_name}")
+        print(f'CDSE download attempt #{retry_state.attempt_number} for {granule_name}')
 
     def _before_sleep(retry_state: tenacity.RetryCallState) -> None:
         wait = retry_state.next_action.sleep  # type: ignore[union-attr]
-        print(
-            f"Attempt #{retry_state.attempt_number} failed: {retry_state.outcome.exception()}"
-        )
-        print(f"Waiting {wait:.0f}s before retry...")
+        print(f'Attempt #{retry_state.attempt_number} failed: {retry_state.outcome.exception()}')
+        print(f'Waiting {wait:.0f}s before retry...')
 
     def _do_download(url: str) -> str:
         """Perform the actual download from a given URL."""
@@ -270,18 +264,16 @@ def download_single_slc_from_cdse(
         )
         response.raise_for_status()
 
-        with open(out_path, "wb") as f:
+        with out_path.open('wb') as f:
             for chunk in response.iter_content(chunk_size=8192 * 16):
                 if chunk:
                     f.write(chunk)
 
         if out_path.stat().st_size == 0:
             out_path.unlink(missing_ok=True)
-            raise requests.RequestException("Downloaded file is empty")
+            raise requests.RequestException('Downloaded file is empty')
 
-        print(
-            f"Successfully downloaded {out_filename} from CDSE ({out_path.stat().st_size / 1e6:.1f} MB)"
-        )
+        print(f'Successfully downloaded {out_filename} from CDSE ({out_path.stat().st_size / 1e6:.1f} MB)')
         return out_filename
 
     @tenacity.retry(
@@ -300,9 +292,7 @@ def download_single_slc_from_cdse(
             out_path.unlink(missing_ok=True)
             # If 404 on /$zip, fall back to /$value (uncompressed, always available)
             if e.response is not None and e.response.status_code == 404:
-                print(
-                    "Compressed format not available, falling back to uncompressed..."
-                )
+                print('Compressed format not available, falling back to uncompressed...')
                 try:
                     return _do_download(download_url_value)
                 except requests.RequestException:
@@ -318,9 +308,9 @@ def download_single_slc_from_cdse(
 
 def download_slcs_from_cdse(
     slc_ids: list[str],
-    username: Optional[str] = None,
-    password: Optional[str] = None,
-    output_dir: str = ".",
+    username: str | None = None,
+    password: str | None = None,
+    output_dir: str = '.',
     max_workers: int = 3,
     dry_run: bool = False,
 ) -> list[str]:
@@ -355,12 +345,12 @@ def download_slcs_from_cdse(
         filenames = []
         for slc_id in slc_ids:
             product = search_cdse_by_granule_name(slc_id)
-            fname = slc_id.replace(".zip", "").replace(".SAFE", "") + ".zip"
-            print(f"[dry-run] Found on CDSE: {product['Name']} (Id={product['Id']})")
+            fname = slc_id.replace('.zip', '').replace('.SAFE', '') + '.zip'
+            print(f'[dry-run] Found on CDSE: {product["Name"]} (Id={product["Id"]})')
             filenames.append(fname)
         return filenames
 
-    def _download_one(slc_id):
+    def _download_one(slc_id: str) -> str:
         return download_single_slc_from_cdse(
             slc_id,
             access_token=access_token,
@@ -373,7 +363,7 @@ def download_slcs_from_cdse(
             tqdm(
                 executor.map(_download_one, slc_ids),
                 total=n,
-                desc="Downloading SLCs from CDSE",
+                desc='Downloading SLCs from CDSE',
             )
         )
 
