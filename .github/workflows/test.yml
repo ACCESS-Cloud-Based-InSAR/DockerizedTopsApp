@@ -18,9 +18,7 @@ jobs:
         pixi-environment: ["py311", "py312"]
 
     steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v7
 
       - uses: extractions/netrc@v3
         with:
