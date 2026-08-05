@@ -72,9 +72,9 @@ pixi run test    # pytest
 
 ## Installation with Miniforge (legacy)
 
-[`environment.yml`](environment.yml) is still maintained for users who are already set up with `conda`/`mamba`.
-It is kept in sync by hand and is *not* locked, so it can resolve to a different set of packages than `pixi.lock` does.
-If you hit a dependency problem, please check against `pixi install` before filing an issue.
+[`environment.yml`](environment.yml) is kept as a transitional path for users who are already set up with `conda`/`mamba`.
+It is *not* locked and nothing in CI validates it, so it will drift from `pixi.lock` and eventually stop solving.
+When that happens it will be removed rather than repaired, so please migrate to `pixi` when you get the chance.
 
 Install [Miniforge](https://github.com/conda-forge/miniforge) (which ships `mamba`), then:
 

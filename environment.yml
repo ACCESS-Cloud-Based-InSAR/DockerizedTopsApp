@@ -1,9 +1,9 @@
-# Legacy conda/mamba path for users not yet on pixi.
+# Transitional conda/mamba path for users not yet on pixi.
 #
 # `pyproject.toml` (with `pixi.lock`) is the source of truth for this project and is what
-# CI and the Docker image build from. This file is kept in sync by hand, so it can resolve
-# to a different set of packages than the lock file does. If you hit a dependency problem
-# here, please check against `pixi install` before filing an issue.
+# CI and the Docker image build from. Nothing validates this file, so it will drift and
+# eventually stop solving; at that point it will be removed rather than repaired.
+# If you hit a dependency problem here, please use `pixi install` instead of filing an issue.
 name: topsapp_env
 channels:
  - conda-forge

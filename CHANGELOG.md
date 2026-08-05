@@ -13,7 +13,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 * Migrated environment management from `conda`/`mamba` to [`pixi`](https://pixi.sh). All configuration now lives in `pyproject.toml` under the `[tool.pixi.*]` tables and the resolved set is locked in `pixi.lock`.
-* `environment.yml` is retained as a hand-maintained legacy path for `conda`/`mamba` users, but `pyproject.toml`/`pixi.lock` is the source of truth and is what CI and the Docker image build from.
+* `environment.yml` is retained as an unvalidated, transitional path for `conda`/`mamba` users; it will be removed once it stops solving. `pyproject.toml`/`pixi.lock` is the source of truth and is what CI and the Docker image build from.
 * Supported platforms are `linux-64` and `osx-64` (`ISCE2` is Intel-only, and pixi runs `osx-64` under Rosetta on Apple Silicon).
 * Python 3.11 and 3.12 are now separate pixi environments (`py311`, `py312`); `default` is `py311`. The PyTest matrix iterates over these environments.
 * `Dockerfile` builds from `ghcr.io/prefix-dev/pixi` and installs from `pixi.lock` with `pixi install --locked`; the entrypoint uses `pixi run`.
