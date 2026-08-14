@@ -92,7 +92,7 @@
             "minItems": 1,
             "items": {
               "type": "string",
-              "enum": ["Sentinel-1A", "Sentinel-1B"]
+              "enum": ["Sentinel-1A", "Sentinel-1B", "Sentinel-1C", "Sentinel-1D"]
             }
           },
           "beam_mode": {

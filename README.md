@@ -152,6 +152,50 @@ This is reflected in the [`sample_run.sh`](sample_run.sh).
 
 To be even more explicit, you can use [`tee`](https://en.wikipedia.org/wiki/Tee_(command)) to record output to both including `> >(tee -a topsapp_img.out) 2> >(tee -a topsapp_img.err >&2)`.
 
+### Alternative: Using Dates Instead of Scene IDs
+
+Starting in version 0.6.0, you can specify acquisition dates instead of explicit scene IDs. The application will automatically discover and process all Sentinel-1 SLC scenes acquired on those dates for the specified frame.
+
+**Date Format:** `YYYY-MM-DD`
+
+**Basic example using dates:**
+```bash
+isce2_topsapp --reference-date 2022-02-12 \
+              --secondary-date 2022-01-31 \
+              --frame-id 25502
+```
+
+When you run this command, the application will:
+1. Search for all Sentinel-1 SLC scenes acquired on each date
+2. Filter to scenes covering frame 25502
+3. Print the discovered scenes (e.g., "Found reference scenes ['S1A_IW_SLC__1SDV_20220212T222803...', ...]")
+4. Process the interferogram using those scenes
+
+**All customization parameters work identically with dates:**
+```bash
+isce2_topsapp --reference-date 2022-02-12 \
+              --secondary-date 2022-01-31 \
+              --frame-id 25502 \
+              --output-resolution 30 \
+              --estimate-ionosphere-delay True \
+              --compute-solid-earth-tide True \
+              --dense-offsets True
+```
+
+**Important notes:**
+- You must use **either** `--reference-scenes`/`--secondary-scenes` **or** `--reference-date`/`--secondary-date` (not both)
+- The secondary date must be chronologically before the reference date
+- The `--frame-id` parameter is still required
+- Both dates must have available Sentinel-1 data for the specified frame
+
+**When to use dates vs. scene IDs:**
+
+| Use Scene IDs When | Use Dates When |
+|-------------------|---------------|
+| You know exact scene identifiers | You know the acquisition dates |
+| Processing specific scenes only | Want all scenes for a date/frame pair |
+| Maximum control over inputs | Simpler specification |
+
 ## Generate an ARIA-S1-GUNW using CDSE for Sentinel-1 Download
 
 By default, Sentinel-1 SLC granules are downloaded from the [Alaska Satellite Facility (ASF)](https://asf.alaska.edu/). As an alternative, particularly suited for European users or those operating within the European cloud ecosystem, granules can be downloaded from the [Copernicus Data Space Ecosystem (CDSE)](https://dataspace.copernicus.eu/) by passing `--download-source CDSE`. Metadata lookups and bounding box checks still use ASF, so a valid `~/.netrc` entry for `urs.earthdata.nasa.gov` remains required. Additionally, CDSE credentials must be configured as described in the *Additional setup* section above.
@@ -197,6 +241,9 @@ We note that the ionosphere correction layer is the (hard) work of [Marin Govorc
 
 Below indicates all available arguments for product generation and parameters required for *standard product* generation (again, for a given pairing and frame, one must use the enumeration of pairs described [here](https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator)). Use `isce2_topsapp --help` for more information of available arguments.
 
+**Note:** You can specify scenes either explicitly using `--reference-scenes`/`--secondary-scenes` (as shown below) or by acquisition date using `--reference-date`/`--secondary-date` (as described in the ["Alternative: Using Dates Instead of Scene IDs"](#alternative-using-dates-instead-of-scene-ids) section above). All other parameters work identically with both approaches.
+
+**Example with scene IDs:**
 ```
 isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T222830_041886_04FCA3_2B3E \
                                  S1A_IW_SLC__1SDV_20220212T222828_20220212T222855_041886_04FCA3_A3E2  \
@@ -211,6 +258,21 @@ isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T22283
               --unfiltered-coherence True # this adds an unfiltered coherence layer\
               --dense-offsets False # adds layers that compute patch wise correlation measurement done in range and azimuth which are helpful after significant surface changes\
 ```
+
+**Equivalent example with dates:**
+```
+isce2_topsapp --reference-date 2022-02-12 \
+              --secondary-date 2022-01-31 \
+              --frame-id 25502 \
+              --estimate-ionosphere-delay True \
+              --esd-coherence-threshold -1. \
+              --compute_solid_earth_tide True \
+              --goldstein-filter-power 0.5 \
+              --output-resolution 90 \
+              --unfiltered-coherence True \
+              --dense-offsets False
+```
+
 or as a json:
 ```
 {
@@ -294,6 +356,8 @@ isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20190716T135159_20190716T13522
 ## Expedient Docker Test for GUNW Generation
 
 Create a new directory (for all the intermediate files) and navigate to it.
+
+**Using scene IDs:**
 ```
 docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img \
                --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T222830_041886_04FCA3_2B3E \
@@ -306,6 +370,19 @@ docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img \
                --esa-username <esa-username> \
                --esa-password <esa-password> \
 ```
+
+**Or, using dates (simpler):**
+```
+docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img \
+               --reference-date 2022-02-12 \
+               --secondary-date 2022-01-31 \
+               --frame-id 25502 \
+               --username <username> \
+               --password <password> \
+               --esa-username <esa-username> \
+               --esa-password <esa-password> \
+```
+
 where the `username`/`password` are the Earthdata credentials for accessing NASA data. We note the command line magic of the above is taken care of the `isce2_topsapp/etc/entrypoint.sh` (written by Joe Kennedy) which automatically runs certain bash commands on startup of the container, i.e. the run commands also calls the `isce2_topsapp` command line function as can be seen [here](isce2_topsapp/etc/entrypoint.sh).
 
 # Build Issues

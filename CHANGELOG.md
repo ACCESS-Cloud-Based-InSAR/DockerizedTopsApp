@@ -24,6 +24,8 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * `tox.ini`, which only carried `flake8` configuration superseded by `ruff`.
 ### Added
 * Support for downloading Sentinel-1 SLC granules from the Copernicus Data Space Ecosystem (CDSE) as an alternative to ASF. Metadata retrieval and bounding box checks continue to use ASF. Download from CDSE uses the compressed `.zip` archive directly, leveraging ISCE2's virtual file access to reduce download traffic.
+* Sentinel-1D support: updated AUX_CAL downloads, DAAC ingest schema, and SLC localization to accept S1D data. AUX_CAL downloads for S1C/S1D gracefully skip with a warning if the files are not yet published.
+* Added `S1D_MIN_DATE` (2026-06-24) placeholder to reject uncalibrated S1D acquisitions, mirroring the existing `S1C_MIN_DATE` check. Update once S1D calibration is officially confirmed.
 
 ## [1.0.2]
 
