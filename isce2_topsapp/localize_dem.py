@@ -84,7 +84,7 @@ def download_dem_for_isce2(
         extent_buffered,
         dem_name,
         dst_ellipsoidal_height=True,
-        dst_area_or_point='Point',
+        dst_area_or_point=None,
         n_threads_downloading=5,
         # ensures square resolution
         dst_resolution=dem_res,
