@@ -17,9 +17,7 @@ MIN_FRAME_COVERAGE_DEFAULT = 0.01
 S1C_MIN_DATE = datetime.datetime(
     2025, 5, 19, tzinfo=datetime.UTC
 )  # https://sentinels.copernicus.eu/-/sentinel-1c-products-are-now-calibrated
-S1D_MIN_DATE = datetime.datetime(
-    2026, 6, 24, tzinfo=datetime.UTC
-)
+S1D_MIN_DATE = datetime.datetime(2026, 6, 24, tzinfo=datetime.UTC)
 
 
 def get_gunw_extent_from_frame_id(frame_id: int) -> Polygon:
@@ -131,9 +129,7 @@ def check_if_s1c_has_valid_date(slc_ids: list, slc_properties: list) -> bool:
 def check_if_s1d_has_valid_date(slc_ids: list, slc_properties: list) -> bool:
     assert len(slc_ids) == len(slc_properties)
     s1d_filter_bool = [id.startswith('S1D') for id in slc_ids]
-    s1d_properties_filter = [
-        prop for (k, prop) in enumerate(slc_properties) if s1d_filter_bool[k]
-    ]
+    s1d_properties_filter = [prop for (k, prop) in enumerate(slc_properties) if s1d_filter_bool[k]]
     # No s1d data
     if not sum(s1d_filter_bool):
         return True
@@ -142,12 +138,8 @@ def check_if_s1d_has_valid_date(slc_ids: list, slc_properties: list) -> bool:
     s1d_valid_data_filter = [date >= S1D_MIN_DATE for date in s1d_dates]
     s1d_has_valid_date = all(s1d_valid_data_filter)
     if not s1d_has_valid_date:
-        invalid_s1d_ids = [
-            id for (k, id) in enumerate(s1d_ids) if not s1d_valid_data_filter[k]
-        ]
-        print(
-            f'The following S1D acquisitions were before {S1D_MIN_DATE}: {invalid_s1d_ids}'
-        )
+        invalid_s1d_ids = [id for (k, id) in enumerate(s1d_ids) if not s1d_valid_data_filter[k]]
+        print(f'The following S1D acquisitions were before {S1D_MIN_DATE}: {invalid_s1d_ids}')
     return s1d_has_valid_date
 
 
@@ -211,12 +203,8 @@ def download_slcs(
     if not check_if_s1c_has_valid_date(reference_ids + secondary_ids, reference_props + secondary_props):
         raise ValueError(f'The Sentinel-1C acquisitions provided were before {S1C_MIN_DATE}')
 
-    if not check_if_s1d_has_valid_date(
-        reference_ids + secondary_ids, reference_props + secondary_props
-    ):
-        raise ValueError(
-            f'The Sentinel-1D acquisitions provided were before {S1D_MIN_DATE}'
-        )
+    if not check_if_s1d_has_valid_date(reference_ids + secondary_ids, reference_props + secondary_props):
+        raise ValueError(f'The Sentinel-1D acquisitions provided were before {S1D_MIN_DATE}')
 
     # Check the number of objects is the same as inputs
     assert len(reference_obs) == len(reference_ids)
@@ -315,13 +303,7 @@ def get_slcs_for_date_and_frame(date: datetime.date, frame_id: int) -> list[str]
         start=date_as_datetime - datetime.timedelta(minutes=5),
         end=date_as_datetime + datetime.timedelta(days=1, minutes=5),
     )
-    if not any(
-        product_date == date
-        for product in results
-        for product_date in _get_dates(product)
-    ):
-        raise ValueError(
-            f'No Sentinel-1A/1B/1C/1D SLCs found for date {date} and frame id {frame_id}.'
-        )
+    if not any(product_date == date for product in results for product_date in _get_dates(product)):
+        raise ValueError(f'No Sentinel-1A/1B/1C/1D SLCs found for date {date} and frame id {frame_id}.')
 
     return [result.properties['sceneName'] for result in results]

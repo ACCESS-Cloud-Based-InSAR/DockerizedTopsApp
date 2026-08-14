@@ -11,7 +11,6 @@ S1B_AUX_URL = 'https://d3g9emy65n853h.cloudfront.net/AUX_CAL/S1B_AUX_CAL_2024112
 SAR_MPC_API_URL = 'https://sar-mpc.eu/api/v1/'
 
 
-
 def _download_platform(url: str, aux_cal_dir: Path) -> None:
     """Download and remove nested structure of the aux cal files.
 

@@ -212,9 +212,7 @@ def test_localize_slc_with_valid_pairs(reference_ids: list[str], secondary_ids: 
 
 
 def test_get_slcs_by_date_and_frame() -> None:
-    with pytest.raises(
-        ValueError, match=r'^No Sentinel-1A/1B/1C/1D SLCs found for date '
-    ):
+    with pytest.raises(ValueError, match=r'^No Sentinel-1A/1B/1C/1D SLCs found for date '):
         get_slcs_for_date_and_frame(date(2018, 2, 17), 16584)
 
     assert get_slcs_for_date_and_frame(date(2018, 2, 18), 16584) == [
@@ -258,9 +256,7 @@ def test_get_slcs_by_date_and_frame() -> None:
     ]
 
     # scenes close to midnight but not crossing
-    with pytest.raises(
-        ValueError, match=r'^No Sentinel-1A/1B/1C/1D SLCs found for date '
-    ):
+    with pytest.raises(ValueError, match=r'^No Sentinel-1A/1B/1C/1D SLCs found for date '):
         get_slcs_for_date_and_frame(date(2025, 1, 4), 25671)
     assert get_slcs_for_date_and_frame(date(2025, 1, 3), 25671) == [
         'S1A_IW_SLC__1SDV_20250103T235910_20250103T235937_057287_070C52_1291',
