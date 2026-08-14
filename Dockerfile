@@ -6,7 +6,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV PYTHONDONTWRITEBYTECODE=true
 
 # Install libgl1-mesa-glx unzip vim
-RUN apt-get update && apt-get install -y --no-install-recommends libgl1-mesa-glx unzip vim curl && \
+RUN apt-get update && apt-get install -y --no-install-recommends libgl1-mesa-glx unzip vim && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # run commands in a bash login shell
@@ -32,11 +32,6 @@ COPY --chown=iscer:iscer . /home/ops/DockerizedTopsApp
 # Create the environment with mamba
 RUN mamba env create -f /home/ops/DockerizedTopsApp/environment.yml && \
     conda clean -afy
-
-# TODO: Remove this when ISCE2 releases S1D Fixes
-RUN TARGET_DIR=$(conda run -n topsapp_env python -c "import isce; import os; print(os.path.dirname(isce.__file__))") && \
-    curl -sSL -o "${TARGET_DIR}/components/isceobj/Sensor/TOPS/Sentinel1.py" \
-    https://raw.githubusercontent.com/isce-framework/isce2/7bd57893ed9ae2d7ac0f7dd0e06625e337b0b993/components/isceobj/Sensor/TOPS/Sentinel1.py
 
 # Ensure that environment is activated on startup
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.profile && \

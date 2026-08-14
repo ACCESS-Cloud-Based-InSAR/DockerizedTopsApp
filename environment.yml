@@ -17,7 +17,7 @@ dependencies:
  - gdal
  - geopandas
  - ipykernel
- - isce2==2.6.4
+ - isce2==2.6.5
  - jinja2
  - joblib
  - jsonschema==3.2.0

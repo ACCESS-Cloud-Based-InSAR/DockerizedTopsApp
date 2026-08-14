@@ -17,8 +17,8 @@ S1C_MIN_DATE = datetime.datetime(
     2025, 5, 19, tzinfo=datetime.timezone.utc
 )  # https://sentinels.copernicus.eu/-/sentinel-1c-products-are-now-calibrated
 S1D_MIN_DATE = datetime.datetime(
-    2026, 4, 17, tzinfo=datetime.timezone.utc
-)  # placeholder - update when S1D calibration is confirmed
+    2026, 6, 24, tzinfo=datetime.timezone.utc
+)
 
 
 def get_gunw_extent_from_frame_id(frame_id) -> Polygon:
