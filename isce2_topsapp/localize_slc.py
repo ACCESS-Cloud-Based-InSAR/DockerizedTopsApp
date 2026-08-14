@@ -18,7 +18,7 @@ S1C_MIN_DATE = datetime.datetime(
     2025, 5, 19, tzinfo=datetime.UTC
 )  # https://sentinels.copernicus.eu/-/sentinel-1c-products-are-now-calibrated
 S1D_MIN_DATE = datetime.datetime(
-    2026, 6, 24, tzinfo=datetime.timezone.utc
+    2026, 6, 24, tzinfo=datetime.UTC
 )
 
 
@@ -130,7 +130,7 @@ def check_if_s1c_has_valid_date(slc_ids: list, slc_properties: list) -> bool:
 
 def check_if_s1d_has_valid_date(slc_ids: list, slc_properties: list) -> bool:
     assert len(slc_ids) == len(slc_properties)
-    s1d_filter_bool = [id.startswith("S1D") for id in slc_ids]
+    s1d_filter_bool = [id.startswith('S1D') for id in slc_ids]
     s1d_properties_filter = [
         prop for (k, prop) in enumerate(slc_properties) if s1d_filter_bool[k]
     ]
@@ -138,7 +138,7 @@ def check_if_s1d_has_valid_date(slc_ids: list, slc_properties: list) -> bool:
     if not sum(s1d_filter_bool):
         return True
     s1d_ids = [id for (k, id) in enumerate(slc_ids) if s1d_filter_bool[k]]
-    s1d_dates = [parse(prop["startTime"]) for prop in s1d_properties_filter]
+    s1d_dates = [parse(prop['startTime']) for prop in s1d_properties_filter]
     s1d_valid_data_filter = [date >= S1D_MIN_DATE for date in s1d_dates]
     s1d_has_valid_date = all(s1d_valid_data_filter)
     if not s1d_has_valid_date:
@@ -146,13 +146,13 @@ def check_if_s1d_has_valid_date(slc_ids: list, slc_properties: list) -> bool:
             id for (k, id) in enumerate(s1d_ids) if not s1d_valid_data_filter[k]
         ]
         print(
-            f"The following S1D acquisitions were before {S1D_MIN_DATE}: {invalid_s1d_ids}"
+            f'The following S1D acquisitions were before {S1D_MIN_DATE}: {invalid_s1d_ids}'
         )
     return s1d_has_valid_date
 
 
-def check_track_numbers(slc_properties: list):
-    path_numbers = [prop["pathNumber"] for prop in slc_properties]
+def check_track_numbers(slc_properties: list) -> False:
+    path_numbers = [prop['pathNumber'] for prop in slc_properties]
     path_numbers = sorted(list(set(path_numbers)))
     if len(path_numbers) == 1:
         return True
@@ -215,7 +215,7 @@ def download_slcs(
         reference_ids + secondary_ids, reference_props + secondary_props
     ):
         raise ValueError(
-            f"The Sentinel-1D acquisitions provided were before {S1D_MIN_DATE}"
+            f'The Sentinel-1D acquisitions provided were before {S1D_MIN_DATE}'
         )
 
     # Check the number of objects is the same as inputs
@@ -321,7 +321,7 @@ def get_slcs_for_date_and_frame(date: datetime.date, frame_id: int) -> list[str]
         for product_date in _get_dates(product)
     ):
         raise ValueError(
-            f"No Sentinel-1A/1B/1C/1D SLCs found for date {date} and frame id {frame_id}."
+            f'No Sentinel-1A/1B/1C/1D SLCs found for date {date} and frame id {frame_id}.'
         )
 
     return [result.properties['sceneName'] for result in results]

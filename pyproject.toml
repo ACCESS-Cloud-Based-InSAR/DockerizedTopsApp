@@ -198,5 +198,4 @@ python = "3.12.*"
 
 [tool.pixi.environments]
 default = { features = ["py311"], solve-group = "py311" }
-py311 = { features = ["py311"], solve-group = "py311" }
 py312 = { features = ["py312"], solve-group = "py312" }
