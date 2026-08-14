@@ -61,6 +61,20 @@ python -m ipykernel install --user --name topsapp_env
     ```
     The `username`/`password` pair are the appropriate Earthdata Login credentials that are used to access NASA data. This file is necessary for downloading the Sentinel-1 files, and auxiliary data. Additionally, the [`requests`](https://docs.python-requests.org/en/latest/) library automatically uses credentials stored in the `~/.netrc` for authentification when none are supplied.
 
+2. (Optional) To download Sentinel-1 SLC granules from the [Copernicus Data Space Ecosystem (CDSE)](https://dataspace.copernicus.eu/) instead of ASF, you will need CDSE credentials. These can be provided in one of two ways:
+    - Add an entry to your `~/.netrc` file:
+        ```
+        machine dataspace.copernicus.eu
+            login <cdse-username>
+            password <cdse-password>
+        ```
+    - Or set environment variables:
+        ```
+        export CDSE_USERNAME=<cdse-username>
+        export CDSE_PASSWORD=<cdse-password>
+        ```
+    A free CDSE account can be registered at [dataspace.copernicus.eu](https://dataspace.copernicus.eu/).
+
 ## Generate an ARIA-S1-GUNW
 
 Make sure you have `~/.netrc` as described above. Run the following command:
@@ -120,6 +134,19 @@ isce2_topsapp --reference-date 2022-02-12 \
 | You know exact scene identifiers | You know the acquisition dates |
 | Processing specific scenes only | Want all scenes for a date/frame pair |
 | Maximum control over inputs | Simpler specification |
+
+## Generate an ARIA-S1-GUNW using CDSE for Sentinel-1 Download
+
+By default, Sentinel-1 SLC granules are downloaded from the [Alaska Satellite Facility (ASF)](https://asf.alaska.edu/). As an alternative, particularly suited for European users or those operating within the European cloud ecosystem, granules can be downloaded from the [Copernicus Data Space Ecosystem (CDSE)](https://dataspace.copernicus.eu/) by passing `--download-source CDSE`. Metadata lookups and bounding box checks still use ASF, so a valid `~/.netrc` entry for `urs.earthdata.nasa.gov` remains required. Additionally, CDSE credentials must be configured as described in the *Additional setup* section above.
+
+```
+isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T222830_041886_04FCA3_2B3E \
+                                 S1A_IW_SLC__1SDV_20220212T222828_20220212T222855_041886_04FCA3_A3E2  \
+              --secondary-scenes S1A_IW_SLC__1SDV_20220131T222803_20220131T222830_041711_04F690_8F5F \
+                                 S1A_IW_SLC__1SDV_20220131T222828_20220131T222855_041711_04F690_28D7  \
+              --frame-id 25502 \
+              --download-source CDSE
+```
 
 ## What makes an ARIA-S1-GUNW Product *standard*?
 

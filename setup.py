@@ -40,6 +40,7 @@ setup(
         "rasterio",
         "requests",
         "shapely",
+        "tenacity",
         "tqdm",
     ],
     extras_require={

@@ -18,15 +18,15 @@ jobs:
         python-version: ["3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: extractions/netrc@v2
+      - uses: extractions/netrc@v3
         with:
           machine: urs.earthdata.nasa.gov
           username: ${{ secrets.EARTHDATA_USERNAME }}
           password: ${{ secrets.EARTHDATA_PASSWORD }}
 
-      - uses: mamba-org/setup-micromamba@v2
+      - uses: mamba-org/setup-micromamba@v3
         with:
           init-shell: bash
           environment-file: environment.yml
