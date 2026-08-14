@@ -10,6 +10,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 * `isce2_topsapp` CLI dispatch raised `KeyError: 'console_scripts'` on Python 3.12. Now uses the `entry_points(group=..., name=...)` API, resolving the long-standing `FIXME`.
+* Updated dem to match NISAR-DEM within 1 cm.
 
 ### Changed
 * Migrated environment management from `conda`/`mamba` to [`pixi`](https://pixi.sh). All configuration now lives in `pyproject.toml` under the `[tool.pixi.*]` tables and the resolved set is locked in `pixi.lock`.
