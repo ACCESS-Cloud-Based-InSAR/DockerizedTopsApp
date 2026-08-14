@@ -73,7 +73,9 @@ def test_mean_of_geocoded_isce_outputs() -> None:
     }
 
     for key in expected_out:
-        assert_almost_equal(expected_out[key], out[key], decimal=5)
+        # This was recently lowered to 4 (from 5) after update to latest ISCE and python env
+        decimal = 4
+        assert_almost_equal(expected_out[key], out[key], decimal=decimal)
 
     # Use output GUNW and compare means
     gunw_s3_path = (

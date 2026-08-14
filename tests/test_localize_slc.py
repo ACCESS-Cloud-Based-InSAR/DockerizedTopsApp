@@ -1,9 +1,10 @@
 import re
 import warnings
-from datetime import date
+from datetime import date, datetime, timedelta
 
 import pytest
 from isce2_topsapp.localize_slc import (
+    S1D_MIN_DATE,
     check_date_order,
     check_flight_direction,
     check_if_s1d_has_valid_date,
@@ -292,19 +293,22 @@ def test_s1c_min_date() -> None:
     download_slcs(slc_ids_ref, slc_ids_sec, 18830, dry_run=True)
 
 
+def s1d_id_and_props(dt: datetime) -> tuple[list[str], list[dict]]:
+    stamp = dt.strftime('%Y%m%dT%H%M%S')
+    stop = (dt + timedelta(seconds=27)).strftime('%Y%m%dT%H%M%S')
+    return (
+        [f'S1D_IW_SLC__1SDV_{stamp}_{stop}_000050_000050_BBBB'],
+        [{'startTime': dt.strftime('%Y-%m-%dT%H:%M:%S.%f') + 'Z'}],
+    )
+
+
 def test_s1d_min_date() -> None:
     # Test check_if_s1d_has_valid_date directly since no real S1D SLCs
     # exist in ASF yet (download_slcs would fail at ASF search)
-    slc_ids = [
-        'S1D_IW_SLC__1SDV_20260401T120000_20260401T120027_000050_000050_BBBB',
-    ]
-    slc_props = [{'startTime': '2026-04-01T12:00:00.000000Z'}]
+    slc_ids, slc_props = s1d_id_and_props(S1D_MIN_DATE - timedelta(days=1))
     assert not check_if_s1d_has_valid_date(slc_ids, slc_props)
 
-    slc_ids = [
-        'S1D_IW_SLC__1SDV_20260417T120000_20260417T120027_000100_000100_AAAA',
-    ]
-    slc_props = [{'startTime': '2026-04-17T12:00:00.000000Z'}]
+    slc_ids, slc_props = s1d_id_and_props(S1D_MIN_DATE + timedelta(days=1))
     assert check_if_s1d_has_valid_date(slc_ids, slc_props)
 
     # Non-S1D data should always pass
