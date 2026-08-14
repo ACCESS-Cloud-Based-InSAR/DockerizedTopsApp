@@ -1,8 +1,11 @@
+from typing import Any
+
 import numpy as np
 
 
-def load_product(xml_name):
+def load_product(xml_name: str) -> Any:  # noqa: ANN401
     """Load the product using Product Manager.
+
     :param xml_name: The name of the xml file to load.
     :return: The loaded product.
     """
@@ -13,8 +16,9 @@ def load_product(xml_name):
     return pm.loadProduct(xml_name)
 
 
-def get_conversion_factors(reference_xml):
+def get_conversion_factors(reference_xml: str) -> tuple[float, float]:
     """Get the conversion factors for converting offsets from pixels to meters.
+
     :param reference_xml: The reference xml file.
     :return: The conversion factors used for converting azimuth and range from pixels to meters.
     """
@@ -29,9 +33,9 @@ def get_conversion_factors(reference_xml):
     sensingMid = burst.sensingMid
     orb = obj.orbit
     Vs = np.linalg.norm(
-        orb.interpolateOrbit(sensingMid, method="hermite").getVelocity()
+        orb.interpolateOrbit(sensingMid, method='hermite').getVelocity()
     )  # satellite velocity at center
-    Ps_vec = orb.interpolateOrbit(sensingMid, method="hermite").getPosition()
+    Ps_vec = orb.interpolateOrbit(sensingMid, method='hermite').getPosition()
     Ps = np.linalg.norm(Ps_vec)  # satellite position at center
 
     # Approximate terrain height
@@ -41,7 +45,7 @@ def get_conversion_factors(reference_xml):
     midRange = burst.midRange
     llh_cen = orb.rdr2geo(sensingMid, midRange, height=terrainHeight)
 
-    refElp = Planet(pname="Earth").ellipsoid
+    refElp = Planet(pname='Earth').ellipsoid
     xyz_cen = refElp.llh_to_xyz(llh_cen)  # xyz coordinate at image center
 
     Re = np.linalg.norm(xyz_cen)
@@ -50,20 +54,20 @@ def get_conversion_factors(reference_xml):
 
     azimuthPixelSize = azimuthTimeInterval * Vg
 
-    print("satellite velocity (m/s)", Vs)
-    print("satellite velocity over the ground (m/s)", Vg)
-    print("rangePixelSize (m)", rangePixelSize)
-    print("azimuthPixelSize (m)", azimuthPixelSize)
+    print('satellite velocity (m/s)', Vs)
+    print('satellite velocity over the ground (m/s)', Vg)
+    print('rangePixelSize (m)', rangePixelSize)
+    print('azimuthPixelSize (m)', azimuthPixelSize)
     return azimuthPixelSize, rangePixelSize
 
 
-def convert_offsets(dense_offsets, amplitude, reference_xml):
+def convert_offsets(dense_offsets: str, amplitude: str, reference_xml: str) -> None:
     """Convert dense offsets from pixels to meters.
+
     :param dense_offsets: The dense offsets file.
     :param amplitude: The amplitude file.
     :param reference_xml: The reference xml file.
     """
-
     from osgeo import gdal
 
     # Get the conversion factors
@@ -72,12 +76,12 @@ def convert_offsets(dense_offsets, amplitude, reference_xml):
     # Open the input raster
     dense_offsets_pix = gdal.Open(dense_offsets)
     if not dense_offsets_pix:
-        raise RuntimeError(f"Failed to open file: {dense_offsets_pix}")
+        raise RuntimeError(f'Failed to open file: {dense_offsets_pix}')
 
     # Open amplitude which will be used for masking
     amplitude_pix = gdal.Open(amplitude)
     if not amplitude_pix:
-        raise RuntimeError(f"Failed to open file: {amplitude}")
+        raise RuntimeError(f'Failed to open file: {amplitude}')
     amp = amplitude_pix.GetRasterBand(1).ReadAsArray()
     amp_NoData = amplitude_pix.GetRasterBand(1).GetNoDataValue()
     if amp_NoData is None:
@@ -103,8 +107,8 @@ def convert_offsets(dense_offsets, amplitude, reference_xml):
     )
 
     # Write the converted arrays to a new raster
-    driver = gdal.GetDriverByName("ISCE")
-    outfile = "merged/filt_dense_offsets_m.geo"
+    driver = gdal.GetDriverByName('ISCE')
+    outfile = 'merged/filt_dense_offsets_m.geo'
 
     # Create the new raster
     dense_offsets_m = driver.Create(

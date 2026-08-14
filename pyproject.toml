@@ -1,8 +1,201 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
+requires = ["setuptools>=77", "setuptools_scm[toml]>=3.4"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "isce2_topsapp"
+description = "Automated ISCE2 TopsApp Processing"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+dynamic = ["version"]
+authors = [
+    { name = "David Bekaert, Grace Bato, Marin Govorcin, Andrew Johnston, Joe Kennedy, Charlie Marshak, Simran Sangha and ARIA-JPL", email = "access_cloud_based_insar@jpl.nasa.gov" },
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "asf_search>=10.0.5",
+    "boto3",
+    "dateparser",
+    "dem_stitcher>=2.5.8",
+    "geopandas",
+    "s1_orbits",
+    "jinja2",
+    "lxml",
+    "matplotlib",
+    "netcdf4",
+    "numpy",
+    "pandas>=2.2",
+    "rasterio",
+    "requests",
+    "shapely",
+    "tenacity",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+develop = [
+    "ipykernel",
+    "jsonschema>=4",
+    "jupyterlab",
+    "papermill",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+]
+
+[project.urls]
+Homepage = "https://github.com/dbekaert/DockerizedTopsApp"
+
+[project.scripts]
+isce2_topsapp = "isce2_topsapp.__main__:main"
+topsapp_config = "isce2_topsapp.enumeration.config_job:main"
+gunw_slc = "isce2_topsapp.__main__:gunw_slc"
+gunw_burst = "isce2_topsapp.__main__:gunw_burst"
+coseis_sar = "isce2_topsapp.__main__:coseis_sar"
+makeGeocube = "isce2_topsapp.packaging_utils.makeGeocube:main"
+nc_packaging = "isce2_topsapp.packaging_utils.nc_packaging:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["isce2_topsapp*"]
+
+[tool.setuptools_scm]
 
 [tool.ruff]
-exclude = ["isce2_topsapp/packaging_utils", 
-           "tests/prepare-for-delivery.ipynb", 
-           "tests/prepare-for-delivery.ipynb",
-           "tests/solid_earth_tides.ipynb"]
+line-length = 120
+src = ["isce2_topsapp", "tests"]
+force-exclude = true
+exclude = [
+    ".eggs",
+    ".git",
+    ".pixi",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "build",
+    "dist",
+    "site-packages",
+    "isce2_topsapp/packaging_utils",
+    "tests/*.ipynb",
+]
+indent-width = 4
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+
+[tool.ruff.lint]
+select = [
+    "F",   # flake8: https://docs.astral.sh/ruff/rules/#flake8-f
+    "E",   # flake8: https://docs.astral.sh/ruff/rules/#flake8-e
+    "I",   # isort: https://docs.astral.sh/ruff/rules/#isort-i
+    "UP",  # pyupgrade: https://docs.astral.sh/ruff/rules/#pyupgrade-up
+    "D",   # pydocstyle: https://docs.astral.sh/ruff/rules/#pydocstyle-d
+    "ANN", # annotations: https://docs.astral.sh/ruff/rules/#flake8-annotations-ann
+    "PTH", # use-pathlib-pth: https://docs.astral.sh/ruff/rules/#flake8-use-pathlib-pth
+    "TRY", # tryceratops
+    "Q",   # flake8-quotes: https://docs.astral.sh/ruff/rules/#flake8-quotes-q
+]
+ignore = [
+    "D100",   # Missing docstring in public module
+    "D101",   # Missing docstring in public class
+    "D102",   # Missing docstring in public method
+    "D103",   # Missing docstring in public function
+    "D104",   # Missing docstring in public package
+    "D105",   # Missing docstring in magic method
+    "D203",   # 1 blank line required before class docstring
+    "D213",   # Multi-line docstring summary should start at the second line
+    "TRY003", # Avoid specifying long messages outside the exception
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+
+[tool.ruff.lint.isort]
+case-sensitive = true
+lines-after-imports = 2
+
+[tool.pixi.workspace]
+name = "DockerizedTopsApp"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-64"]
+
+[tool.pixi.tasks]
+install = "python -m pip install --no-deps -e ."
+lint = "ruff check ."
+format = "ruff format ."
+fix = "ruff check --fix ."
+test = { cmd = "pytest .", depends-on = ["install"] }
+lab = "jupyter lab"
+
+[tool.pixi.dependencies]
+python = ">=3.11,<3.13"
+affine = ">=2.4.0,<3"
+asf_search = ">=12.2.3,<13"
+boto3 = ">=1.43.64,<2"
+dask = ">=2026.7.1,<2027"
+dateparser = ">=1.4.2,<2"
+fsspec = ">=2026.7.0,<2027"
+gdal = ">=3.10.3,<4"
+geopandas = ">=1.1.4,<2"
+ipykernel = ">=7.3.0,<8"
+isce2 = "==2.6.5"
+jinja2 = ">=3.1.6,<4"
+joblib = ">=1.5.3,<2"
+jsonschema = ">=4,<5"
+lxml = ">=6.1.1,<7"
+matplotlib = ">=3.11.1,<4"
+netcdf4 = ">=1.7.4,<2"
+numpy = ">=1.24,<3"
+pandas = ">=2.2,<4"
+pandera = ">=0.32.1,<0.33"
+pysolid = ">=0.3.4,<0.4"
+papermill = ">=2.7.0,<3"
+pytest = ">=9.1.1,<10"
+pydantic = ">=2.13.4,<3"
+pytest-cov = ">=7.1.0,<8"
+pytest-mock = ">=3.15.1,<4"
+rasterio = ">=1.4.4,<2"
+requests = ">=2.34.2,<3"
+rioxarray = ">=0.19.0,<0.20"
+ruff = ">=0.16.1,<0.17"
+xarray = ">=2026.7.0,<2027"
+scipy = ">=1.11,<2"
+setuptools = ">=83.0.0,<84"
+setuptools_scm = ">=10.2.1,<11"
+shapely = ">=2.1.2,<3"
+tqdm = ">=4.70.0,<5"
+dem_stitcher = ">=3,<4"
+aiohttp = ">=3.14.3,<4"
+tile_mate = ">=0.0.15"
+s1_orbits = ">=0.2.0,<0.3"
+jupyterlab = ">=4.6.2,<5"
+jupyter-collaboration = ">=5.0.0,<6"
+pip = ">=25"
+tenacity = ">=8"
+
+[tool.pixi.feature.py311.dependencies]
+python = "3.11.*"
+
+[tool.pixi.feature.py312.dependencies]
+python = "3.12.*"
+
+[tool.pixi.environments]
+default = { features = ["py311"], solve-group = "py311" }
+py312 = { features = ["py312"], solve-group = "py312" }

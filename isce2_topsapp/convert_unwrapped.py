@@ -1,12 +1,12 @@
-def convert_unwrapped(unwrapped_pix, outfile, vrtfile):
+def convert_unwrapped(unwrapped_pix: str, outfile: str, vrtfile: str) -> None:
     """Convert unwrapped phase from radians to meters.
+
     :param unwrapped_pix: The unwrapped phase file.
     :param outfile: The output file.
     :param vrtfile: The output vrt file.
     """
-    from osgeo import gdal
-
     import numpy as np
+    from osgeo import gdal
 
     # Open the input raster
     unwrapped = gdal.Open(unwrapped_pix)
@@ -19,12 +19,10 @@ def convert_unwrapped(unwrapped_pix, outfile, vrtfile):
     phase_m = (phase_array * 0.05546576) / (4 * np.pi)
 
     # Write the converted arrays to a new raster
-    driver = gdal.GetDriverByName("ISCE")
+    driver = gdal.GetDriverByName('ISCE')
 
     # Create the new raster
-    unwrapped_m = driver.Create(
-        outfile, unwrapped.RasterXSize, unwrapped.RasterYSize, 2, gdal.GDT_Float32
-    )
+    unwrapped_m = driver.Create(outfile, unwrapped.RasterXSize, unwrapped.RasterYSize, 2, gdal.GDT_Float32)
 
     # Get the raster bands
     band1 = unwrapped_m.GetRasterBand(1)

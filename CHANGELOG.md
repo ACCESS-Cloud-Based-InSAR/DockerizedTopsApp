@@ -8,6 +8,21 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.0.3]
 
+### Fixed
+* `isce2_topsapp` CLI dispatch raised `KeyError: 'console_scripts'` on Python 3.12. Now uses the `entry_points(group=..., name=...)` API, resolving the long-standing `FIXME`.
+* Updated dem to match NISAR-DEM within 1 cm.
+
+### Changed
+* Migrated environment management from `conda`/`mamba` to [`pixi`](https://pixi.sh). All configuration now lives in `pyproject.toml` under the `[tool.pixi.*]` tables and the resolved set is locked in `pixi.lock`.
+* `environment.yml` is retained as an unvalidated, transitional path for `conda`/`mamba` users; it will be removed once it stops solving. `pyproject.toml`/`pixi.lock` is the source of truth and is what CI and the Docker image build from.
+* Supported platforms are `linux-64` and `osx-64` (`ISCE2` is Intel-only, and pixi runs `osx-64` under Rosetta on Apple Silicon).
+* Python 3.11 and 3.12 are now separate pixi environments (`py311`, `py312`); `default` is `py311`. The PyTest matrix iterates over these environments.
+* `Dockerfile` builds from `ghcr.io/prefix-dev/pixi` and installs from `pixi.lock` with `pixi install --locked`; the entrypoint uses `pixi run`.
+* Replaced the `reusable-ruff` and `reusable-version-info` ASFHyP3 workflows with inline pixi jobs, as both consumed `environment.yml`.
+* Loosened the stale `scipy<1.10` and `jsonschema==3.2.0` pins (neither is required by the code) and pinned remaining dependencies with semver bounds. `isce2` remains pinned at `==2.6.4`.
+
+### Removed
+* `tox.ini`, which only carried `flake8` configuration superseded by `ruff`.
 ### Added
 * Support for downloading Sentinel-1 SLC granules from the Copernicus Data Space Ecosystem (CDSE) as an alternative to ASF. Metadata retrieval and bounding box checks continue to use ASF. Download from CDSE uses the compressed `.zip` archive directly, leveraging ISCE2's virtual file access to reduce download traffic.
 * Sentinel-1D support: updated AUX_CAL downloads, DAAC ingest schema, and SLC localization to accept S1D data. AUX_CAL downloads for S1C/S1D gracefully skip with a warning if the files are not yet published.

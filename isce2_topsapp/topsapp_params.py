@@ -1,11 +1,9 @@
-from typing import List
-
 from pydantic import BaseModel
 
 
 class topsappParams(BaseModel):
-    reference_scenes: List[str]
-    secondary_scenes: List[str]
+    reference_scenes: list[str]
+    secondary_scenes: list[str]
     frame_id: int
     estimate_ionosphere_delay: bool = True
     compute_solid_earth_tide: bool = True
@@ -16,7 +14,7 @@ class topsappParams(BaseModel):
     esd_coherence_threshold: float = -1
 
     def is_standard_gunw_product(self) -> bool:
-        """Version 3+"""
+        """Version 3+."""
         checks = [
             self.estimate_ionosphere_delay,
             self.frame_id != -1,
