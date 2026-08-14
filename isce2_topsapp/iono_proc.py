@@ -101,7 +101,7 @@ def iono_processing(
         ionosphere(topsapp, ionParam)
     else:
         # This mode is used for cross
-        # Sentinel-1A/B interferogram
+        # Sentinel-1A/B/C/D interferogram
         # runIon.ionSwathBySwath(topsapp, ionParam)
         ionSwathBySwath(
             topsapp, ionParam, use_bridging=True, conncomp_flag=conncomp_flag
