@@ -211,9 +211,9 @@ def test_localize_slc_with_valid_pairs(reference_ids: list[str], secondary_ids: 
     assert download_slcs(reference_ids, secondary_ids, frame_id=frame_id, dry_run=True)
 
 
-def test_get_slcs_by_date_and_frame():
+def test_get_slcs_by_date_and_frame() -> None:
     with pytest.raises(
-        ValueError, match=r"^No Sentinel-1A/1B/1C/1D SLCs found for date "
+        ValueError, match=r'^No Sentinel-1A/1B/1C/1D SLCs found for date '
     ):
         get_slcs_for_date_and_frame(date(2018, 2, 17), 16584)
 
@@ -259,7 +259,7 @@ def test_get_slcs_by_date_and_frame():
 
     # scenes close to midnight but not crossing
     with pytest.raises(
-        ValueError, match=r"^No Sentinel-1A/1B/1C/1D SLCs found for date "
+        ValueError, match=r'^No Sentinel-1A/1B/1C/1D SLCs found for date '
     ):
         get_slcs_for_date_and_frame(date(2025, 1, 4), 25671)
     assert get_slcs_for_date_and_frame(date(2025, 1, 3), 25671) == [
@@ -296,24 +296,24 @@ def test_s1c_min_date() -> None:
     download_slcs(slc_ids_ref, slc_ids_sec, 18830, dry_run=True)
 
 
-def test_s1d_min_date():
+def test_s1d_min_date() -> None:
     # Test check_if_s1d_has_valid_date directly since no real S1D SLCs
     # exist in ASF yet (download_slcs would fail at ASF search)
     slc_ids = [
-        "S1D_IW_SLC__1SDV_20260401T120000_20260401T120027_000050_000050_BBBB",
+        'S1D_IW_SLC__1SDV_20260401T120000_20260401T120027_000050_000050_BBBB',
     ]
-    slc_props = [{"startTime": "2026-04-01T12:00:00.000000Z"}]
+    slc_props = [{'startTime': '2026-04-01T12:00:00.000000Z'}]
     assert not check_if_s1d_has_valid_date(slc_ids, slc_props)
 
     slc_ids = [
-        "S1D_IW_SLC__1SDV_20260417T120000_20260417T120027_000100_000100_AAAA",
+        'S1D_IW_SLC__1SDV_20260417T120000_20260417T120027_000100_000100_AAAA',
     ]
-    slc_props = [{"startTime": "2026-04-17T12:00:00.000000Z"}]
+    slc_props = [{'startTime': '2026-04-17T12:00:00.000000Z'}]
     assert check_if_s1d_has_valid_date(slc_ids, slc_props)
 
     # Non-S1D data should always pass
     slc_ids = [
-        "S1A_IW_SLC__1SDV_20200101T120000_20200101T120027_000001_000001_AAAA",
+        'S1A_IW_SLC__1SDV_20200101T120000_20200101T120027_000001_000001_AAAA',
     ]
-    slc_props = [{"startTime": "2020-01-01T12:00:00.000000Z"}]
+    slc_props = [{'startTime': '2020-01-01T12:00:00.000000Z'}]
     assert check_if_s1d_has_valid_date(slc_ids, slc_props)
