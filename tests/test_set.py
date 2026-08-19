@@ -1,5 +1,4 @@
 import datetime
-import shutil
 from pathlib import Path
 
 import numpy as np
@@ -12,24 +11,17 @@ from affine import Affine
 from isce2_topsapp.solid_earth_tides import (
     get_azimuth_time_array,
     get_start_time_from_slc_id,
-    update_gunw_with_solid_earth_tide,
 )
 from numpy.testing import assert_almost_equal
 from rasterio.crs import CRS
 
 
-def test_set_workflow(orbit_files_for_set: list[dict], gunw_paths_for_set: list[Path], tmp_path: Path) -> None:
-    for gunw_path_for_set, orbit_dict in zip(gunw_paths_for_set, orbit_files_for_set):
-        tmp_gunw = tmp_path / 'temp.nc'
-        shutil.copy(gunw_path_for_set, tmp_gunw)
-
-        update_gunw_with_solid_earth_tide(tmp_gunw, 'reference', [orbit_dict['reference']])
-        update_gunw_with_solid_earth_tide(tmp_gunw, 'secondary', [orbit_dict['secondary']])
-
+def test_set_workflow(gunw_paths_with_set: list[Path]) -> None:
+    for gunw_path in gunw_paths_with_set:
         for acq_type in ['reference', 'secondary']:
             group = f'/science/grids/corrections/external/tides/solidEarth/{acq_type}'
             variable = 'solidEarthTide'
-            with rasterio.open(f'netcdf:{tmp_gunw}:{group}/{variable}') as ds:
+            with rasterio.open(f'netcdf:{gunw_path}:{group}/{variable}') as ds:
                 # Check nodata and CRS
                 assert ds.nodata == 0
                 assert ds.crs == CRS.from_epsg(4326)
@@ -147,9 +139,7 @@ def get_pysolid_set(gunw_path: Path, acq_type: str = 'reference') -> np.ndarray:
 
 
 @pytest.mark.parametrize('acq_type', ['reference', 'secondary'])
-def test_magnitude_of_set_with_variable_timing(
-    acq_type: str, orbit_files_for_set: list, gunw_paths_for_set: list, tmp_path: Path
-) -> None:
+def test_magnitude_of_set_with_variable_timing(acq_type: str, gunw_paths_with_set: list[Path]) -> None:
     """Verify the SET correction doesn't deviate more than 1 mm from a fixed time calculation.
 
     Relies on the helper functions above.
@@ -163,21 +153,15 @@ def test_magnitude_of_set_with_variable_timing(
     orb_file = s1_orbits.fetch_for_scene(slc_id)
     ```
     """
-    for gunw_path_for_set, orbit_dict in zip(gunw_paths_for_set, orbit_files_for_set):
-        tmp_gunw = tmp_path / 'temp.nc'
-        shutil.copy(gunw_path_for_set, tmp_gunw)
-
-        orb_file = orbit_dict[acq_type]
-        update_gunw_with_solid_earth_tide(tmp_gunw, acq_type, [orb_file])
-
+    for gunw_path in gunw_paths_with_set:
         path_to_set = (
-            f'netcdf:{tmp_gunw}:/science/grids/corrections/external/tides/solidEarth/{acq_type}/solidEarthTide'
+            f'netcdf:{gunw_path}:/science/grids/corrections/external/tides/solidEarth/{acq_type}/solidEarthTide'
         )
         with rasterio.open(path_to_set) as ds:
             X = ds.read()
 
         X_set_plugin_mm = X * 0.055465761572122574 / np.pi / 4 * 1_000
-        X_set_pysolid_mm = get_pysolid_set(tmp_gunw, acq_type=acq_type)
+        X_set_pysolid_mm = get_pysolid_set(gunw_path, acq_type=acq_type)
 
         set_abs_diff = np.abs(X_set_pysolid_mm - X_set_plugin_mm)
         assert np.max(set_abs_diff) < 1
