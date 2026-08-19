@@ -90,6 +90,7 @@ exclude = [
     "site-packages",
     "isce2_topsapp/packaging_utils",
     "tests/legacy_notebooks",
+    "*.ipynb",
 ]
 indent-width = 4
 
