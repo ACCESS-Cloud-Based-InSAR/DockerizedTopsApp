@@ -20,11 +20,12 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Python 3.11 and 3.12 are now separate pixi environments (`py311`, `py312`); `default` is `py311`. The PyTest matrix iterates over these environments.
 * `Dockerfile` builds from `ghcr.io/prefix-dev/pixi` and installs from `pixi.lock` with `pixi install --locked`; the entrypoint uses `pixi run`.
 * Replaced the `reusable-ruff` and `reusable-version-info` ASFHyP3 workflows with inline pixi jobs, as both consumed `environment.yml`.
-* Loosened the stale `scipy<1.10` and `jsonschema==3.2.0` pins (neither is required by the code) and pinned remaining dependencies with semver bounds. `isce2` remains pinned at `==2.6.4`.
 * The three notebooks previously executed by `papermill` in `tests/test_notebooks.py` are now plain pytest modules (`tests/test_localize.py` and `tests/test_delivery_prep.py`); the notebooks themselves are kept for interactive use in `tests/legacy_notebooks/`.
 * Solid earth tide test data is computed once per session via the `gunw_paths_with_set` fixture rather than recomputed by each test, and the notebook-derived tests read local test data instead of downloading a GUNW from ASF.
 * Tests that write to the working directory now run under `tmp_path`, so DEMs, orbits and AUX_CAL files no longer accumulate in the repository root.
 * Moved the sample delivered GUNW metadata from the repository root into `tests/test_data/`.
+* Loosened the stale `scipy<1.10` and `jsonschema==3.2.0` pins (neither is required by the code) and pinned remaining dependencies with semver bounds. 
+* `isce2` has been updated v2.6.5 to enable full S1C and S1D support. `isce2` is still strictly pinned to `==2.6.5`.
 
 ### Removed
 * `tox.ini`, which only carried `flake8` configuration superseded by `ruff`.
