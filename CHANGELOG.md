@@ -35,7 +35,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Support for downloading Sentinel-1 SLC granules from the Copernicus Data Space Ecosystem (CDSE) as an alternative to ASF. Metadata retrieval and bounding box checks continue to use ASF. Download from CDSE uses the compressed `.zip` archive directly, leveraging ISCE2's virtual file access to reduce download traffic.
 * Sentinel-1D support: updated AUX_CAL downloads, DAAC ingest schema, and SLC localization to accept S1D data. AUX_CAL downloads for S1C/S1D gracefully skip with a warning if the files are not yet published.
 * `notebooks/water_mask/water_mask_check.ipynb`, which reproduces the browse-image mask over a Southern California GUNW and sweeps the occurrence threshold and no-data handling that motivated the fix above.
-* Added `S1D_MIN_DATE` (2026-06-24) placeholder to reject uncalibrated S1D acquisitions, mirroring the existing `S1C_MIN_DATE` check. Update once S1D calibration is officially confirmed.
+* Added `S1D_MIN_DATE` (2026-06-24) placeholder to reject uncalibrated S1D acquisitions, mirroring the existing `S1C_MIN_DATE` check. This is currently the ARIA/OPERA agreed upon date (as noted in compass [here](https://github.com/opera-adt/COMPASS/blob/5bdef5e1199de52e83a1f31afb1c9a6ec8a33e9d/scripts/README.md?plain=1#L126)).
 
 ## [1.0.2]
 
