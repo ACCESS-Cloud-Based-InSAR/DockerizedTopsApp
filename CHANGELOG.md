@@ -19,7 +19,8 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Python 3.11 and 3.12 are now separate pixi environments (`py311`, `py312`); `default` is `py311`. The PyTest matrix iterates over these environments.
 * `Dockerfile` builds from `ghcr.io/prefix-dev/pixi` and installs from `pixi.lock` with `pixi install --locked`; the entrypoint uses `pixi run`.
 * Replaced the `reusable-ruff` and `reusable-version-info` ASFHyP3 workflows with inline pixi jobs, as both consumed `environment.yml`.
-* Loosened the stale `scipy<1.10` and `jsonschema==3.2.0` pins (neither is required by the code) and pinned remaining dependencies with semver bounds. `isce2` remains pinned at `==2.6.4`.
+* Loosened the stale `scipy<1.10` and `jsonschema==3.2.0` pins (neither is required by the code) and pinned remaining dependencies with semver bounds. 
+* `isce2` has been updated v2.6.5 to enable full S1C and S1D support. `isce2` is still strictly pinned to `==2.6.5`.
 
 ### Removed
 * `tox.ini`, which only carried `flake8` configuration superseded by `ruff`.
