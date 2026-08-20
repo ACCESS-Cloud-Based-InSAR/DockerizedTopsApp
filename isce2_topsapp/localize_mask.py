@@ -7,6 +7,12 @@ from shapely.geometry import box
 from tile_mate import get_raster_from_tiles
 
 from .localize_dem import fix_image_xml
+from .water_mask import PEKEL_OCCURRENCE_THRESHOLD, water_mask_from_occurrence
+
+
+PEKEL_MASK_FILENAME = (
+    f'water_mask_derived_from_pekel_water_occurrence_2021_with_at_least_{PEKEL_OCCURRENCE_THRESHOLD}_perc_water.geo'
+)
 
 
 def download_water_mask(
@@ -43,9 +49,9 @@ def download_water_mask(
 
     elif water_mask_name == 'pekel_water_occurrence_2021':
         X, p = get_raster_from_tiles(extent_buffered, tile_shortname='pekel_water_occ_2021')
-        mask = (X >= 95).astype(np.uint8)
+        mask = water_mask_from_occurrence(X).astype(np.uint8)
         mask[mask.astype(bool)] = 255
-        mask_filename = 'water_mask_derived_from_pekel_water_occurrence_2021_with_at_least_95_perc_water.geo'
+        mask_filename = PEKEL_MASK_FILENAME
 
         # Remove esa nodata, change gdal driver to ISCE, and generate VRT as in localize DEM
         p_isce = p.copy()

@@ -32,7 +32,6 @@ dependencies:
  - pandas
  - pandera
  - pysolid
- - papermill
  - pytest
  - pydantic
  - pytest-cov

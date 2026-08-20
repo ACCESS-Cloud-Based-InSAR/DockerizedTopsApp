@@ -104,6 +104,10 @@ conf/settings.conf
 *.log
 *isce.log*
 
+# Esa water mask analysis
+notebooks/water_mask/water_mask_check_esa.ipynb
+
+
 # Include template directory
 !isce2_topsapp/templates/topsapp_template.xml
 !isce2_topsapp/templates/topsapp_iono_template.xml
@@ -111,7 +115,6 @@ conf/settings.conf
 
 # Tests
 tests/*.ipynb
-tests/out/*.ipynb
 !tests/localize-data.ipynb
 /isce2_topsapp.egg-info/
 !tests/prepare-for-delivery.ipynb

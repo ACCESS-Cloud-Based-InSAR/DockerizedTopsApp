@@ -30,6 +30,7 @@ from isce2_topsapp import (
 )
 from isce2_topsapp.iono_proc import iono_processing
 from isce2_topsapp.json_encoder import MetadataEncoder
+from isce2_topsapp.localize_mask import PEKEL_MASK_FILENAME
 from isce2_topsapp.localize_slc import MIN_FRAME_COVERAGE_DEFAULT
 from isce2_topsapp.packaging import update_gunw_internal_version_attribute
 from isce2_topsapp.solid_earth_tides import update_gunw_with_solid_earth_tide
@@ -605,8 +606,7 @@ def coseis_sar() -> None:
     gunw_id_dir = isce_data_directory / gunw_id
     nc_file_path = gunw_id_dir / f'{gunw_id}.nc'
     viz_dir = gunw_id_dir / 'viz'
-    water_filename = 'water_mask_derived_from_pekel_water_occurrence_2021_with_at_least_95_perc_water.geo'
-    water_mask_path = isce_data_directory / water_filename
+    water_mask_path = isce_data_directory / PEKEL_MASK_FILENAME
 
     try:
         create_viz_files(

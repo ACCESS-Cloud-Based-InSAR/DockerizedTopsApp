@@ -56,7 +56,7 @@ For JupyterLab (with [`jupyter-collaboration`](https://github.com/jupyterlab/jup
 ```
 pixi run lab
 ```
-To run the test notebooks, you will need to add a `topsapp_env` jupyter kernel, too:
+To run the notebooks in `tests/legacy_notebooks`, you will need to add a `topsapp_env` jupyter kernel, too:
 ```
 pixi run python -m ipykernel install --user --name topsapp_env
 ```
@@ -106,7 +106,7 @@ mamba env update --file environment.yml
 
 (`pixi` handles this fallback automatically, which is one reason we recommend it.)
 
-To run the test notebooks, you will need to add a `topsapp_env` jupyter kernel, too:
+To run the notebooks in `tests/legacy_notebooks`, you will need to add a `topsapp_env` jupyter kernel, too:
 ```
 python -m ipykernel install --user --name topsapp_env
 ```

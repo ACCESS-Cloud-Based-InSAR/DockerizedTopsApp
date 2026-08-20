@@ -11,6 +11,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 * `isce2_topsapp` CLI dispatch raised `KeyError: 'console_scripts'` on Python 3.12. Now uses the `entry_points(group=..., name=...)` API, resolving the long-standing `FIXME`.
 * Updated dem to match NISAR-DEM within 1 cm.
+* The JRC/Pekel water mask no longer punches holes in the open ocean. The `255` no-data code is now honored (previously it was reprojected with bilinear resampling, which averaged `255` into neighboring occurrence values and painted a spurious water halo along every no-data edge) and the occurrence threshold dropped from `95` to `90` percent, since open ocean dithers between ~90 and 100 along Landsat WRS-2 scene edges. No-data blocks are dilated by 3 pixels to swallow the thin rim of `0`-occurrence pixels that reads as land and draws hairline seams through the sea. The thresholding logic lives in `water_mask.water_mask_from_occurrence` and is shared by the browse-image mask (`water_mask.py`) and the ISCE2 processing mask (`localize_mask.py`), so the two can no longer drift apart. The processing mask filename now tracks the threshold constant.
 
 ### Changed
 * Migrated environment management from `conda`/`mamba` to [`pixi`](https://pixi.sh). All configuration now lives in `pyproject.toml` under the `[tool.pixi.*]` tables and the resolved set is locked in `pixi.lock`.
@@ -19,15 +20,23 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Python 3.11 and 3.12 are now separate pixi environments (`py311`, `py312`); `default` is `py311`. The PyTest matrix iterates over these environments.
 * `Dockerfile` builds from `ghcr.io/prefix-dev/pixi` and installs from `pixi.lock` with `pixi install --locked`; the entrypoint uses `pixi run`.
 * Replaced the `reusable-ruff` and `reusable-version-info` ASFHyP3 workflows with inline pixi jobs, as both consumed `environment.yml`.
+* The three notebooks previously executed by `papermill` in `tests/test_notebooks.py` are now plain pytest modules (`tests/test_localize.py` and `tests/test_delivery_prep.py`); the notebooks themselves are kept for interactive use in `tests/legacy_notebooks/`.
+* Solid earth tide test data is computed once per session via the `gunw_paths_with_set` fixture rather than recomputed by each test, and the notebook-derived tests read local test data instead of downloading a GUNW from ASF.
+* Tests that write to the working directory now run under `tmp_path`, so DEMs, orbits and AUX_CAL files no longer accumulate in the repository root.
+* Moved the sample delivered GUNW metadata from the repository root into `tests/test_data/`.
 * Loosened the stale `scipy<1.10` and `jsonschema==3.2.0` pins (neither is required by the code) and pinned remaining dependencies with semver bounds. 
 * `isce2` has been updated v2.6.5 to enable full S1C and S1D support. `isce2` is still strictly pinned to `==2.6.5`.
 
 ### Removed
 * `tox.ini`, which only carried `flake8` configuration superseded by `ruff`.
+* `papermill` as a dependency, along with the `tests/out` notebook output directory.
+* `tests/test_notebooks.py` and the stray delivered-GUNW directory that the delivery notebook left in the repository root.
+
 ### Added
 * Support for downloading Sentinel-1 SLC granules from the Copernicus Data Space Ecosystem (CDSE) as an alternative to ASF. Metadata retrieval and bounding box checks continue to use ASF. Download from CDSE uses the compressed `.zip` archive directly, leveraging ISCE2's virtual file access to reduce download traffic.
 * Sentinel-1D support: updated AUX_CAL downloads, DAAC ingest schema, and SLC localization to accept S1D data. AUX_CAL downloads for S1C/S1D gracefully skip with a warning if the files are not yet published.
-* Added `S1D_MIN_DATE` (2026-06-24) placeholder to reject uncalibrated S1D acquisitions, mirroring the existing `S1C_MIN_DATE` check. Update once S1D calibration is officially confirmed.
+* `notebooks/water_mask/water_mask_check.ipynb`, which reproduces the browse-image mask over a Southern California GUNW and sweeps the occurrence threshold and no-data handling that motivated the fix above.
+* Added `S1D_MIN_DATE` (2026-06-24) placeholder to reject uncalibrated S1D acquisitions, mirroring the existing `S1C_MIN_DATE` check. This is currently the ARIA/OPERA agreed upon date (as noted in compass [here](https://github.com/opera-adt/COMPASS/blob/5bdef5e1199de52e83a1f31afb1c9a6ec8a33e9d/scripts/README.md?plain=1#L126)).
 
 ## [1.0.2]
 
