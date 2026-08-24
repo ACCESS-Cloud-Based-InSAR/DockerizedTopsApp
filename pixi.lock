@@ -346,7 +346,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/dask-core-2026.7.1-pyhc364b38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/dateparser-1.4.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/defusedxml-0.7.1-pyhd8ed1ab_0.tar.bz2
-      - conda: https://conda.anaconda.org/conda-forge/noarch/dem_stitcher-3.0.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/dem_stitcher-3.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/distributed-2026.7.1-pyhc364b38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.3.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/executing-2.2.1-pyhd8ed1ab_0.conda
@@ -536,7 +536,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/dask-core-2026.7.1-pyhc364b38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/dateparser-1.4.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/defusedxml-0.7.1-pyhd8ed1ab_0.tar.bz2
-      - conda: https://conda.anaconda.org/conda-forge/noarch/dem_stitcher-3.0.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/dem_stitcher-3.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/distributed-2026.7.1-pyhc364b38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.3.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/executing-2.2.1-pyhd8ed1ab_0.conda
@@ -1265,7 +1265,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/dask-core-2026.7.1-pyhc364b38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/dateparser-1.4.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/defusedxml-0.7.1-pyhd8ed1ab_0.tar.bz2
-      - conda: https://conda.anaconda.org/conda-forge/noarch/dem_stitcher-3.0.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/dem_stitcher-3.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/distributed-2026.7.1-pyhc364b38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.3.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/executing-2.2.1-pyhd8ed1ab_0.conda
@@ -1455,7 +1455,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/dask-core-2026.7.1-pyhc364b38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/dateparser-1.4.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/defusedxml-0.7.1-pyhd8ed1ab_0.tar.bz2
-      - conda: https://conda.anaconda.org/conda-forge/noarch/dem_stitcher-3.0.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/dem_stitcher-3.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/distributed-2026.7.1-pyhc364b38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.3.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/executing-2.2.1-pyhd8ed1ab_0.conda
@@ -2186,7 +2186,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/dask-core-2026.7.1-pyhc364b38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/dateparser-1.4.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/defusedxml-0.7.1-pyhd8ed1ab_0.tar.bz2
-      - conda: https://conda.anaconda.org/conda-forge/noarch/dem_stitcher-3.0.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/dem_stitcher-3.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/distributed-2026.7.1-pyhc364b38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.3.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/executing-2.2.1-pyhd8ed1ab_0.conda
@@ -2379,7 +2379,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/dask-core-2026.7.1-pyhc364b38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/dateparser-1.4.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/defusedxml-0.7.1-pyhd8ed1ab_0.tar.bz2
-      - conda: https://conda.anaconda.org/conda-forge/noarch/dem_stitcher-3.0.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/dem_stitcher-3.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/distributed-2026.7.1-pyhc364b38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.3.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/executing-2.2.1-pyhd8ed1ab_0.conda
@@ -9643,9 +9643,9 @@ packages:
   run_exports: {}
   size: 24062
   timestamp: 1615232388757
-- conda: https://conda.anaconda.org/conda-forge/noarch/dem_stitcher-3.0.0-pyhd8ed1ab_0.conda
-  sha256: f728ddf7a6ff97787aeb8e10fe96f7e8604ea106339f141dd62f59ef8e4fea05
-  md5: 5e379844088fac5dde6d35aa2a8361bb
+- conda: https://conda.anaconda.org/conda-forge/noarch/dem_stitcher-3.2.0-pyhd8ed1ab_0.conda
+  sha256: 5740e7a5e8f6529d1f20c7e596de69e38f401986114e91a79d7aec24a2fae4fb
+  md5: ca6d18f56d1cbdd7d58cf90198dd37b8
   depends:
   - affine
   - boto3
@@ -9654,7 +9654,7 @@ packages:
   - numpy
   - pyarrow
   - pyproj
-  - python >=3.10
+  - python >=3.11
   - rasterio
   - requests
   - shapely
@@ -9664,8 +9664,8 @@ packages:
   purls:
   - pkg:pypi/dem-stitcher?source=hash-mapping
   run_exports: {}
-  size: 29307294
-  timestamp: 1786724294651
+  size: 29286802
+  timestamp: 1787268310462
 - conda: https://conda.anaconda.org/conda-forge/noarch/distributed-2026.7.1-pyhc364b38_0.conda
   sha256: bae0d85df264228cbd485b444bd1f5135e32093e32503aa72e4b4b61636d12b2
   md5: f06a1abc946ca9b6107851cf148621f3
