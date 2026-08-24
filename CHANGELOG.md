@@ -10,7 +10,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 * `isce2_topsapp` CLI dispatch raised `KeyError: 'console_scripts'` on Python 3.12. Now uses the `entry_points(group=..., name=...)` API, resolving the long-standing `FIXME`.
-* Updated dem to match NISAR-DEM within 1 cm.
+* The DEM is stitched as it was before `dem-stitcher` 3.0.0, so heights stay consistent with the existing ARIA GUNW archive. 3.0.0 moved geoid removal onto the native DEM grid and changed the default registration, which shifted ellipsoidal heights by up to ~3 cm relative to every previously delivered product (it is the more accurate DEM - it agrees with the NISAR DEM to ~1 mm - but time-series consistency wins here). `download_dem_for_isce2` now passes `dst_area_or_point='Point'` and `geoid_correction_mode='aria-legacy'` to `stitch_dem`, which reproduces the 2.5.x correction bit-for-bit (see [dem-stitcher#171](https://github.com/ACCESS-Cloud-Based-InSAR/dem-stitcher/pull/171)); a `UserWarning` is emitted on every call by design.
 * The JRC/Pekel water mask no longer punches holes in the open ocean. The `255` no-data code is now honored (previously it was reprojected with bilinear resampling, which averaged `255` into neighboring occurrence values and painted a spurious water halo along every no-data edge) and the occurrence threshold dropped from `95` to `90` percent, since open ocean dithers between ~90 and 100 along Landsat WRS-2 scene edges. No-data blocks are dilated by 3 pixels to swallow the thin rim of `0`-occurrence pixels that reads as land and draws hairline seams through the sea. The thresholding logic lives in `water_mask.water_mask_from_occurrence` and is shared by the browse-image mask (`water_mask.py`) and the ISCE2 processing mask (`localize_mask.py`), so the two can no longer drift apart. The processing mask filename now tracks the threshold constant.
 
 ### Changed
@@ -24,6 +24,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Solid earth tide test data is computed once per session via the `gunw_paths_with_set` fixture rather than recomputed by each test, and the notebook-derived tests read local test data instead of downloading a GUNW from ASF.
 * Tests that write to the working directory now run under `tmp_path`, so DEMs, orbits and AUX_CAL files no longer accumulate in the repository root.
 * Moved the sample delivered GUNW metadata from the repository root into `tests/test_data/`.
+* `dem_stitcher` is now pinned to `>=3.1.1`, the first release with `geoid_correction_mode`. The locked environment resolves to 3.2.0, which also declares the source nodata when reprojecting - gdal >= 3.11 was otherwise remapping the JRC/Pekel `255` no-data code to `254` in the water mask reprojection.
 * Loosened the stale `scipy<1.10` and `jsonschema==3.2.0` pins (neither is required by the code) and pinned remaining dependencies with semver bounds. 
 * `isce2` has been updated v2.6.5 to enable full S1C and S1D support. `isce2` is still strictly pinned to `==2.6.5`.
 
