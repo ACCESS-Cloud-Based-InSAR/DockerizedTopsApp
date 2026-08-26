@@ -1,4 +1,5 @@
 {
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "required": [
       "label",
@@ -91,7 +92,7 @@
             "minItems": 1,
             "items": {
               "type": "string",
-              "enum": ["Sentinel-1A", "Sentinel-1B"]
+              "enum": ["Sentinel-1A", "Sentinel-1B", "Sentinel-1C", "Sentinel-1D"]
             }
           },
           "beam_mode": {

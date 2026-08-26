@@ -12,15 +12,15 @@ on:
 
 jobs:
   call-version-info-workflow:
-    uses: ASFHyP3/actions/.github/workflows/reusable-version-info.yml@v0.20.0
+    uses: ASFHyP3/actions/.github/workflows/reusable-version-info.yml@v0.21.1
     with:
         python_version: '3.11'
 
   call-docker-ghcr-workflow:
     needs: call-version-info-workflow
-    uses: ASFHyP3/actions/.github/workflows/reusable-docker-ghcr.yml@v0.20.0
+    uses: ASFHyP3/actions/.github/workflows/reusable-docker-ghcr.yml@v0.21.1
     with:
-      version_tag: ${{ needs.call-version-info-workflow.outputs.version_tag }}
+      version_tag: ${{ needs.version-info.outputs.version_tag }}
       user: ${{ github.actor }}
       file: Dockerfile
     secrets:

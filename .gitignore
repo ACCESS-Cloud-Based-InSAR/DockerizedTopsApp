@@ -1,9 +1,17 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+# Sandbox (local testing, not part of the repository)
+sandbox/
+
 # OS Files
 **/.DS_Store
 **/.DS_Store?
 
 # vscode
 .vscode
+.vs_code/
 
 # .pyenv files
 .python-version
@@ -11,14 +19,20 @@
 # pytest files
 .pytest_cache/
 
+# Ruff
+.ruff_cache
+
 # Jupyter files
 *.ipynb_checkpoints
+**/.ipynb_checkpoints/
+.jupyter/
 
 # Python build files
 build/
 
 # Setuptools distribution folder.
 /dist/
+**/*.egg-info
 
 # Rope Files
 .ropeproject/
@@ -90,6 +104,10 @@ conf/settings.conf
 *.log
 *isce.log*
 
+# Esa water mask analysis
+notebooks/water_mask/water_mask_check_esa.ipynb
+
+
 # Include template directory
 !isce2_topsapp/templates/topsapp_template.xml
 !isce2_topsapp/templates/topsapp_iono_template.xml
@@ -97,7 +115,6 @@ conf/settings.conf
 
 # Tests
 tests/*.ipynb
-tests/out/*.ipynb
 !tests/localize-data.ipynb
 /isce2_topsapp.egg-info/
 !tests/prepare-for-delivery.ipynb
@@ -130,4 +147,6 @@ tests/**/*.json
 !isce2_topsapp/data/s1_frames_latitude_aligned.geojson.zip
 
 # Include Natural Earth data inside plugin
-!isce2_topsapp/data/ne_10m_land.zip
+!isce2_topsapp/data/ne_10m_land.zip# pixi environments
+.pixi/*
+!.pixi/config.toml

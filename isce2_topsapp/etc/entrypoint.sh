@@ -1,4 +1,4 @@
-#!/bin/bash --login
+#!/bin/bash
 set -e
-conda activate topsapp_env
-exec python -um isce2_topsapp "$@"
+cd /home/ops/DockerizedTopsApp
+exec pixi run --frozen python -um isce2_topsapp "$@"

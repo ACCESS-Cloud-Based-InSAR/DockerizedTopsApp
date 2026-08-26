@@ -1,3 +1,9 @@
+# Transitional conda/mamba path for users not yet on pixi.
+#
+# `pyproject.toml` (with `pixi.lock`) is the source of truth for this project and is what
+# CI and the Docker image build from. Nothing validates this file, so it will drift and
+# eventually stop solving; at that point it will be removed rather than repaired.
+# If you hit a dependency problem here, please use `pixi install` instead of filing an issue.
 name: topsapp_env
 channels:
  - conda-forge
@@ -9,28 +15,23 @@ dependencies:
  - boto3
  - dask  # see https://github.com/unionai-oss/pandera/issues/1525
  - dateparser
- - flake8
- - flake8-blind-except
- - flake8-builtins
- - flake8-import-order
  - fsspec
  - gdal
  - geopandas
  - ipykernel
- - isce2==2.6.4
+ - isce2==2.6.5
  - jinja2
  - joblib
- - jsonschema==3.2.0
- - jupyter
+ - jsonschema>=4
+ - jupyterlab
+ - jupyter-collaboration
  - lxml
  - matplotlib
  - netcdf4
- - notebook
  - numpy>=1.24
  - pandas
  - pandera
  - pysolid
- - papermill
  - pytest
  - pydantic
  - pytest-cov
@@ -40,12 +41,12 @@ dependencies:
  - rioxarray
  - ruff
  - xarray
- - scipy<1.10
+ - scipy>=1.11
  - setuptools
  - setuptools_scm
  - shapely
  - tqdm
- - dem_stitcher>=2.5.8
+ - dem_stitcher>=3.1.1
  - aiohttp  # only needed for manifest and swath download
  - tile_mate>=0.0.8
  - s1_orbits

@@ -1,0 +1,33 @@
+# Never ship the host's pixi environment; the image builds its own from pixi.lock
+.pixi/
+
+# Caches
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+__pycache__/
+*.py[cod]
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Editor / OS
+.idea/
+.vscode/
+**/.DS_Store
+**/.ipynb_checkpoints/
+
+# Credentials
+.env
+.netrc
+
+# ISCE2 intermediate output and logs
+*.log
+isce.log
+tests/out/
+tests/merged/
+tests/orbits/
+tests/aux_cal/
+**/PICKLE/

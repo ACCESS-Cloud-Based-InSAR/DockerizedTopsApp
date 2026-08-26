@@ -10,7 +10,6 @@ import datetime
 import xml.etree.ElementTree as ET
 from itertools import starmap
 from pathlib import Path
-from typing import Union
 
 import h5py
 import numpy as np
@@ -22,9 +21,10 @@ from pysolid.solid import solid_grid
 from tqdm import tqdm
 
 
-def read_ESA_Orbit_file(orbit_xml: Union[str, Path]) -> list[np.ndarray]:
+def read_ESA_Orbit_file(orbit_xml: str | Path) -> list[np.ndarray]:
     """
-    Source: https://github.com/dbekaert/RAiDER/blob/dev/tools/RAiDER/losreader.py#L465
+    Source: https://github.com/dbekaert/RAiDER/blob/dev/tools/RAiDER/losreader.py#L465.
+
     Note: Raider cannot be imported because ISCE2 and ISCE3 require very different
     environments.
 
@@ -54,7 +54,7 @@ def read_ESA_Orbit_file(orbit_xml: Union[str, Path]) -> list[np.ndarray]:
     vz = np.ones(numOSV)
 
     for i, st in enumerate(data_block[0]):
-        t.append(datetime.datetime.strptime(st[1].text, "UTC=%Y-%m-%dT%H:%M:%S.%f"))
+        t.append(datetime.datetime.strptime(st[1].text, 'UTC=%Y-%m-%dT%H:%M:%S.%f'))
 
         x[i] = float(st[4].text)
         y[i] = float(st[5].text)
@@ -66,8 +66,8 @@ def read_ESA_Orbit_file(orbit_xml: Union[str, Path]) -> list[np.ndarray]:
     return [t, x, y, z, vx, vy, vz]
 
 
-def get_state_vector_arrays(orbit_xml: Union[str, Path]) -> list[StateVector]:
-    """Source: https://github.com/dbekaert/RAiDER/blob/dev/tools/RAiDER/losreader.py"""
+def get_state_vector_arrays(orbit_xml: str | Path) -> list[StateVector]:
+    """Source: https://github.com/dbekaert/RAiDER/blob/dev/tools/RAiDER/losreader.py."""
     state_vector_list = []
     t, x, y, z, vx, vy, vz = read_ESA_Orbit_file(orbit_xml)
     for idx in range(len(t)):
@@ -83,7 +83,7 @@ def get_orbit_obj_from_orbit_xmls(
     orbit_xmls: list[Path], slc_start_time: datetime.datetime, pad_in_seconds: int = 600
 ) -> Orbit:
     """
-    Source: https://github.com/dbekaert/RAiDER/blob/dev/tools/RAiDER/losreader.py
+    Source: https://github.com/dbekaert/RAiDER/blob/dev/tools/RAiDER/losreader.py.
 
     **Warning**: geo2rdr numerically finds azimuth and range time by Newton's method. The clipping is
     essential and larger than 100,000 seconds yielded errors.
@@ -132,7 +132,7 @@ def get_orbit_obj_from_orbit_xmls(
 
 
 def get_start_time_from_slc_id(slc_id: str) -> pd.Timestamp:
-    acq_start_time_token = slc_id.split("_")[5]
+    acq_start_time_token = slc_id.split('_')[5]
     return pd.to_datetime(acq_start_time_token)
 
 
@@ -140,7 +140,7 @@ def compute_solid_earth_tide_from_gunw(
     *, gunw_path: str, reference_or_secondary: str, orbit_xmls: list[Path]
 ) -> xr.Dataset:
     """
-    Read GUNW and compute/export differential SET
+    Read GUNW and compute/export differential SET.
 
     Parameters
     ----------
@@ -162,23 +162,23 @@ def compute_solid_earth_tide_from_gunw(
     ValueError
         When reference_or_secondary is not specified correctly
     """
-    if reference_or_secondary not in ["reference", "secondary"]:
+    if reference_or_secondary not in ['reference', 'secondary']:
         raise ValueError('acq_type must be in "reference" or "secondary"')
 
     # get GUNW attributes
-    group = "science/radarMetaData"
+    group = 'science/radarMetaData'
     with xr.open_dataset(gunw_path, group=group) as ds:
-        wavelength = ds["wavelength"].item()
+        wavelength = ds['wavelength'].item()
 
-    group = "science/radarMetaData/inputSLC"
-    with xr.open_dataset(gunw_path, group=f"{group}/{reference_or_secondary}") as ds:
-        slc_ids = ds["L1InputGranules"].data
+    group = 'science/radarMetaData/inputSLC'
+    with xr.open_dataset(gunw_path, group=f'{group}/{reference_or_secondary}') as ds:
+        slc_ids = ds['L1InputGranules'].data
         # Ensure non-empty and sorted by acq_time
         slc_ids = sorted(list(filter(lambda x: x, slc_ids)))
         slc_start_time = get_start_time_from_slc_id(slc_ids[0])
 
-    group = "science/grids/imagingGeometry"
-    with xr.open_dataset(gunw_path, group=group, mode="r") as ds:
+    group = 'science/grids/imagingGeometry'
+    with xr.open_dataset(gunw_path, group=group, mode='r') as ds:
         # latitude resolution will match the rasterio transformed; i.e. it will be negative
         lon_res, lat_res = ds.rio.resolution()
         # We make the resolution positive
@@ -206,9 +206,7 @@ def compute_solid_earth_tide_from_gunw(
         inc_angle = np.deg2rad(ds.incidenceAngle.data)
         azi_angle = np.deg2rad(ds.azimuthAngle.data - 90)
 
-    tide_los = compute_los_solid_earth_tide(
-        tide_e, tide_n, tide_u, inc_angle, azi_angle, wavelength
-    )
+    tide_los = compute_los_solid_earth_tide(tide_e, tide_n, tide_u, inc_angle, azi_angle, wavelength)
 
     solidtide_corr_ds = export_se_tides_to_dataset(gunw_path, tide_los)
     return solidtide_corr_ds
@@ -222,8 +220,10 @@ def get_azimuth_time_array(
     longitude_mesh_arr: np.ndarray,
     orbit_padding_in_seconds: int = 600,
 ) -> np.ndarray:
-    """Get azimuth time array in which each pixel in mesh array is matched to a azimuth time corresponding to time
-    which satellite passes (zero-doppler).
+    """Get azimuth time array from the input mesh arrays.
+
+    Each pixel in mesh array is matched to a azimuth time corresponding to time which satellite passes
+    (zero-doppler).
 
     Parameters
     ----------
@@ -246,10 +246,7 @@ def get_azimuth_time_array(
     -----
     - See get_orbit_obj_from_orbit_xmls as to why slc start time and padding is required.
     """
-
-    orb = get_orbit_obj_from_orbit_xmls(
-        orbit_xmls, slc_start_time, pad_in_seconds=orbit_padding_in_seconds
-    )
+    orb = get_orbit_obj_from_orbit_xmls(orbit_xmls, slc_start_time, pad_in_seconds=orbit_padding_in_seconds)
 
     m, n, p = height_mesh_arr.shape
 
@@ -264,7 +261,7 @@ def get_azimuth_time_array(
         total_time_isce = datetime_isce + datetime.timedelta(seconds=rng_seconds)
         dt_np = pd.to_datetime(str(total_time_isce))
         azimuth_time_list.append(dt_np)
-    azimuth_time_flat_np = np.array(azimuth_time_list, dtype="datetime64")
+    azimuth_time_flat_np = np.array(azimuth_time_list, dtype='datetime64')
     azimuth_time = azimuth_time_flat_np.reshape((m, n, p))
     return azimuth_time
 
@@ -273,7 +270,7 @@ def solid_grid_pixel_rounded_to_nearest_sec(
     timestamp: pd.Timestamp, lon: float, lat: float, res_x: float, res_y: float
 ) -> np.ndarray:
     if any([res <= 0 for res in [res_x, res_y]]):
-        raise ValueError("Resolutions must be positive")
+        raise ValueError('Resolutions must be positive')
     # https://github.com/insarlab/PySolid/blob/main/src/pysolid/grid.py#L69-L79
     # Make sure that our steps are in line with the geo-transform
     lat_step = -res_y
@@ -301,8 +298,8 @@ def solid_grid_pixel_interpolated_across_second_est(
     np_datetime: np.datetime64, lon: float, lat: float, res_x: float, res_y: float
 ) -> np.ndarray:
     dt = pd.to_datetime(np_datetime)
-    dt_sec_floor = dt.floor("S")
-    dt_sec_ceil = dt.ceil("S")
+    dt_sec_floor = dt.floor('s')
+    dt_sec_ceil = dt.ceil('s')
 
     # The sum of these differences is 1 so can serve as linear weights
     # When we use 1 - diff; the closer the time, the more it should be valued
@@ -311,28 +308,20 @@ def solid_grid_pixel_interpolated_across_second_est(
 
     for diff_time in [seconds_diff_low, seconds_diff_high]:
         if (diff_time < 0) or (diff_time >= 1):
-            raise ValueError("The truncated times were invalid; should be in [0, 1)")
+            raise ValueError('The truncated times were invalid; should be in [0, 1)')
 
     # The rare case in which the truncated time occurs exactly on the seconds marker (w.r.t. floating point)
     # This would mean seconds_diff_low and seconds_diff_high are both 0.
     if np.abs(seconds_diff_low) < 1e-9:
-        interpolated_se_tides = solid_grid_pixel_rounded_to_nearest_sec(
-            dt_sec_floor, lon, lat, res_x, res_y
-        )
+        interpolated_se_tides = solid_grid_pixel_rounded_to_nearest_sec(dt_sec_floor, lon, lat, res_x, res_y)
     else:
-        se_tides_low = solid_grid_pixel_rounded_to_nearest_sec(
-            dt_sec_floor, lon, lat, res_x, res_y
-        )
+        se_tides_low = solid_grid_pixel_rounded_to_nearest_sec(dt_sec_floor, lon, lat, res_x, res_y)
 
-        se_tides_high = solid_grid_pixel_rounded_to_nearest_sec(
-            dt_sec_ceil, lon, lat, res_x, res_y
-        )
+        se_tides_high = solid_grid_pixel_rounded_to_nearest_sec(dt_sec_ceil, lon, lat, res_x, res_y)
 
         # The closer a time is to its ceiling or floor, the smaller the difference is; and the higher the linear weight
         # in (0, 1) should be
-        interpolated_se_tides = se_tides_low * (
-            1 - seconds_diff_low
-        ) + se_tides_high * (1 - seconds_diff_high)
+        interpolated_se_tides = se_tides_low * (1 - seconds_diff_low) + se_tides_high * (1 - seconds_diff_high)
     return interpolated_se_tides
 
 
@@ -346,10 +335,9 @@ def compute_enu_solid_earth_tide(
     res_x: float,
     res_y: float,
 ) -> np.ndarray:
-    """Compute SET in ENU"""
-
+    """Compute SET in ENU."""
     if (res_x <= 0) or (res_y <= 0):
-        raise ValueError("Resolutions must be positive")
+        raise ValueError('Resolutions must be positive')
 
     height_mesh_arr, latitude_mesh_arr, longitude_mesh_arr = np.meshgrid(
         height_coord_arr,
@@ -359,7 +347,7 @@ def compute_enu_solid_earth_tide(
         # Ensures output dimensions
         # align with order the inputs
         # height x latitude x longitude
-        indexing="ij",
+        indexing='ij',
     )
 
     azimuth_time_arr = get_azimuth_time_array(
@@ -376,9 +364,7 @@ def compute_enu_solid_earth_tide(
     input_data = zip(azimuth_time_arr.ravel(), longitude_flat, latitude_flat)
 
     def solid_grid_pixel_partial(azi_time: float, lon: float, lat: float) -> np.ndarray:
-        return solid_grid_pixel_interpolated_across_second_est(
-            azi_time, lon, lat, res_x, res_y
-        )
+        return solid_grid_pixel_interpolated_across_second_est(azi_time, lon, lat, res_x, res_y)
 
     results = list(starmap(solid_grid_pixel_partial, input_data))
     tide_e_flat, tide_n_flat, tide_u_flat = zip(*results)
@@ -403,7 +389,7 @@ def compute_los_solid_earth_tide(
     az_angle: np.array,
     wavelength: float,
 ) -> np.array:
-    """Compute SET in LOS"""
+    """Compute SET in LOS."""
     # source:
     # https://github.com/insarlab/
     # PySolid/blob/main/docs/plot_grid_SET.ipynb
@@ -421,51 +407,50 @@ def compute_los_solid_earth_tide(
     return tide_los
 
 
-def export_se_tides_to_dataset(
-    gunw_path: str, tide_los: np.array, lyr_name="solidEarthTide"
-) -> xr.Dataset:
-    """Create SET array and populate with metadata leveraging
-    the same geodata from the imaging geometry in the gunw"""
+def export_se_tides_to_dataset(gunw_path: str, tide_los: np.array, lyr_name: str = 'solidEarthTide') -> xr.Dataset:
+    """Create SET array and populate with metadata.
 
+    Leverages the same geodata from the imaging geometry in the gunw.
+    """
     # obtain affine transformation and coordinate metadata
-    group = "science/grids/imagingGeometry"
+    group = 'science/grids/imagingGeometry'
     with xr.open_dataset(gunw_path, group=group) as ds:
         solidtide_corr_ds = ds.copy(deep=True)
 
     solidtide_corr_ds = solidtide_corr_ds.rename(
         {
-            "longitudeMeta": "longitude",
-            "latitudeMeta": "latitude",
-            "heightsMeta": "height",
+            'longitudeMeta': 'longitude',
+            'latitudeMeta': 'latitude',
+            'heightsMeta': 'height',
         }
     )
     attrs = {
-        "description": "Solid Earth tide",
-        "units": "radians",
-        "long_name": lyr_name,
-        "standard_name": lyr_name,
+        'description': 'Solid Earth tide',
+        'units': 'radians',
+        'long_name': lyr_name,
+        'standard_name': lyr_name,
     }
 
-    dim_order = ["height", "latitude", "longitude"]
+    dim_order = ['height', 'latitude', 'longitude']
     solidtide_corr_ds[lyr_name] = (dim_order, tide_los)
     solidtide_corr_ds[lyr_name].attrs.update(attrs)
     solidtide_corr_ds = solidtide_corr_ds[[lyr_name]]
     solidtide_corr_ds = solidtide_corr_ds.astype(np.float32)
-    solidtide_corr_ds.rio.write_crs("epsg:4326", inplace=True)
-    solidtide_corr_ds["solidEarthTide"].rio.write_nodata(0, inplace=True)
+    solidtide_corr_ds.rio.write_crs('epsg:4326', inplace=True)
+    solidtide_corr_ds['solidEarthTide'].rio.write_nodata(0, inplace=True)
     return solidtide_corr_ds
 
 
 def update_gunw_with_solid_earth_tide(
     gunw_path: Path, reference_or_secondary: str, orbit_xmls: list[Path] = None
 ) -> Path:
-    if reference_or_secondary not in ["reference", "secondary"]:
+    if reference_or_secondary not in ['reference', 'secondary']:
         raise ValueError('acq_type must be in "reference" or "secondary"')
-    tide_group = "/science/grids/corrections/external/tides"
+    tide_group = '/science/grids/corrections/external/tides'
 
     # If GUNW has dummy placeholder - delete it
-    se_tide_group_dummy = f"{tide_group}/solidEarthTide"
-    with h5py.File(gunw_path, "a") as file:
+    se_tide_group_dummy = f'{tide_group}/solidEarthTide'
+    with h5py.File(gunw_path, 'a') as file:
         if se_tide_group_dummy in file:
             del file[se_tide_group_dummy]
 
@@ -475,6 +460,6 @@ def update_gunw_with_solid_earth_tide(
         reference_or_secondary=reference_or_secondary,
     )
 
-    se_tide_group_acq = f"{tide_group}/solidEarth/{reference_or_secondary}"
-    solid_earth_tide_ds.to_netcdf(gunw_path, mode="a", group=se_tide_group_acq)
+    se_tide_group_acq = f'{tide_group}/solidEarth/{reference_or_secondary}'
+    solid_earth_tide_ds.to_netcdf(gunw_path, mode='a', group=se_tide_group_acq)
     return gunw_path

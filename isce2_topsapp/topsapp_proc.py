@@ -1,48 +1,48 @@
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 from jinja2 import Template
 from tqdm import tqdm
 
+
 TOPSAPP_STEPS = [
-    "startup",
-    "preprocess",
-    "computeBaselines",
-    "verifyDEM",
-    "topo",
-    "subsetoverlaps",
-    "coarseoffsets",
-    "coarseresamp",
-    "overlapifg",
-    "prepesd",
-    "esd",
-    "rangecoreg",
-    "fineoffsets",
-    "fineresamp",
-    "ion",
-    "burstifg",
-    "mergebursts",
-    "filter",
-    "unwrap",
-    "unwrap2stage",
-    "geocode",
-    "denseoffsets",
-    "filteroffsets",
-    "geocodeoffsets",
+    'startup',
+    'preprocess',
+    'computeBaselines',
+    'verifyDEM',
+    'topo',
+    'subsetoverlaps',
+    'coarseoffsets',
+    'coarseresamp',
+    'overlapifg',
+    'prepesd',
+    'esd',
+    'rangecoreg',
+    'fineoffsets',
+    'fineresamp',
+    'ion',
+    'burstifg',
+    'mergebursts',
+    'filter',
+    'unwrap',
+    'unwrap2stage',
+    'geocode',
+    'denseoffsets',
+    'filteroffsets',
+    'geocodeoffsets',
 ]
 
-TEMPLATE_DIR = Path(__file__).parent / "templates"
+TEMPLATE_DIR = Path(__file__).parent / 'templates'
 
 GEOCODE_LIST_BASE = [
-    "merged/phsig.cor",
-    "merged/filt_topophase.unw",
-    "merged/los.rdr",
-    "merged/topophase.flat",
-    "merged/filt_topophase.flat",
-    "merged/filt_topophase_2stage.unw",
-    "merged/topophase.cor",
-    "merged/filt_topophase.unw.conncomp",
+    'merged/phsig.cor',
+    'merged/filt_topophase.unw',
+    'merged/los.rdr',
+    'merged/topophase.flat',
+    'merged/filt_topophase.flat',
+    'merged/filt_topophase_2stage.unw',
+    'merged/topophase.cor',
+    'merged/filt_topophase.unw.conncomp',
 ]
 
 
@@ -55,7 +55,7 @@ def topsapp_processing(
     dem_for_proc: str,
     dem_for_geoc: str,
     estimate_ionosphere_delay: bool = False,
-    swaths: Optional[list] = None,
+    swaths: list | None = None,
     dry_run: bool = False,
     do_esd: bool = False,
     esd_coherence_threshold: float = 0.7,
@@ -63,7 +63,7 @@ def topsapp_processing(
     do_dense_offsets: bool = False,
     goldstein_filter_power: float = 0.5,
     ampcor_window_size: int = 32,
-):
+) -> int:
     swaths = swaths or [1, 2, 3]
     # for [ymin, ymax, xmin, xmax]
     extent_isce = [extent[k] for k in [1, 3, 0, 2]]
@@ -77,20 +77,20 @@ def topsapp_processing(
     else:
         raise ValueError('Output resolution must be "30" or "90"')
 
-    with open(TEMPLATE_DIR / "topsapp_template.xml", "r") as file:
+    with (TEMPLATE_DIR / 'topsapp_template.xml').open() as file:
         template = Template(file.read())
 
     geocode_list = GEOCODE_LIST_BASE.copy()
     if estimate_ionosphere_delay:
-        geocode_list.append("merged/topophase.ion")
+        geocode_list.append('merged/topophase.ion')
 
     if do_dense_offsets:
-        geocode_list.append("merged/dense_offsets.bil")
+        geocode_list.append('merged/dense_offsets.bil')
 
     topsApp_xml = template.render(
         orbit_directory=orbit_directory,
-        output_reference_directory="reference",
-        output_secondary_directory="secondary",
+        output_reference_directory='reference',
+        output_secondary_directory='secondary',
         ref_zip_file=reference_slc_zips,
         sec_zip_file=secondary_slc_zips,
         region_of_interest=extent_isce,
@@ -110,15 +110,15 @@ def topsapp_processing(
         ampcor_height=ampcor_window_size,
         ampcor_width=ampcor_window_size * 4,
     )
-    with open("topsApp.xml", "w") as file:
+    with Path('topsApp.xml').open('w') as file:
         file.write(topsApp_xml)
 
-    for step in tqdm(TOPSAPP_STEPS, desc="TopsApp Steps"):
-        step_cmd = f"topsApp.py --dostep={step}"
+    for step in tqdm(TOPSAPP_STEPS, desc='TopsApp Steps'):
+        step_cmd = f'topsApp.py --dostep={step}'
         result = subprocess.run(step_cmd, shell=True)
         if result.returncode != 0:
-            raise ValueError(f"TopsApp failed at step: {step}")
-        if dry_run and (step == "topo"):
+            raise ValueError(f'TopsApp failed at step: {step}')
+        if dry_run and (step == 'topo'):
             break
 
     return result.returncode

@@ -7,34 +7,92 @@ This processor plugs into the [HyP3](https://hyp3-docs.asf.alaska.edu/v2-transit
 1. Integrates into [HyP3](https://github.com/ASFHyP3/hyp3) platform so that this processing unit can be called directly from an API or the [hyp3-sdk](https://github.com/ASFHyP3/hyp3-sdk) to generate ARIA GUNWs.
 2. Fashions a command line interface (CLI) for generating the GUNWs for local study and research.
 
-We note all the input datasets are publicly available using a NASA Earthdata account. This codebase can be run locally both within a conda environment or within a docker container. To generate a GUNW, one needs to only specify valid SLC IDs that span a repeat-pass for a specific Sentinel-1 viewing geometry. The `main` branch of this repository is the stable release deployed via the HyP3 platform and can be accessed via the appropriate API.
+We note all the input datasets are publicly available using a NASA Earthdata account. This codebase can be run locally both within a pixi environment or within a docker container. To generate a GUNW, one needs to only specify valid SLC IDs that span a repeat-pass for a specific Sentinel-1 viewing geometry. The `main` branch of this repository is the stable release deployed via the HyP3 platform and can be accessed via the appropriate API.
 
 ## Background
 
 [TopsApp](https://github.com/isce-framework/isce2-docs/blob/master/Notebooks/UNAVCO_2020/TOPS/topsApp.ipynb) is a an ISCE2 InSAR workflow for Sentinel-1 constellation SLCs corresponding to a repeat-pass date pair. ISCE2 TopsApp generates numerous SAR analysis ready products including a geocoded unwrapped interferogram. The ARIA GUNW product packages the ISCE2 analysis ready data products into a NISAR netcdf file as discussed [here](​https://asf.alaska.edu/data-sets/derived-data-sets/sentinel-1-interferograms/​). The ARIA project has generated numerous GUNWS over numerous Sentinel-1 tracks and for numerous date pairs ([here](https://search.asf.alaska.edu/#/?dataset=SENTINEL-1%20INTERFEROGRAM%20(BETA)&zoom=9.447&center=-117.753,33.588&polygon=POINT(-118.1724%2034.1996)&resultsLoaded=true&granule=S1-GUNW-A-R-137-tops-20210809_20210728-015757-34441N_32227N-PP-81c7-v2_0_4-amplitude) are some GUNWs over JPL). These products were first generated using the topsApp Product Generation Executable (PGE) written by [Mohammed Karim](https://github.com/mkarim2017) and [David Bekaert](https://github.com/dbekaert) in the [ariamh repo](https://github.com/aria-jpl/ariamh). The repo was later reorganized [here](https://github.com/aria-jpl/topsApp_pge). The current processor (also dubbed a plugin) is adapted from these two repositories adding necessary localization of datasets required so that this processor can be called via an API.
 
 
-# Running Locally in Conda
+# Running Locally
 
-## Installation
+## Installation with Pixi (recommended)
 
-We use [`mamba`](https://github.com/mamba-org/mamba) to manage our virtual environments and the dependencies required to run this plugin.
-Our instructions are tailored for this. Below are generic instructions (additional instructions have to be followed for Mac ARM users; see below.)
+We use [`pixi`](https://pixi.sh/latest/#installation) to manage our virtual environments and the dependencies required to run this plugin.
+All environment configuration lives in [`pyproject.toml`](pyproject.toml) under the `[tool.pixi.*]` tables and is locked in [`pixi.lock`](pixi.lock).
+This is what CI and the Docker image build from, so it is the most reliable way to reproduce our environment.
+If you prefer `conda`/`mamba`, see [Installation with Miniforge](#installation-with-miniforge-legacy) below.
+
+1. Install [pixi](https://pixi.sh/latest/#installation).
+2. Clone this repo `git clone https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp.git`
+3. Navigate with your terminal to the repo.
+4. Create the environment and install the package into it:
+```
+pixi install
+pixi run install  # python -m pip install --no-deps -e .
+```
+
+Then run any command inside the environment with `pixi run`, e.g.
+```
+pixi run isce2_topsapp --help
+```
+or drop into an interactive shell with `pixi shell`.
+
+`ISCE2` is only built for Intel `x86_64`, so the supported platforms are `linux-64` and `osx-64`.
+On Apple Silicon, pixi automatically falls back to `osx-64` and runs the environment under Rosetta - no `CONDA_SUBDIR` juggling required.
+You can confirm this with:
+```
+pixi run python -c "import platform; print(platform.machine())"  # Should print "x86_64"
+```
+
+The environment resolves against Python 3.11 by default. To use Python 3.12 instead, prefix commands with `-e py312`:
+```
+pixi run -e py312 pytest .
+```
+
+### Notebooks
+
+For JupyterLab (with [`jupyter-collaboration`](https://github.com/jupyterlab/jupyter-collaboration) for real-time collaborative editing):
+```
+pixi run lab
+```
+To run the notebooks in `tests/legacy_notebooks`, you will need to add a `topsapp_env` jupyter kernel, too:
+```
+pixi run python -m ipykernel install --user --name topsapp_env
+```
+
+### Linting and tests
+
+```
+pixi run lint    # ruff check
+pixi run format  # ruff format
+pixi run fix     # ruff check --fix
+pixi run test    # pytest
+```
+
+## Installation with Miniforge (legacy)
+
+[`environment.yml`](environment.yml) is kept as a transitional path for users who are already set up with `conda`/`mamba`.
+It is *not* locked and nothing in CI validates it, so it will drift from `pixi.lock` and eventually stop solving.
+When that happens it will be removed rather than repaired, so please migrate to `pixi` when you get the chance.
+
+Install [Miniforge](https://github.com/conda-forge/miniforge) (which ships `mamba`), then:
 
 1. Clone this repo `git clone https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp.git`
 2. Navigate with your terminal to the repo.
 3. Create a new environment and install requirements using `mamba env create --file environment.yml`
-4. Install the package from cloned repo using `python -m pip install -e .`
+4. Activate the environment: `mamba activate topsapp_env`
+5. Install the package from cloned repo using `python -m pip install -e .`
 
 ### For Mac ARM Users
 
-`ISCE2` requires Intel `x86_64` complied, conda-forge packages. Please follow the directions [here](https://conda-forge.org/docs/user/tipsandtricks.html#installing-apple-intel-packages-on-apple-silicon) i.e.
+`ISCE2` requires Intel `x86_64` compiled, conda-forge packages. Please follow the directions [here](https://conda-forge.org/docs/user/tipsandtricks.html#installing-apple-intel-packages-on-apple-silicon) i.e.
 
 ```
 CONDA_SUBDIR=osx-64 conda create -n topsapp_env python=3.11  # currently env is pinned at 3.11
 conda activate topsapp_env
 export CONDA_SUBDIR=osx-64  # added from official instructions
-conda config --env --set subdir osx-64 
+conda config --env --set subdir osx-64
 ```
 Then check
 ```
@@ -45,7 +103,10 @@ and finally update the environment with:
 ```
 mamba env update --file environment.yml
 ```
-To run the test notebooks, you will need to add a `topsapp_env` jupyter kernel, too:
+
+(`pixi` handles this fallback automatically, which is one reason we recommend it.)
+
+To run the notebooks in `tests/legacy_notebooks`, you will need to add a `topsapp_env` jupyter kernel, too:
 ```
 python -m ipykernel install --user --name topsapp_env
 ```
@@ -60,6 +121,20 @@ python -m ipykernel install --user --name topsapp_env
         password <password>
     ```
     The `username`/`password` pair are the appropriate Earthdata Login credentials that are used to access NASA data. This file is necessary for downloading the Sentinel-1 files, and auxiliary data. Additionally, the [`requests`](https://docs.python-requests.org/en/latest/) library automatically uses credentials stored in the `~/.netrc` for authentification when none are supplied.
+
+2. (Optional) To download Sentinel-1 SLC granules from the [Copernicus Data Space Ecosystem (CDSE)](https://dataspace.copernicus.eu/) instead of ASF, you will need CDSE credentials. These can be provided in one of two ways:
+    - Add an entry to your `~/.netrc` file:
+        ```
+        machine dataspace.copernicus.eu
+            login <cdse-username>
+            password <cdse-password>
+        ```
+    - Or set environment variables:
+        ```
+        export CDSE_USERNAME=<cdse-username>
+        export CDSE_PASSWORD=<cdse-password>
+        ```
+    A free CDSE account can be registered at [dataspace.copernicus.eu](https://dataspace.copernicus.eu/).
 
 ## Generate an ARIA-S1-GUNW
 
@@ -76,6 +151,63 @@ Add `> topsapp_img.out 2> topsapp_img.err` to avoid unnecessary output to your t
 This is reflected in the [`sample_run.sh`](sample_run.sh).
 
 To be even more explicit, you can use [`tee`](https://en.wikipedia.org/wiki/Tee_(command)) to record output to both including `> >(tee -a topsapp_img.out) 2> >(tee -a topsapp_img.err >&2)`.
+
+### Alternative: Using Dates Instead of Scene IDs
+
+Starting in version 0.6.0, you can specify acquisition dates instead of explicit scene IDs. The application will automatically discover and process all Sentinel-1 SLC scenes acquired on those dates for the specified frame.
+
+**Date Format:** `YYYY-MM-DD`
+
+**Basic example using dates:**
+```bash
+isce2_topsapp --reference-date 2022-02-12 \
+              --secondary-date 2022-01-31 \
+              --frame-id 25502
+```
+
+When you run this command, the application will:
+1. Search for all Sentinel-1 SLC scenes acquired on each date
+2. Filter to scenes covering frame 25502
+3. Print the discovered scenes (e.g., "Found reference scenes ['S1A_IW_SLC__1SDV_20220212T222803...', ...]")
+4. Process the interferogram using those scenes
+
+**All customization parameters work identically with dates:**
+```bash
+isce2_topsapp --reference-date 2022-02-12 \
+              --secondary-date 2022-01-31 \
+              --frame-id 25502 \
+              --output-resolution 30 \
+              --estimate-ionosphere-delay True \
+              --compute-solid-earth-tide True \
+              --dense-offsets True
+```
+
+**Important notes:**
+- You must use **either** `--reference-scenes`/`--secondary-scenes` **or** `--reference-date`/`--secondary-date` (not both)
+- The secondary date must be chronologically before the reference date
+- The `--frame-id` parameter is still required
+- Both dates must have available Sentinel-1 data for the specified frame
+
+**When to use dates vs. scene IDs:**
+
+| Use Scene IDs When | Use Dates When |
+|-------------------|---------------|
+| You know exact scene identifiers | You know the acquisition dates |
+| Processing specific scenes only | Want all scenes for a date/frame pair |
+| Maximum control over inputs | Simpler specification |
+
+## Generate an ARIA-S1-GUNW using CDSE for Sentinel-1 Download
+
+By default, Sentinel-1 SLC granules are downloaded from the [Alaska Satellite Facility (ASF)](https://asf.alaska.edu/). As an alternative, particularly suited for European users or those operating within the European cloud ecosystem, granules can be downloaded from the [Copernicus Data Space Ecosystem (CDSE)](https://dataspace.copernicus.eu/) by passing `--download-source CDSE`. Metadata lookups and bounding box checks still use ASF, so a valid `~/.netrc` entry for `urs.earthdata.nasa.gov` remains required. Additionally, CDSE credentials must be configured as described in the *Additional setup* section above.
+
+```
+isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T222830_041886_04FCA3_2B3E \
+                                 S1A_IW_SLC__1SDV_20220212T222828_20220212T222855_041886_04FCA3_A3E2  \
+              --secondary-scenes S1A_IW_SLC__1SDV_20220131T222803_20220131T222830_041711_04F690_8F5F \
+                                 S1A_IW_SLC__1SDV_20220131T222828_20220131T222855_041711_04F690_28D7  \
+              --frame-id 25502 \
+              --download-source CDSE
+```
 
 ## What makes an ARIA-S1-GUNW Product *standard*?
 
@@ -109,6 +241,9 @@ We note that the ionosphere correction layer is the (hard) work of [Marin Govorc
 
 Below indicates all available arguments for product generation and parameters required for *standard product* generation (again, for a given pairing and frame, one must use the enumeration of pairs described [here](https://github.com/ACCESS-Cloud-Based-InSAR/s1-frame-enumerator)). Use `isce2_topsapp --help` for more information of available arguments.
 
+**Note:** You can specify scenes either explicitly using `--reference-scenes`/`--secondary-scenes` (as shown below) or by acquisition date using `--reference-date`/`--secondary-date` (as described in the ["Alternative: Using Dates Instead of Scene IDs"](#alternative-using-dates-instead-of-scene-ids) section above). All other parameters work identically with both approaches.
+
+**Example with scene IDs:**
 ```
 isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T222830_041886_04FCA3_2B3E \
                                  S1A_IW_SLC__1SDV_20220212T222828_20220212T222855_041886_04FCA3_A3E2  \
@@ -123,6 +258,21 @@ isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T22283
               --unfiltered-coherence True # this adds an unfiltered coherence layer\
               --dense-offsets False # adds layers that compute patch wise correlation measurement done in range and azimuth which are helpful after significant surface changes\
 ```
+
+**Equivalent example with dates:**
+```
+isce2_topsapp --reference-date 2022-02-12 \
+              --secondary-date 2022-01-31 \
+              --frame-id 25502 \
+              --estimate-ionosphere-delay True \
+              --esd-coherence-threshold -1. \
+              --compute_solid_earth_tide True \
+              --goldstein-filter-power 0.5 \
+              --output-resolution 90 \
+              --unfiltered-coherence True \
+              --dense-offsets False
+```
+
 or as a json:
 ```
 {
@@ -201,11 +351,13 @@ isce2_topsapp --reference-scenes S1A_IW_SLC__1SDV_20190716T135159_20190716T13522
 
 5. Run the topsapp process within a docker container:
 
-   ```cd /home/ops/topsapp_data && conda activate topsapp_env && source /home/ops/topsapp_data/sample_run.sh```
+   ```cd /home/ops/DockerizedTopsApp && pixi shell --frozen && cd /home/ops/topsapp_data && source /home/ops/topsapp_data/sample_run.sh```
 
 ## Expedient Docker Test for GUNW Generation
 
 Create a new directory (for all the intermediate files) and navigate to it.
+
+**Using scene IDs:**
 ```
 docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img \
                --reference-scenes S1A_IW_SLC__1SDV_20220212T222803_20220212T222830_041886_04FCA3_2B3E \
@@ -218,17 +370,30 @@ docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img \
                --esa-username <esa-username> \
                --esa-password <esa-password> \
 ```
+
+**Or, using dates (simpler):**
+```
+docker run -ti -v $PWD:/home/ops/topsapp_data topsapp_img \
+               --reference-date 2022-02-12 \
+               --secondary-date 2022-01-31 \
+               --frame-id 25502 \
+               --username <username> \
+               --password <password> \
+               --esa-username <esa-username> \
+               --esa-password <esa-password> \
+```
+
 where the `username`/`password` are the Earthdata credentials for accessing NASA data. We note the command line magic of the above is taken care of the `isce2_topsapp/etc/entrypoint.sh` (written by Joe Kennedy) which automatically runs certain bash commands on startup of the container, i.e. the run commands also calls the `isce2_topsapp` command line function as can be seen [here](isce2_topsapp/etc/entrypoint.sh).
 
 # Build Issues
 
-ISCE2, gdal, and xarray are hard to balance. Ideally, we would have a dependabot to increment packages and integration tests to make sure datasets are generated correctly with each update. Unfortunately, this is not currently the case. So, we are including some snippets (credit to Joseph Kennedy) for determining where packages might fail. We have some caps in our environment.yml file. This is how we find them. Sometimes even with our rather minimal integration tests and builds, in 24 hours, a new package can entirely throw something awry with respect to builds.
+ISCE2, gdal, and xarray are hard to balance. Ideally, we would have a dependabot to increment packages and integration tests to make sure datasets are generated correctly with each update. Unfortunately, this is not currently the case. So, we are including some snippets (credit to Joseph Kennedy) for determining where packages might fail. We have some caps in the `[tool.pixi.dependencies]` table of `pyproject.toml`, and the exact resolved set is recorded in `pixi.lock`. This is how we find them. Sometimes even with our rather minimal integration tests and builds, in 24 hours, a new package can entirely throw something awry with respect to builds.
 
 The easiest way to see what was the *last* working build, check out the docker [images](https://github.com/ACCESS-Cloud-Based-InSAR/DockerizedTopsApp/pkgs/container/dockerizedtopsapp) for the last build. `latest` refers to the latest production build on `main`. `test` refers to the last build on `dev`. But each merge to `dev` gets an image that is recorded.
 
 1. Click one of the images and it will tell you how to download an image into docker e.g. `docker pull ghcr.io/access-cloud-based-insar/dockerizedtopsapp:0.2.2.dev148_gab75888`.
 2. Load the image and get into interactive mode e.g. `docker run --entrypoint /usr/bin/bash  -it --rm ghcr.io/access-cloud-based-insar/dockerizedtopsapp:0.2.2.dev136_ga2d5389 -l`
-3. Check the packages `conda list | grep xarray`
+3. Check the packages `cd /home/ops/DockerizedTopsApp && pixi list --frozen | grep xarray`
 
 # Contribution Instructions
 
@@ -239,10 +404,9 @@ This is an open-source plugin and we welcome contributions. Because we use this 
 
 1. Clone or fork this repo. If you are a member of ACCESS or working on new features of this plugin, ask to become a member of this Github organization. The integration tests will be easier to run if you are pushing to branches of this repository as opposed to a fork (require organization secrets). This will ensure new features are more quickly integrated particularly into HyP3. Otherwise, please add secrets to your repository as indicate below.
 2. Navigate with your terminal to the repo.
-3. Create a new environment and install requirements using `conda env update --file environment.yml`
-4. Activate the environment: `conda activate topsapp_env`
-5. Install the package from cloned repo using `python -m pip install -e .`
-6. Create a new branch with your feature.
+3. Install [pixi](https://pixi.sh/latest/#installation) and create the environment with `pixi install` (or, with `conda`/`mamba`, `mamba env update --file environment.yml && mamba activate topsapp_env`)
+4. Install the package from cloned repo using `pixi run install` (or `python -m pip install -e .`)
+5. Create a new branch with your feature.
 
 **Note**: because forked repositories do not have access to the repositories secrets, you will have to add secrets to your repository. You will need to add your Earthdata username and password to the secrets as:
 
@@ -321,7 +485,7 @@ Only after these **manual** checks, will we continue with a release of the plugi
 
 1. The docker build is taking a long time.
 
-    *Answer*: Make sure the time is spent with `conda/mamba` not copying data files. The `.dockerignore` file should ignore ISCE2 data files (if you are running some examples within this repo directory, there will be GBs of intermediate files). It's crucial you don't include unnecessary ISCE2 intermediate files into the Docker image as this will bloat it.
+    *Answer*: Make sure the time is spent with `pixi` not copying data files. The `.dockerignore` file should ignore ISCE2 data files (if you are running some examples within this repo directory, there will be GBs of intermediate files). It's crucial you don't include unnecessary ISCE2 intermediate files into the Docker image as this will bloat it.
 
 2. Need to install additional packages such as vim in your container?
 
@@ -331,8 +495,8 @@ Only after these **manual** checks, will we continue with a release of the plugi
    ```
    $ docker start <container_id>
    $ docker exec --user root -ti <container_id> /bin/bash
-   $ conda activate topsapp_env
-   $ conda install <package>
+   $ cd /home/ops/DockerizedTopsApp
+   $ pixi add <package>
    $ exit
    ```
    Return to the terminal inside the container as non-root user: ```docker exec -ti <container_id> /bin/bash```
