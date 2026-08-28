@@ -13,8 +13,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgl1 unzip vi
 ARG UID=1000
 ARG GID=1000
 
-RUN groupadd -g "${GID}" --system iscer && \
-    useradd -l -u "${UID}" -g "${GID}" --system -d /home/ops -m  -s /bin/bash iscer
+# noble ships a stock ubuntu user at 1000, which collides with UID/GID below
+RUN userdel -r ubuntu && \
+    groupadd -g "${GID}" --system iscer && \
+    useradd -l -u "${UID}" -g "${GID}" --system -d /home/ops -m -s /bin/bash iscer
 
 # Switch to non-root user
 USER iscer

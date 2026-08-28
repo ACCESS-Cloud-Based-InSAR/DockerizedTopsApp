@@ -8,7 +8,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.0.4]
 * Update Docker build action with correct job name - main builds (and it's release) were failing silently.
-
+* Update UID/GIDs to avoid stock ubunut IDs (which is Docker base pixi uses)
 
 ## [1.0.3]
 
